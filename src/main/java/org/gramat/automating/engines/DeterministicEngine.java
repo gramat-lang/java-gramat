@@ -2,18 +2,21 @@ package org.gramat.automating.engines;
 
 import org.gramat.actions.ActionList;
 import org.gramat.automating.Automaton;
+import org.gramat.automating.Closure;
 import org.gramat.automating.DeterministicMachine;
+import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
-import org.gramat.automating.StateSet;
 import org.gramat.exceptions.GramatException;
 import org.gramat.logging.Logger;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 public class DeterministicEngine {
 
@@ -22,7 +25,7 @@ public class DeterministicEngine {
     }
 
     private final Logger logger;
-    private final Map<String, StateSet> idClosures;
+    private final Map<String, Closure> idClosures;
     private final Map<String, State> idStates;
     private final Automaton dAuto;
 
@@ -35,41 +38,29 @@ public class DeterministicEngine {
 
     private DeterministicMachine resolve(Machine nMachine) {
         var nAuto = nMachine.am;
-        var queue = new LinkedList<StateSet>();
+        var queue = new LinkedList<Closure>();
         var control = new HashSet<String>();
-        var closure0 = nAuto.emptyClosure(nMachine.begin);
+        var closure0 = ClosureEngine.empty(nMachine.begin, Direction.FORWARD);
 
         queue.add(closure0);
 
-        logger.debug("Resolving %s codes and %s levels...", nAuto.codes.size(), nAuto.levels.size());
+        var levels = nAuto.listLevels();
+        var codes = nAuto.listCodes();
+
+        logger.debug("Resolving %s codes and %s levels...", codes.size(), levels.size());
 
         do {
             var closure = queue.remove();
             if (control.add(closure.getID())) {
                 var dSource = mapClosure(closure);
 
-                for (var code : nAuto.codes) {
-//                    for (var level : nam.levels) {
-                        var targets = StateSet.of();
-                        var beforeActions = new ActionList();
-                        var afterActions = new ActionList();
+                for (var branch : BranchEngine.branches(nAuto, closure.getStates(), Direction.FORWARD)) {
+                    var target = ClosureEngine.empty(branch.target, Direction.FORWARD);
+                    var dTarget = mapClosure(target);
 
-                        for (var t : nAuto.transitionsFrom(closure, code, Level.ANY)) {
-                            beforeActions.prependAll(t.beforeActions);
-                            afterActions.appendAll(t.afterActions);
+                    dAuto.addSymbol(dSource, dTarget, branch.code, branch.level, new ActionList(), new ActionList());
 
-                            targets.add(t.target);
-                        }
-
-                        if (targets.isPresent()) {
-                            var targetClosure = nAuto.emptyClosure(targets);
-                            var dTarget = mapClosure(targetClosure);
-
-                            dAuto.addSymbol(dSource, dTarget, code, Level.ANY, beforeActions, afterActions);
-
-                            queue.add(targetClosure);
-                        }
-//                    }
+                    queue.add(target);
                 }
             }
         }
@@ -84,7 +75,7 @@ public class DeterministicEngine {
         return idStates.containsKey(id);
     }
 
-    private State mapClosure(StateSet closure) {
+    private State mapClosure(Closure closure) {
         return idStates.computeIfAbsent(closure.getID(), closureID -> {
             var state = dAuto.createState();
 
@@ -94,7 +85,7 @@ public class DeterministicEngine {
         });
     }
 
-    private State unmapClosure(StateSet closure) {
+    private State unmapClosure(Closure closure) {
         var state = idStates.get(closure.getID());
         if (state == null) {
             throw new GramatException("state not found: " + closure.getID());
@@ -102,8 +93,8 @@ public class DeterministicEngine {
         return state;
     }
 
-    private StateSet unmapWith(State end) {
-        var result = StateSet.of();
+    private Set<State> unmapWith(State end) {
+        var result = new LinkedHashSet<State>();
 
         for (var closure : idClosures.values()) {
             if (closure.contains(end)) {

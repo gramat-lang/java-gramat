@@ -63,14 +63,14 @@ public class Gramat {
 
         var nLinked = markEngine.resolve(nMachine);
 
-        Debug.print(nLinked, true);
+        Debug.print(nLinked, false);
 
 //        var nClean = new EmptyResolverEngine(logger).resolve(nLinked);
 //        Debug.print(nClean, true);
 
         var dMachine = DeterministicEngine.resolve(nLinked, logger);
 
-        Debug.print(dMachine, false);
+        Debug.print(dMachine, true);
 
         return nMachine;
     }

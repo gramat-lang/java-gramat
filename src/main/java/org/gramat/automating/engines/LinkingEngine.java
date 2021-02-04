@@ -3,6 +3,7 @@ package org.gramat.automating.engines;
 import org.gramat.actions.RecursionBegin;
 import org.gramat.actions.RecursionEnd;
 import org.gramat.automating.Automaton;
+import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.transitions.TransitionReference;
@@ -16,6 +17,8 @@ public class LinkingEngine {
     private final Logger logger;
     private final BiMap<String, Level, Machine> refLevelMachines;
     private final Automaton am;
+
+    private int nextPairID;
 
     public LinkingEngine(Logger logger) {
         this.logger = logger;
@@ -73,8 +76,10 @@ public class LinkingEngine {
             am.addEmpty(machine.end, reference.target);
         }
         else {
-            am.addEnter(reference.source, machine.begin, reference.name, reference.level);
-            am.addExit(machine.end, reference.target, reference.name, reference.level);
+            nextPairID++;
+            var pairID = nextPairID;
+            am.addRecursion(reference.source, machine.begin, reference.name, reference.level, pairID, Direction.FORWARD);
+            am.addRecursion(machine.end, reference.target, reference.name, reference.level, pairID, Direction.BACKWARD);
         }
 
         am.removeTransition(reference);

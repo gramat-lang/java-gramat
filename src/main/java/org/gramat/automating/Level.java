@@ -17,4 +17,8 @@ public class Level {
         }
         return "Level(" + id + ')';
     }
+
+    public boolean matches(Level that) {
+        return this == that || this.id == that.id || that == ANY;
+    }
 }

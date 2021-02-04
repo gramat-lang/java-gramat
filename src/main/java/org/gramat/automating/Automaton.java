@@ -3,11 +3,9 @@ package org.gramat.automating;
 import org.gramat.actions.Action;
 import org.gramat.actions.ActionList;
 import org.gramat.automating.transitions.Transition;
-import org.gramat.automating.transitions.TransitionBackward;
+import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
-import org.gramat.automating.transitions.TransitionEnter;
-import org.gramat.automating.transitions.TransitionExit;
-import org.gramat.automating.transitions.TransitionForward;
+import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionReference;
 import org.gramat.automating.transitions.TransitionSymbol;
 import org.gramat.codes.Code;
@@ -17,9 +15,10 @@ import org.gramat.exceptions.GramatException;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -126,26 +125,14 @@ public class Automaton {
         return t;
     }
 
-    public TransitionForward addForward(State source, State target, Action action) {
-        var t = new TransitionForward(this, source, target, action);
+    public TransitionAction addAction(State source, State target, Action action, Direction direction) {
+        var t = new TransitionAction(this, source, target, action, direction);
         transitions.add(t);
         return t;
     }
 
-    public TransitionBackward addBackward(State source, State target, Action action) {
-        var t = new TransitionBackward(this, source, target, action);
-        transitions.add(t);
-        return t;
-    }
-
-    public TransitionEnter addEnter(State source, State target, String name, Level level) {
-        var t = new TransitionEnter(this, source, target, name, level);
-        transitions.add(t);
-        return t;
-    }
-
-    public TransitionExit addExit(State source, State target, String name, Level level) {
-        var t = new TransitionExit(this, source, target, name, level);
+    public TransitionRecursion addRecursion(State source, State target, String name, Level level, int pairID, Direction direction) {
+        var t = new TransitionRecursion(this, source, target, name, level, pairID, direction);
         transitions.add(t);
         return t;
     }
@@ -269,5 +256,44 @@ public class Automaton {
         var newTransition = transition.derive(newSource, newTarget);
 
         transitions.add(newTransition);
+    }
+
+    public Set<Code> listCodes() {
+        var codes = new LinkedHashSet<Code>();
+        for (var t : transitions) {
+            if (t instanceof TransitionSymbol) {
+                codes.add(((TransitionSymbol) t).code);
+            }
+        }
+        return codes;
+    }
+
+    public Set<Level> listLevels() {
+        var levels = new LinkedHashSet<Level>();
+        for (var t : transitions) {
+            if (t instanceof TransitionSymbol) {
+                levels.add(((TransitionSymbol) t).level);
+            }
+            else if (t instanceof TransitionRecursion) {
+                levels.add(((TransitionRecursion) t).level);
+            }
+        }
+        return levels;
+    }
+
+    public List<Transition> findTransitions(State state, Direction dir) {
+        if (dir == Direction.FORWARD) {
+            return transitions.stream()
+                    .filter(t -> t.source == state)
+                    .collect(Collectors.toList());
+        }
+        else if (dir == Direction.BACKWARD) {
+            return transitions.stream()
+                    .filter(t -> t.target == state)
+                    .collect(Collectors.toList());
+        }
+        else {
+            throw new GramatException("invalid dir");
+        }
     }
 }

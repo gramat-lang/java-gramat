@@ -1,16 +1,14 @@
 package org.gramat.formatting;
 
-import org.gramat.automating.Automaton;
 import org.gramat.automating.DeterministicMachine;
+import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;
-import org.gramat.automating.transitions.TransitionBackward;
+import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
-import org.gramat.automating.transitions.TransitionEnter;
-import org.gramat.automating.transitions.TransitionExit;
-import org.gramat.automating.transitions.TransitionForward;
+import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionReference;
 import org.gramat.automating.transitions.TransitionSymbol;
 import org.gramat.automating.transitions.TransitionWrapper;
@@ -74,29 +72,35 @@ public class AutomatonFormatting {
         }
 
 
-        if (transition instanceof TransitionForward) {
-            var tf = (TransitionForward)transition;
+        if (transition instanceof TransitionAction) {
+            var ta = (TransitionAction)transition;
 
-            symbols.add("FRW " + tf.action);
-        }
-        else if (transition instanceof TransitionBackward) {
-            var tb = (TransitionBackward)transition;
-
-            symbols.add("BKW " + tb.action);
+            if (ta.direction == Direction.FORWARD) {
+                symbols.add("FRW " + ta.action);
+            }
+            else if (ta.direction == Direction.BACKWARD) {
+                symbols.add("BKW " + ta.action);
+            }
+            else {
+                throw new GramatException("invalid dir");
+            }
         }
         else if (transition instanceof TransitionSymbol) {
             var ts = (TransitionSymbol)transition;
 
             symbols.add("SYM " + ts.code + "/" + ts.level);
         }
-        else if (transition instanceof TransitionEnter) {
-            var te = (TransitionEnter)transition;
-            symbols.add("ENT " + te.name + "/" + te.level.toString());
-        }
-        else if (transition instanceof TransitionExit) {
-            var te = (TransitionExit)transition;
-
-            symbols.add("EXT " + te.name + "/" + te.level);
+        else if (transition instanceof TransitionRecursion) {
+            var tr = (TransitionRecursion)transition;
+            if (tr.direction == Direction.FORWARD) {
+                symbols.add("ENT " + tr.name + "/" + tr.level.toString());
+            }
+            else if (tr.direction == Direction.BACKWARD) {
+                symbols.add("EXT " + tr.name + "/" + tr.level.toString());
+            }
+            else {
+                throw new GramatException("invalid dir");
+            }
         }
         else if (transition instanceof TransitionReference) {
             var tr = (TransitionReference)transition;

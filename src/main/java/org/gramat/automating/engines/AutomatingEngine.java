@@ -12,6 +12,7 @@ import org.gramat.actions.PropertyEnd;
 import org.gramat.actions.TextBegin;
 import org.gramat.actions.TextEnd;
 import org.gramat.automating.Automaton;
+import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
@@ -241,8 +242,8 @@ public class AutomatingEngine {
         var begin = am.createState();
         var end = am.createState();
 
-        am.addForward(begin, machine.begin, beginAction);
-        am.addBackward(machine.end, end, endAction);
+        am.addAction(begin, machine.begin, beginAction, Direction.FORWARD);
+        am.addAction(machine.end, end, endAction, Direction.BACKWARD);
 
         return am.createMachine(begin, end);
     }

@@ -4,9 +4,8 @@ import org.gramat.automating.Automaton;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;
-import org.gramat.automating.transitions.TransitionBackward;
+import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
-import org.gramat.automating.transitions.TransitionForward;
 import org.gramat.automating.transitions.TransitionReference;
 import org.gramat.automating.transitions.TransitionSymbol;
 import org.gramat.exceptions.GramatException;
@@ -71,6 +70,7 @@ public class CopyManager {
         var newSource = copyState(transition.source);
         var newTarget = copyState(transition.target);
         return transitionMap.computeIfAbsent(transition, k -> {
+            // TODO this is like derive(...) method
             if (transition instanceof TransitionEmpty) {
                 return this.am.addEmpty(newSource, newTarget);
             }
@@ -84,15 +84,10 @@ public class CopyManager {
 
                 return this.am.addReference(newSource, newTarget, tr.name, tr.level, tr.beforeActions.copy(), tr.afterActions.copy());
             }
-            else if (transition instanceof TransitionForward) {
-                var tf = (TransitionForward) transition;
+            else if (transition instanceof TransitionAction) {
+                var ta = (TransitionAction) transition;
 
-                return this.am.addForward(newSource, newTarget, tf.action);
-            }
-            else if (transition instanceof TransitionBackward) {
-                var tb = (TransitionBackward) transition;
-
-                return this.am.addBackward(newSource, newTarget, tb.action);
+                return this.am.addAction(newSource, newTarget, ta.action, ta.direction);
             }
             else {
                 throw new GramatException("not supported transition: " + transition);

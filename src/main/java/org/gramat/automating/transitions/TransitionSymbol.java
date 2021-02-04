@@ -9,6 +9,8 @@ import org.gramat.codes.Code;
 import java.util.Objects;
 
 public class TransitionSymbol extends TransitionWrapper {
+    // TODO create simple version and pushdown version
+    
     public final Code code;
     public final Level level;
 
