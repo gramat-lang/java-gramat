@@ -68,8 +68,7 @@ public class Gramat {
 //        var nClean = new EmptyResolverEngine(logger).resolve(nLinked);
 //        Debug.print(nClean, true);
 
-        var dEngine = new DeterministicEngine(logger);
-        var dMachine = dEngine.resolve(nLinked);
+        var dMachine = DeterministicEngine.resolve(nLinked, logger);
 
         Debug.print(dMachine, false);
 
