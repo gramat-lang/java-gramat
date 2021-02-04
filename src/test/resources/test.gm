@@ -1,0 +1,6 @@
+Value = Array|Token|Object
+Object = @object("(" { @set(@name(Token) "=" Value) / "," } ")")
+Array = @list("[" { Value / "," } "]")
+Token = @value('x')
+
+main = Value

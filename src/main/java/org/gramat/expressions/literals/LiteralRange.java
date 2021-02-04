@@ -1,0 +1,28 @@
+package org.gramat.expressions.literals;
+
+import org.gramat.exceptions.GramatException;
+import org.gramat.expressions.Expression;
+import org.gramat.expressions.ExpressionFinal;
+import org.gramat.util.Definition;
+import org.gramat.util.WalkFunction;
+
+public class LiteralRange extends ExpressionFinal {
+
+    public final char begin;
+    public final char end;
+
+    public LiteralRange(char begin, char end) {
+        this.begin = begin;
+        this.end = end;
+
+        if (begin >= end) {
+            throw new GramatException("invalid char range");
+        }
+    }
+
+    @Override
+    protected void define(Definition def) {
+        def.attr("begin", begin);
+        def.attr("end", end);
+    }
+}
