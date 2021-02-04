@@ -88,7 +88,7 @@ public class AutomatonFormatting {
         else if (transition instanceof TransitionSymbol) {
             var ts = (TransitionSymbol)transition;
 
-            symbols.add("SYM " + ts.code + "/" + ts.level);
+            symbols.add("SYM " + ts.code);
         }
         else if (transition instanceof TransitionRecursion) {
             var tr = (TransitionRecursion)transition;

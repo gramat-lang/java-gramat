@@ -110,7 +110,7 @@ public class AutomatingEngine {
         var begin = am.createState();
         var end = am.createState();
 
-        am.addSymbol(begin, end, am.getChar(chr.value), Level.ANY, new ActionList(), new ActionList());
+        am.addSymbol(begin, end, am.getChar(chr.value));
 
         return am.createMachine(begin, end);
     }
@@ -124,7 +124,7 @@ public class AutomatingEngine {
 
             end = am.createState();
 
-            am.addSymbol(state, end, am.getChar(chr), Level.ANY, new ActionList(), new ActionList());
+            am.addSymbol(state, end, am.getChar(chr));
         }
 
         return am.createMachine(begin, end);
@@ -134,7 +134,7 @@ public class AutomatingEngine {
         var begin = am.createState();
         var end = am.createState();
 
-        am.addSymbol(begin, end, am.getRange(expr.begin, expr.end), Level.ANY, new ActionList(), new ActionList());
+        am.addSymbol(begin, end, am.getRange(expr.begin, expr.end));
 
         return am.createMachine(begin, end);
     }

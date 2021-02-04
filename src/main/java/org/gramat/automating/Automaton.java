@@ -119,8 +119,8 @@ public class Automaton {
         return t;
     }
 
-    public TransitionSymbol addSymbol(State source, State target, Code code, Level level, ActionList beforeActions, ActionList afterActions) {
-        var t = new TransitionSymbol(this, source, target, code, level, beforeActions, afterActions);
+    public TransitionSymbol addSymbol(State source, State target, Code code) {
+        var t = new TransitionSymbol(this, source, target, code);
         transitions.add(t);
         return t;
     }
@@ -271,10 +271,7 @@ public class Automaton {
     public Set<Level> listLevels() {
         var levels = new LinkedHashSet<Level>();
         for (var t : transitions) {
-            if (t instanceof TransitionSymbol) {
-                levels.add(((TransitionSymbol) t).level);
-            }
-            else if (t instanceof TransitionRecursion) {
+            if (t instanceof TransitionRecursion) {
                 levels.add(((TransitionRecursion) t).level);
             }
         }

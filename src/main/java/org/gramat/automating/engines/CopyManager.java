@@ -77,7 +77,7 @@ public class CopyManager {
             else if (transition instanceof TransitionSymbol) {
                 var ts = (TransitionSymbol) transition;
 
-                return this.am.addSymbol(newSource, newTarget, ts.code, ts.level, ts.beforeActions.copy(), ts.afterActions.copy());
+                return this.am.addSymbol(newSource, newTarget, ts.code);
             }
             else if (transition instanceof TransitionReference) {
                 var tr = (TransitionReference) transition;

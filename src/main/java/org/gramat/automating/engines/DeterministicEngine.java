@@ -58,7 +58,9 @@ public class DeterministicEngine {
                     var target = ClosureEngine.empty(branch.target, Direction.FORWARD);
                     var dTarget = mapClosure(target);
 
-                    dAuto.addSymbol(dSource, dTarget, branch.code, branch.level, new ActionList(), new ActionList());
+                    // TODO add pushdown features from branch
+
+                    dAuto.addSymbol(dSource, dTarget, branch.code);
 
                     queue.add(target);
                 }
