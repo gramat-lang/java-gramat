@@ -24,12 +24,12 @@ public class Definition {
 
         builder.append(valueClass.getSimpleName());
 
-        if (!attributes.isEmpty()) {
-            builder.append('(');
+        builder.append('(');
 
-            var i = 0;
+        var i = 0;
 
-            for (var attr : attributes.entrySet()) {
+        for (var attr : attributes.entrySet()) {
+            if (attr.getValue() != null) {
                 if (i > 0) {
                     builder.append(", ");
                 }
@@ -39,9 +39,9 @@ public class Definition {
                 writeValue(attr.getValue(), builder);
                 i++;
             }
-
-            builder.append(')');
         }
+
+        builder.append(')');
 
         return builder.toString();
     }

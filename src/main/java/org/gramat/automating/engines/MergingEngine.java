@@ -12,18 +12,25 @@ import org.gramat.automating.Machine;
 import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;
 import org.gramat.automating.transitions.TransitionAction;
+import org.gramat.automating.transitions.TransitionEmpty;
 import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionSymbol;
 import org.gramat.codes.Code;
 import org.gramat.exceptions.GramatException;
 import org.gramat.logging.Logger;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MergingEngine {
 
@@ -32,7 +39,7 @@ public class MergingEngine {
     }
 
     private final Logger logger;
-    private final Map<String, Closure> idClosures;
+    private final Map<String, Set<State>> idClosures;
     private final Map<String, State> idStates;
     private final Automaton dAuto;
 
@@ -45,9 +52,9 @@ public class MergingEngine {
 
     private DeterministicMachine resolve(Machine nMachine) {
         var nAuto = nMachine.am;
-        var queue = new LinkedList<Closure>();
+        var queue = new LinkedList<Set<State>>();
         var control = new HashSet<String>();
-        var closure0 = ClosureEngine.empty(nMachine.begin, Direction.FORWARD);
+        var closure0 = emptyClosure(nMachine.begin, null);
 
         queue.add(closure0);
 
@@ -58,33 +65,34 @@ public class MergingEngine {
 
         do {
             var closure = queue.remove();
-            if (control.add(closure.getID())) {
-                var dSource = mapClosure(closure);
+            var closureID = computeID(closure);
+            if (control.add(closureID)) {
+                var dSource = mapClosure(closure, closureID);
 
-                for (var code : codes) {
-                    for (var ts : findTransitionSymbols(closure, code)) {
-                        var path = PathEngine.between(closure.getStates(), ts.source);
-                        var targetClosure = ClosureEngine.empty(ts.target, Direction.FORWARD);
-                        var dTarget = mapClosure(targetClosure);
+                for (var ts : findTransitionSymbols(nAuto, closure)) {
+                    var sourceTransitions = PathEngine.between(closure, ts.source);
+                    var targetTransitions = new ArrayList<Transition>();
+                    var targetClosure = emptyClosure(ts.target, targetTransitions);
+                    var targetClosureID = computeID(targetClosure);
+                    var dTarget = mapClosure(targetClosure, targetClosureID);
 
-                        var enterLevels = listLevels(path, Direction.FORWARD);
-                        var exitLevels = listLevels(targetClosure.getTransitions(), Direction.BACKWARD);
+                    var enterLevels = listLevels(sourceTransitions, Direction.FORWARD);
+                    var exitLevels = listLevels(targetTransitions, Direction.BACKWARD);
 
-                        var beginActions = listActions(path, Direction.FORWARD);
-                        var endActions = listActions(targetClosure.getTransitions(), Direction.BACKWARD);
+                    var beginActions = listActions(sourceTransitions, Direction.FORWARD);
+                    var endActions = listActions(targetTransitions, Direction.BACKWARD);
 
-                        for (var level : enterLevels) {
-                            beginActions.prepend(new HeapPush(level.id));
-                        }
-
-                        for (var level : exitLevels) {
-                            endActions.append(new HeapPop(level.id));
-                        }
-
-                        dAuto.addMerged(dSource, dTarget, code, beginActions, endActions);
-
-                        queue.add(targetClosure);
+                    for (var level : enterLevels) {
+                        beginActions.prepend(new HeapPush(level.id));
                     }
+
+                    for (var level : exitLevels) {
+                        endActions.append(new HeapPop(level.id));
+                    }
+
+                    dAuto.addMerged(dSource, dTarget, ts.code, beginActions, endActions);
+
+                    queue.add(targetClosure);
                 }
             }
         }
@@ -95,7 +103,7 @@ public class MergingEngine {
         return new DeterministicMachine(dAuto, begin, ends);
     }
 
-    private Set<Level> listLevels(Set<Transition> transitions, Direction dir) {
+    private Set<Level> listLevels(Collection<Transition> transitions, Direction dir) {
         var levels = new LinkedHashSet<Level>();
 
         for (var t : transitions) {
@@ -111,7 +119,7 @@ public class MergingEngine {
         return levels;
     }
 
-    private ActionList listActions(Set<Transition> transitions, Direction dir) {
+    private ActionList listActions(Collection<Transition> transitions, Direction dir) {
         var levels = new ActionList();
 
         for (var t : transitions) {
@@ -127,12 +135,40 @@ public class MergingEngine {
         return levels;
     }
 
-    private boolean containsClosureID(String id) {
-        return idStates.containsKey(id);
+    private static Set<State> emptyClosure(State source, List<Transition> transitions) {
+        var am = source.am;
+        var states = new LinkedHashSet<State>();
+        var queue = new ArrayDeque<State>();
+        var control = new HashSet<State>();
+
+        queue.add(source);
+
+        do {
+            var state = queue.remove();
+
+            if (control.add(state)) {
+                states.add(state);
+
+                for (var t : am.findTransitions(state, Direction.FORWARD)) {
+                    if (t instanceof TransitionEmpty || t instanceof TransitionAction || t instanceof TransitionRecursion) {
+                        queue.add(t.target);
+
+                        if (transitions != null) {
+                            transitions.add(t);
+                        }
+                    }
+                    else if (!(t instanceof TransitionSymbol)) {
+                        throw new RuntimeException();
+                    }
+                }
+            }
+        } while (!queue.isEmpty());
+
+        return states;
     }
 
-    private State mapClosure(Closure closure) {
-        return idStates.computeIfAbsent(closure.getID(), closureID -> {
+    private State mapClosure(Set<State> closure, String closureID) {
+        return idStates.computeIfAbsent(closureID, k -> {
             var state = dAuto.createState();
 
             idClosures.put(closureID, closure);
@@ -141,30 +177,27 @@ public class MergingEngine {
         });
     }
 
-    private Set<TransitionSymbol> findTransitionSymbols(Closure source, Code code) {
+    private Set<TransitionSymbol> findTransitionSymbols(Automaton am, Set<State> source) {
         var result = new LinkedHashSet<TransitionSymbol>();
-        for (var state : source.getStates()) {
-            source.am.walkForward(state, t -> {
+        for (var state : source) {
+            for (var t : am.findTransitions(state, Direction.FORWARD)) {
                 if (t instanceof TransitionSymbol) {
                     var ts = (TransitionSymbol) t;
-                    if (ts.code == code) {
-                        result.add(ts);
-                    }
-                    return false;
+                    result.add(ts);
                 }
                 else {
                     // TODO check for unsupported transitions
-                    return true;
                 }
-            });
+            }
         }
         return result;
     }
 
-    private State unmapClosure(Closure closure) {
-        var state = idStates.get(closure.getID());
+    private State unmapClosure(Set<State> closure) {
+        var closureID = computeID(closure);
+        var state = idStates.get(closureID);
         if (state == null) {
-            throw new GramatException("state not found: " + closure.getID());
+            throw new GramatException("state not found: " + closureID);
         }
         return state;
     }
@@ -181,5 +214,12 @@ public class MergingEngine {
         }
 
         return result;
+    }
+
+    private static String computeID(Set<State> states) {
+        return states.stream()
+                .sorted(Comparator.comparingInt(a -> a.id))
+                .map(a -> String.valueOf(a.id))
+                .collect(Collectors.joining("_"));
     }
 }

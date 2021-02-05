@@ -15,7 +15,7 @@ class GramatTest {
         var gramat = new Gramat(logger);
         var node = gramat.compile(new InputCharSequence(code));
 
-        gramat.eval(node, new InputCharSequence("(x=[])"));
+        gramat.eval(node, new InputCharSequence("(x=[x,x,()],x=x,x=(x=[x,x,x]))"));
     }
 
 }
