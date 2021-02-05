@@ -144,8 +144,8 @@ public class Automaton {
         return t;
     }
 
-    public TransitionReference addReference(State source, State target, String name, Level level, ActionList beforeActions, ActionList afterActions) {
-        var t = new TransitionReference(this, source, target, name, level, beforeActions, afterActions);
+    public TransitionReference addReference(State source, State target, String name, Level level) {
+        var t = new TransitionReference(this, source, target, name, level);
         transitions.add(t);
         return t;
     }

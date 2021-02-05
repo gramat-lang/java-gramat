@@ -258,7 +258,7 @@ public class AutomatingEngine {
         var begin = am.createState();
         var end = am.createState();
 
-        am.addReference(begin, end, ref.name, am.createLevel(), new ActionList(), new ActionList());
+        am.addReference(begin, end, ref.name, am.createLevel());
 
         return am.createMachine(begin, end);
     }

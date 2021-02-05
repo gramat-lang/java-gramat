@@ -65,9 +65,13 @@ public class Gramat {
 
         var dMachine = MergingEngine.resolve(nLinked, logger);
 
-        Debug.print(dMachine, true);
+        Debug.print(dMachine, false);
 
-        return EvalNodeEngine.run(dMachine, logger);
+        var node = EvalNodeEngine.run(dMachine, logger);
+
+        Debug.print(node, true);
+
+        return node;
     }
 
     public Object eval(EvalNode node, Input input) {

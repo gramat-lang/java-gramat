@@ -3,9 +3,11 @@ package org.gramat.util;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Machine;
+import org.gramat.eval.EvalNode;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.formatting.AutomatonFormatting;
+import org.gramat.formatting.EvalFormatter;
 import org.gramat.formatting.ExpressionFormatter;
 
 import java.awt.Toolkit;
@@ -52,11 +54,7 @@ public class Debug {
         System.out.println("=".repeat(80));
         System.out.println(buffer);
 
-        if (copy) {
-            Toolkit.getDefaultToolkit().getSystemClipboard()
-                    .setContents(new StringSelection(buffer.toString()), null);
-            System.out.println("Copied to clipboard!");
-        }
+        checkCopy(buffer, copy);
 
         System.out.println("=".repeat(80));
     }
@@ -70,12 +68,30 @@ public class Debug {
         System.out.println("=".repeat(80));
         System.out.println(buffer);
 
+        checkCopy(buffer, copy);
+
+        System.out.println("=".repeat(80));
+    }
+
+    public static void print(EvalNode node, boolean copy) {
+        var buffer = new StringBuilder();
+        var formatter = new EvalFormatter(buffer);
+
+        formatter.write(node);
+
+        System.out.println("=".repeat(80));
+        System.out.println(buffer);
+
+        checkCopy(buffer, copy);
+
+        System.out.println("=".repeat(80));
+    }
+
+    private static void checkCopy(StringBuilder buffer, boolean copy) {
         if (copy) {
             Toolkit.getDefaultToolkit().getSystemClipboard()
                     .setContents(new StringSelection(buffer.toString()), null);
             System.out.println("Copied to clipboard!");
         }
-
-        System.out.println("=".repeat(80));
     }
 }

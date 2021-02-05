@@ -82,7 +82,7 @@ public class CopyManager {
             else if (transition instanceof TransitionReference) {
                 var tr = (TransitionReference) transition;
 
-                return this.am.addReference(newSource, newTarget, tr.name, tr.level, tr.beforeActions.copy(), tr.afterActions.copy());
+                return this.am.addReference(newSource, newTarget, tr.name, tr.level);
             }
             else if (transition instanceof TransitionAction) {
                 var ta = (TransitionAction) transition;
