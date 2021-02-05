@@ -8,6 +8,7 @@ import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;
 import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
+import org.gramat.automating.transitions.TransitionMerged;
 import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionReference;
 import org.gramat.automating.transitions.TransitionSymbol;
@@ -89,6 +90,19 @@ public class AutomatonFormatting {
             var ts = (TransitionSymbol)transition;
 
             symbols.add("SYM " + ts.code);
+        }
+        else if (transition instanceof TransitionMerged) {
+            var tm = (TransitionMerged)transition;
+
+            for (var action : tm.beginActions) {
+                symbols.add("BGN " + action);
+            }
+
+            symbols.add("SYM " + tm.code);
+
+            for (var action : tm.endActions) {
+                symbols.add("END " + action);
+            }
         }
         else if (transition instanceof TransitionRecursion) {
             var tr = (TransitionRecursion)transition;

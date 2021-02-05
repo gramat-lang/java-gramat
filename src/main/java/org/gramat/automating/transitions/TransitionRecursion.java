@@ -9,7 +9,7 @@ public class TransitionRecursion extends Transition {
     public final String name;
     public final Level level;
     public final Direction direction;
-    public final int pairID;
+    public final int pairID;  // TODO is this really useful?
 
     public TransitionRecursion(Automaton am, State source, State target, String name, Level level, int pairID, Direction direction) {
         super(am, source, target);
@@ -17,6 +17,10 @@ public class TransitionRecursion extends Transition {
         this.level = level;
         this.pairID = pairID;
         this.direction = direction;
+
+        if (level == Level.ANY) {
+            throw new RuntimeException();
+        }
     }
 
     @Override

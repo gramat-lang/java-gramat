@@ -3,11 +3,12 @@ package org.gramat.actions;
 import org.gramat.eval.EvalEngine;
 import org.gramat.util.Definition;
 
-public class TextEnd extends Action {
-    public final String parser;
+public class HeapPush extends Action {
 
-    public TextEnd(String parser) {
-        this.parser = parser;
+    public final int level;
+
+    public HeapPush(int level) {
+        this.level = level;
     }
 
     @Override
@@ -17,6 +18,6 @@ public class TextEnd extends Action {
 
     @Override
     protected void define(Definition def) {
-        def.attr("parser", parser);
+        def.attr("level", level);
     }
 }

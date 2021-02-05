@@ -14,19 +14,25 @@ import java.util.ArrayList;
 
 public class LinkingEngine {
 
+    public static Machine run(Machine main, Logger logger) {
+        var engine = new LinkingEngine(logger);
+
+        return engine.resolve(main);
+    }
+
     private final Logger logger;
     private final BiMap<String, Level, Machine> refLevelMachines;
     private final Automaton am;
 
     private int nextPairID;
 
-    public LinkingEngine(Logger logger) {
+    private LinkingEngine(Logger logger) {
         this.logger = logger;
         this.refLevelMachines = new BiMap<>();
         this.am = new Automaton();
     }
 
-    public Machine resolve(Machine main) {
+    private Machine resolve(Machine main) {
         var mainCopy = new CopyManager(am).copyMachine(main);
         var promises = new ArrayList<Runnable>();
 
@@ -71,20 +77,14 @@ public class LinkingEngine {
 
             am.addEmpty(machine.begin, copyMachine.begin);
             am.addEmpty(copyMachine.end, machine.end);
+        }
 
-            am.addEmpty(reference.source, machine.begin);
-            am.addEmpty(machine.end, reference.target);
-        }
-        else {
-            nextPairID++;
-            var pairID = nextPairID;
-            am.addRecursion(reference.source, machine.begin, reference.name, reference.level, pairID, Direction.FORWARD);
-            am.addRecursion(machine.end, reference.target, reference.name, reference.level, pairID, Direction.BACKWARD);
-        }
+        nextPairID++;
+        var pairID = nextPairID;
+        am.addRecursion(reference.source, machine.begin, reference.name, reference.level, pairID, Direction.FORWARD);
+        am.addRecursion(machine.end, reference.target, reference.name, reference.level, pairID, Direction.BACKWARD);
 
         am.removeTransition(reference);
     }
-
-
 
 }

@@ -1,6 +1,7 @@
 package org.gramat.actions;
 
 import org.gramat.automating.Level;
+import org.gramat.eval.EvalEngine;
 import org.gramat.util.Definition;
 
 public class RecursionEnd extends Action {
@@ -10,6 +11,11 @@ public class RecursionEnd extends Action {
     public RecursionEnd(String name, Level level) {
         this.name = name;
         this.level = level;
+    }
+
+    @Override
+    public void execute(EvalEngine engine) {
+        // TODO
     }
 
     @Override

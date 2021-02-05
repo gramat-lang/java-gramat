@@ -4,7 +4,7 @@ import org.gramat.automating.Automaton;
 import org.gramat.automating.State;
 
 public abstract class Transition {
-    public abstract Transition derive(State newSource, State newTarget);
+    public abstract Transition derive(State newSource, State newTarget); // TODO delete this method
 
     public final Automaton am;
     public final State source;

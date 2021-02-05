@@ -5,6 +5,7 @@ import org.gramat.actions.ActionList;
 import org.gramat.automating.transitions.Transition;
 import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
+import org.gramat.automating.transitions.TransitionMerged;
 import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionReference;
 import org.gramat.automating.transitions.TransitionSymbol;
@@ -121,6 +122,12 @@ public class Automaton {
 
     public TransitionSymbol addSymbol(State source, State target, Code code) {
         var t = new TransitionSymbol(this, source, target, code);
+        transitions.add(t);
+        return t;
+    }
+
+    public TransitionMerged addMerged(State source, State target, Code code, ActionList beginActions, ActionList endActions) {
+        var t = new TransitionMerged(this, source, target, code, beginActions, endActions);
         transitions.add(t);
         return t;
     }

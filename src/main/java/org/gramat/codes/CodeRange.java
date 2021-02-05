@@ -13,6 +13,11 @@ public class CodeRange implements Code {
     }
 
     @Override
+    public boolean test(char c) {
+        return c >= begin && c <= end;
+    }
+
+    @Override
     public String toString() {
         return "Range(" + PP.str(begin) + "," + PP.str(end) + ")";
     }

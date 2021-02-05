@@ -1,4 +1,4 @@
-package org.gramat.parsing;
+package org.gramat.expressions.engines;
 
 import org.gramat.exceptions.SyntaxException;
 import org.gramat.expressions.Expression;
@@ -17,9 +17,6 @@ import org.gramat.inputs.Location;
 import org.gramat.inputs.Position;
 import org.gramat.util.ExpressionList;
 import org.gramat.util.ExpressionMap;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class ParsingEngine {
 

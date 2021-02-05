@@ -38,13 +38,19 @@ import org.gramat.logging.Logger;
 
 public class AutomatingEngine {
 
+    public static Machine automate(ExpressionProgram program, Logger logger) {
+        var engine = new AutomatingEngine(logger);
+
+        return engine.automate(program);
+    }
+
     private final Logger logger;
 
-    public AutomatingEngine(Logger logger) {
+    private AutomatingEngine(Logger logger) {
         this.logger = logger;
     }
 
-    public Machine automate(ExpressionProgram program) {
+    private Machine automate(ExpressionProgram program) {
         var am = new Automaton();
 
         // create empty machines for dependencies
@@ -251,12 +257,6 @@ public class AutomatingEngine {
     private Machine automateReference(Reference ref, Automaton am) {
         var begin = am.createState();
         var end = am.createState();
-
-//        var level = ac.levels.create();
-//        var refMachine = ac.namedMachines.get(ref.name);
-//
-//        ac.transitions.addEnter(begin, refMachine.begin, level);
-//        ac.transitions.addExit(refMachine.end, end, level);
 
         am.addReference(begin, end, ref.name, am.createLevel(), new ActionList(), new ActionList());
 

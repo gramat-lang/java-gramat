@@ -27,7 +27,7 @@ import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
-import org.gramat.parsing.ActionFactory;
+import org.gramat.expressions.engines.ActionFactory;
 
 import java.io.IOException;
 import java.util.regex.Pattern;

@@ -75,4 +75,11 @@ public class ActionList implements Iterable<Action> {
         }
         return that;
     }
+
+    public Action[] toArray() {
+        if (actions == null) {
+            return null;
+        }
+        return actions.toArray(Action[]::new);
+    }
 }

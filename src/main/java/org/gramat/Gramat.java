@@ -1,16 +1,20 @@
 package org.gramat;
 
 import org.gramat.automating.engines.AutomatingEngine;
-import org.gramat.automating.engines.DeterministicEngine;
-import org.gramat.automating.engines.EmptyResolverEngine;
+import org.gramat.automating.engines.EvalNodeEngine;
+import org.gramat.automating.engines.MergingEngine;
 import org.gramat.automating.engines.LinkingEngine;
+import org.gramat.eval.EvalEngine;
+import org.gramat.eval.EvalNode;
+import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.inputs.Input;
+import org.gramat.inputs.InputCharSequence;
 import org.gramat.logging.Logger;
 import org.gramat.logging.NullLogger;
-import org.gramat.parsing.ParsingEngine;
-import org.gramat.resolving.ResolvingEngine;
+import org.gramat.expressions.engines.ParsingEngine;
+import org.gramat.expressions.engines.ResolvingEngine;
 import org.gramat.util.Debug;
 import org.gramat.util.ExpressionMap;
 
@@ -27,11 +31,11 @@ public class Gramat {
         this.logger = logger;
     }
 
-    public Object compile(Input input) {
+    public EvalNode compile(Input input) {
         return compile(input, DEFAULT_RULE_NAME);
     }
 
-    public Object compile(Input input, String ruleName) {
+    public EvalNode compile(Input input, String ruleName) {
         var parser = new ParsingEngine();
 
         parser.readAll(input);
@@ -42,37 +46,39 @@ public class Gramat {
         return compile(main, rules);
     }
 
-    public Object compile(Expression main, ExpressionMap dependencies) {
+    public EvalNode compile(Expression main, ExpressionMap dependencies) {
         return compile(new ExpressionProgram(main, dependencies));
     }
 
-    public Object compile(ExpressionProgram program) {
-        var resolver = new ResolvingEngine(logger);
-
-        var resolvedProgram = resolver.resolve(program);
+    public EvalNode compile(ExpressionProgram program) {
+        var resolvedProgram = ResolvingEngine.resolve(program, logger);
 
         Debug.print(resolvedProgram);
 
-        var automator = new AutomatingEngine(logger);
-
-        var nMachine = automator.automate(resolvedProgram);
+        var nMachine = AutomatingEngine.automate(resolvedProgram, logger);
 
         Debug.print(nMachine, false);
 
-        var markEngine = new LinkingEngine(logger);
-
-        var nLinked = markEngine.resolve(nMachine);
+        var nLinked = LinkingEngine.run(nMachine, logger);
 
         Debug.print(nLinked, false);
 
-//        var nClean = new EmptyResolverEngine(logger).resolve(nLinked);
-//        Debug.print(nClean, true);
-
-        var dMachine = DeterministicEngine.resolve(nLinked, logger);
+        var dMachine = MergingEngine.resolve(nLinked, logger);
 
         Debug.print(dMachine, true);
 
-        return nMachine;
+        return EvalNodeEngine.run(dMachine, logger);
     }
 
+    public Object eval(EvalNode node, Input input) {
+        var engine = new EvalEngine(logger);
+
+        var nodeHalt = engine.run(node, input);
+
+        if (!nodeHalt.accepted) {
+            throw new GramatException("rejected");
+        }
+
+        return engine.getResult();
+    }
 }

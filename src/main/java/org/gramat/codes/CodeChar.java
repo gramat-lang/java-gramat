@@ -11,6 +11,11 @@ public class CodeChar implements Code {
     }
 
     @Override
+    public boolean test(char c) {
+        return c == value;
+    }
+
+    @Override
     public String toString() {
         return "Char(" + PP.str(value) + ")";
     }

@@ -56,6 +56,9 @@ public class PP {
             else if (c == '\r') {
                 out.append("\\r");
             }
+            else if (c == '\0') {
+                out.append("\\0");
+            }
             else if (c == '\"' || c == '\'' || c == '\\') {
                 out.append('\\');
                 out.append(c);

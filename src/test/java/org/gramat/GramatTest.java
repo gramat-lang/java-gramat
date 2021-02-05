@@ -13,8 +13,9 @@ class GramatTest {
         var code = TestUtils.loadString("/test.gm");
         var logger = new PrintStreamLogger(System.out);
         var gramat = new Gramat(logger);
+        var node = gramat.compile(new InputCharSequence(code));
 
-        gramat.compile(new InputCharSequence(code));
+        gramat.eval(node, new InputCharSequence("(x=[])"));
     }
 
 }

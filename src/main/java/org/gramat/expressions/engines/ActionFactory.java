@@ -1,4 +1,4 @@
-package org.gramat.parsing;
+package org.gramat.expressions.engines;
 
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
