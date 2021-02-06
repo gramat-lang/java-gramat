@@ -1,8 +1,6 @@
 package org.gramat.automating.transitions;
 
-import org.gramat.actions.Action;
 import org.gramat.actions.design.ActionTemplate;
-import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Level;

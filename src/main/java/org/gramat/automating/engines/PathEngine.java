@@ -1,6 +1,5 @@
 package org.gramat.automating.engines;
 
-import org.gramat.automating.Closure;
 import org.gramat.automating.Direction;
 import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;

@@ -1,8 +1,5 @@
 package org.gramat.expressions.engines;
 
-import org.gramat.exceptions.SyntaxException;
-import org.gramat.inputs.Input;
-
 public class Syntax {
 
     // Char classes

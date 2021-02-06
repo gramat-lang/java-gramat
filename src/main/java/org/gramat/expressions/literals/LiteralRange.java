@@ -1,11 +1,9 @@
 package org.gramat.expressions.literals;
 
 import org.gramat.exceptions.GramatException;
-import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionFinal;
 import org.gramat.inputs.Location;
 import org.gramat.util.Definition;
-import org.gramat.util.WalkFunction;
 
 public class LiteralRange extends ExpressionFinal {
 

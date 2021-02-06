@@ -1,11 +1,8 @@
 package org.gramat.automating.engines;
 
-import org.gramat.actions.ListEnd;
-import org.gramat.actions.design.ActionMaker;
 import org.gramat.actions.design.ActionRole;
 import org.gramat.actions.design.ActionScheme;
 import org.gramat.actions.design.ActionTemplate;
-import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Machine;
@@ -13,7 +10,6 @@ import org.gramat.automating.State;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.actions.ListBegin;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;

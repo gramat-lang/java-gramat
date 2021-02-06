@@ -1,14 +1,9 @@
 package org.gramat.automating.engines;
 
-import org.gramat.actions.ActionList;
-import org.gramat.actions.HeapPop;
-import org.gramat.actions.HeapPush;
 import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.Automaton;
-import org.gramat.automating.Closure;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Direction;
-import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
 import org.gramat.automating.transitions.Transition;
@@ -16,7 +11,6 @@ import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
 import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionSymbol;
-import org.gramat.codes.Code;
 import org.gramat.exceptions.GramatException;
 import org.gramat.inputs.Location;
 import org.gramat.logging.Logger;

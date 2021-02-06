@@ -1,7 +1,5 @@
 package org.gramat.automating;
 
-import org.gramat.actions.Action;
-import org.gramat.actions.ActionList;
 import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.transitions.Transition;
 import org.gramat.automating.transitions.TransitionAction;

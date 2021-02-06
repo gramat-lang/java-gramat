@@ -1,7 +1,6 @@
 package org.gramat.exceptions;
 
 import org.gramat.exceptions.reporting.ErrorDetail;
-import org.gramat.exceptions.reporting.ErrorReport;
 
 public class GramatException extends RuntimeException {
 

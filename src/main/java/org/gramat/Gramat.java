@@ -2,22 +2,19 @@ package org.gramat;
 
 import org.gramat.automating.engines.AutomatingEngine;
 import org.gramat.automating.engines.EvalNodeEngine;
-import org.gramat.automating.engines.MergingEngine;
 import org.gramat.automating.engines.LinkingEngine;
+import org.gramat.automating.engines.MergingEngine;
 import org.gramat.eval.EvalEngine;
 import org.gramat.eval.EvalNode;
 import org.gramat.eval.EvalProgram;
 import org.gramat.exceptions.GramatException;
-import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.inputs.Input;
-import org.gramat.inputs.InputCharSequence;
-import org.gramat.logging.Logger;
-import org.gramat.logging.NullLogger;
 import org.gramat.expressions.engines.ParsingEngine;
 import org.gramat.expressions.engines.ResolvingEngine;
+import org.gramat.inputs.Input;
+import org.gramat.logging.Logger;
+import org.gramat.logging.NullLogger;
 import org.gramat.util.Debug;
-import org.gramat.util.ExpressionMap;
 
 public class Gramat {
 

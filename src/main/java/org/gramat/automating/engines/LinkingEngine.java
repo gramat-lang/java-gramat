@@ -1,8 +1,5 @@
 package org.gramat.automating.engines;
 
-import org.gramat.actions.HeapPop;
-import org.gramat.actions.HeapPush;
-import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Level;

@@ -1,7 +1,5 @@
 package org.gramat.eval;
 
-import java.util.LinkedList;
-
 public class EvalNode {
 
     public final int id;

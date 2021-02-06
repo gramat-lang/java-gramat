@@ -1,12 +1,10 @@
 package org.gramat.util;
 
-import org.gramat.automating.Automaton;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Machine;
 import org.gramat.eval.EvalNode;
 import org.gramat.eval.EvalProgram;
 import org.gramat.exceptions.EvalException;
-import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.formatting.AutomatonFormatting;
@@ -16,9 +14,6 @@ import org.gramat.formatting.ExpressionFormatter;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.PrintStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 public class Debug {
 
