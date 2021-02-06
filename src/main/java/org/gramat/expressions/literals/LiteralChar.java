@@ -1,15 +1,15 @@
 package org.gramat.expressions.literals;
 
 import org.gramat.expressions.ExpressionFinal;
-import org.gramat.runtime.RExpression;
-import org.gramat.runtime.RLiteralChar;
+import org.gramat.inputs.Location;
 import org.gramat.util.Definition;
 
 public class LiteralChar extends ExpressionFinal {// TODO remove this class?
 
     public final char value;
 
-    public LiteralChar(char value) {
+    public LiteralChar(Location begin, Location end, char value) {
+        super(begin, end);
         this.value = value;
     }
 
@@ -18,8 +18,4 @@ public class LiteralChar extends ExpressionFinal {// TODO remove this class?
         def.attr("value", value);
     }
 
-    @Override
-    public RExpression build() {
-        return new RLiteralChar(value);
-    }
 }

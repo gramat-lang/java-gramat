@@ -7,6 +7,7 @@ import org.gramat.expressions.actions.NameWrapper;
 import org.gramat.expressions.actions.ObjectWrapper;
 import org.gramat.expressions.actions.PropertyWrapper;
 import org.gramat.expressions.actions.TextWrapper;
+import org.gramat.inputs.Location;
 
 public class ActionFactory {
     public static final String LIST_WRAPPER_ID = "list";
@@ -25,47 +26,47 @@ public class ActionFactory {
     public static final String LIST_BEGIN_ID = "list-begin";
     public static final String OBJECT_BEGIN_ID = "object-begin";
 
-    public Expression createAction(String id, String keyword, Expression content) {
+    public Expression createAction(String id, String keyword, Expression content, Location begin, Location end) {
         if (LIST_WRAPPER_ID.equals(id)) {
-            return createList(keyword, content);
+            return createList(keyword, content, begin, end);
         }
         else if (OBJECT_WRAPPER_ID.equals(id)) {
-            return createObject(keyword, content);
+            return createObject(keyword, content, begin, end);
         }
         else if (TEXT_WRAPPER_ID.equals(id)) {
-            return createText(keyword, content);
+            return createText(keyword, content, begin, end);
         }
         else if (PROPERTY_WRAPPER_ID.equals(id)) {
-            return createProperty(keyword, content);
+            return createProperty(keyword, content, begin, end);
         }
         else if (NAME_WRAPPER_ID.equals(id)) {
-            return createName(keyword, content);
+            return createName(keyword, content, begin, end);
         }
         else {
             throw new GramatException("unsupported action: " + id);
         }
     }
 
-    public PropertyWrapper createProperty(String keyword, Expression content) {
-        return new PropertyWrapper(content, keyword);
+    public PropertyWrapper createProperty(String keyword, Expression content, Location begin, Location end) {
+        return new PropertyWrapper(begin, end, content, keyword);
     }
 
-    public TextWrapper createText(String keyword, Expression content) {
-        return new TextWrapper(content, keyword);
+    public TextWrapper createText(String keyword, Expression content, Location begin, Location end) {
+        return new TextWrapper(begin, end, content, keyword);
     }
 
-    public ObjectWrapper createObject(String keyword, Expression content) {
-        return new ObjectWrapper(content, keyword);
+    public ObjectWrapper createObject(String keyword, Expression content, Location begin, Location end) {
+        return new ObjectWrapper(begin, end, content, keyword);
     }
 
-    public ListWrapper createList(String keyword, Expression content) {
-        return new ListWrapper(content, keyword);
+    public ListWrapper createList(String keyword, Expression content, Location begin, Location end) {
+        return new ListWrapper(begin, end, content, keyword);
     }
 
-    public NameWrapper createName(String keyword, Expression content) {
+    public NameWrapper createName(String keyword, Expression content, Location begin, Location end) {
         if (keyword != null) {
             throw new GramatException("Unsupported keyword");
         }
-        return new NameWrapper(content);
+        return new NameWrapper(begin, end, content);
     }
 }

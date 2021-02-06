@@ -1,5 +1,6 @@
 package org.gramat.automating.engines;
 
+import org.gramat.actions.Action;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Direction;
 import org.gramat.automating.State;
@@ -8,17 +9,20 @@ import org.gramat.automating.transitions.TransitionMerged;
 import org.gramat.codes.Code;
 import org.gramat.eval.EvalLink;
 import org.gramat.eval.EvalNode;
+import org.gramat.eval.EvalProgram;
 import org.gramat.logging.Logger;
+import org.gramat.tracking.SourceMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EvalNodeEngine {
 
-    public static EvalNode run(DeterministicMachine machine, Logger logger) {
+    public static EvalProgram run(DeterministicMachine machine, Logger logger) {
         var engine = new EvalNodeEngine(logger);
 
         return engine.run(machine);
@@ -26,15 +30,17 @@ public class EvalNodeEngine {
 
     private final Logger logger;
     private final Map<State, EvalNode> stateNodes;
+    private final SourceMap sourceMap;
 
     private int nextID;
 
     private EvalNodeEngine(Logger logger) {
         this.logger = logger;
         this.stateNodes = new LinkedHashMap<>();
+        this.sourceMap = new SourceMap();
     }
 
-    private EvalNode run(DeterministicMachine machine) {
+    private EvalProgram run(DeterministicMachine machine) {
         var queue = new ArrayDeque<State>();
         var control = new HashSet<State>();
 
@@ -50,12 +56,26 @@ public class EvalNodeEngine {
                     if (t instanceof TransitionMerged) {
                         var tm = (TransitionMerged)t;
                         var targetNode = verifyMapping(tm.target);
+                        var beginActions = new ArrayList<Action>();
+                        var endActions = new ArrayList<Action>();
+
+                        for (var actionPlace : tm.beginActions) {
+                            beginActions.add(actionPlace.action);
+
+                            sourceMap.addActionLocations(actionPlace.action.id, actionPlace.locations);
+                        }
+
+                        for (var actionPlace : tm.endActions) {
+                            endActions.add(actionPlace.action);
+
+                            sourceMap.addActionLocations(actionPlace.action.id, actionPlace.locations);
+                        }
 
                         var link = new EvalLink(
                                 tm.code,
                                 targetNode,
-                                tm.beginActions.toArray(),
-                                tm.endActions.toArray());
+                                compileActions(beginActions),
+                                compileActions(endActions));
 
                         links.add(link);
 
@@ -76,13 +96,28 @@ public class EvalNodeEngine {
         }
 
         // return initial node
-        return stateNodes.get(machine.initial);
+        var main = stateNodes.get(machine.initial);
+        return new EvalProgram(main, sourceMap);
+    }
+
+    private Action[] compileActions(List<Action> actions) {
+        if (actions.isEmpty()) {
+            return null;
+        }
+        if (actions.size() > 3) {
+            actions.toArray();
+        }
+        return actions.toArray(Action[]::new);
     }
 
     private EvalNode verifyMapping(State state) {
         return stateNodes.computeIfAbsent(state, k -> {
            nextID++;
-           return new EvalNode(nextID);
+           var id = nextID;
+
+           sourceMap.addNodeLocations(id, state.locations);
+
+           return new EvalNode(id);
         });
     }
 

@@ -14,7 +14,6 @@ import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 import org.gramat.inputs.Input;
 import org.gramat.inputs.Location;
-import org.gramat.inputs.Position;
 import org.gramat.util.ExpressionList;
 import org.gramat.util.ExpressionMap;
 
@@ -36,16 +35,16 @@ public class ParsingEngine {
         while (input.alive()) {
             skipBlockVoid(input);
 
-            var nameBegin = input.position();
+            var nameBegin = input.getLocation();
 
             var name = tryReadKeyword(input);
 
             if (name != null) {
-                var nameEnd = input.position();
+                var nameEnd = input.getLocation();
 
                 skipBlockVoid(input);
 
-                var defBegin = input.position();
+                var defBegin = input.getLocation();
 
                 if (tryPull(input, '=')) {
                     if (rules.containsKey(name)) {
@@ -71,10 +70,10 @@ public class ParsingEngine {
     private Expression readExpression(Input input, boolean multiline) {
         skipVoid(input, multiline);
 
-        var position = input.position();
+        var location = input.getLocation();
         var expression = readAlternationOrNull(input, multiline);
         if (expression == null) {
-            return withLocation(new Nop(), position);
+            return new Nop(location, location);
         }
 
         return expression;
@@ -85,7 +84,7 @@ public class ParsingEngine {
 
         skipVoid(input, multiline);
 
-        var begin = input.position();
+        var begin = input.getLocation();
         var end = begin;
         do {
             var item = readSequenceOrNull(input, multiline);
@@ -95,7 +94,7 @@ public class ParsingEngine {
 
             items.add(item);
 
-            end = input.position();
+            end = input.getLocation();
 
             skipVoid(input, multiline);
         } while (tryPull(input, '|'));
@@ -106,7 +105,7 @@ public class ParsingEngine {
         else if (items.size() == 1) {
             return items.get(0);
         }
-        return withLocation(new Alternation(items.build()), begin, end);
+        return new Alternation(begin, end, items.build());
     }
 
     private Expression readSequenceOrNull(Input input, boolean multiline) {
@@ -114,7 +113,7 @@ public class ParsingEngine {
 
         skipVoid(input, multiline);
 
-        var begin = input.position();
+        var begin = input.getLocation();
         var end = begin;
         while (input.alive()) {
             var item = readExpressionItemOrNull(input, multiline);
@@ -124,7 +123,7 @@ public class ParsingEngine {
 
             items.add(item);
 
-            end = input.position();
+            end = input.getLocation();
 
             skipVoid(input, multiline);
         }
@@ -135,7 +134,7 @@ public class ParsingEngine {
         else if (items.size() == 1) {
             return items.get(0);
         }
-        return withLocation(new Sequence(items.build()), begin, end);
+        return new Sequence(begin, end, items.build());
     }
 
     private Expression readExpressionItemOrNull(Input input, boolean multiline) {
@@ -171,13 +170,15 @@ public class ParsingEngine {
     }
 
     private Expression readWild(Input input) {
+        var location = input.getLocation();
+
         expect(input, '*');
 
-        return new Wild();
+        return new Wild(location, location);
     }
 
     private Expression readLiteral(Input input) {
-        var begin = input.position();
+        var begin = input.getLocation();
         var buffer = new StringBuilder();
 
         expect(input, '"');
@@ -190,9 +191,9 @@ public class ParsingEngine {
 
         expect(input, '"');
 
-        var end = input.position();
+        var end = input.getLocation();
         var value = buffer.toString();
-        return withLocation(new LiteralString(value), begin, end);
+        return new LiteralString(begin, end, value);
     }
 
     private Expression readGroup(Input input) {
@@ -208,7 +209,7 @@ public class ParsingEngine {
     }
 
     private Expression readRepetition(Input input) {
-        var begin = input.position();
+        var begin = input.getLocation();
 
         expect(input, '{');
 
@@ -235,34 +236,42 @@ public class ParsingEngine {
 
         expect(input, '}');
 
-        var end = input.position();
-        Expression result;
+        var end = input.getLocation();
 
         if (min == 0 && max == 0) {
             if (separator != null) {
-                result = new Optional(new Sequence(ExpressionList.of(content, new Repetition(new Sequence(ExpressionList.of(separator, content))))));
+                return new Optional(begin, end,
+                        new Sequence(begin, end,
+                                content,
+                                new Repetition(begin, end,
+                                        new Sequence(begin, end, separator, content)
+                                )
+                        )
+                );
             }
             else {
-                result = new Repetition(content);
+                return new Repetition(begin, end, content);
             }
         }
         else if (min == 1 && max == 0) {
             if (separator != null) {
-                result = new Sequence(ExpressionList.of(content, new Repetition(new Sequence(ExpressionList.of(separator, content)))));
+                return new Sequence(begin, end, content,
+                        new Repetition(begin, end,
+                                new Sequence(begin, end, separator, content)
+                        )
+                );
             }
             else {
-                result = new Sequence(ExpressionList.of(content, new Repetition(content)));
+                return new Sequence(begin, end, content, new Repetition(begin, end, content));
             }
         }
         else {
             throw new UnsupportedOperationException();
         }
-
-         return withLocation(result, begin, end);
     }
 
     private Expression readOptional(Input input) {
-        var begin = input.position();
+        var begin = input.getLocation();
 
         expect(input, '[');
 
@@ -272,12 +281,12 @@ public class ParsingEngine {
 
         expect(input, ']');
 
-        var end = input.position();
-        return withLocation(new Optional(content), begin, end);
+        var end = input.getLocation();
+        return new Optional(begin, end, content);
     }
 
     private Expression readChars(Input input) {
-        var begin = input.position();
+        var begin = input.getLocation();
         var items = ExpressionList.builder();
 
         expect(input, '\'');
@@ -290,26 +299,28 @@ public class ParsingEngine {
 
         expect(input, '\'');
 
-        var end = input.position();
+        var end = input.getLocation();
         if (items.size() == 1) {
             return items.get(0);
         }
-        return withLocation(new Alternation(items.build()), begin, end);
+        return new Alternation(begin, end, items.build());
     }
 
     private Expression readLiteralCharOrRange(Input input) {
         if (input.peek() == ' ') {
-            throw new SyntaxException("cannot start with space", input.position());
+            throw new SyntaxException("cannot start with space", input.getLocation());
         }
-        var beginPos = input.position();
+        var beginPos = input.getLocation();
         var beginChr = readCharItem(input);
 
         if (tryPull(input, '-')) {
             var endChr = readCharItem(input);
-            return withLocation(new LiteralRange(beginChr, endChr), beginPos, input.position());
+            var endPos = input.getLocation();
+            return new LiteralRange(beginPos, endPos, beginChr, endChr);
         }
         else {
-            return withLocation(new LiteralChar(beginChr), beginPos, input.position());
+            var endPos = input.getLocation();
+            return new LiteralChar(beginPos, endPos, beginChr);
         }
     }
 
@@ -331,7 +342,7 @@ public class ParsingEngine {
                     return e;
                 // TODO add more escaped cases
                 default:
-                    throw new SyntaxException("unexpected escaped char: " + e, input.position());
+                    throw new SyntaxException("unexpected escaped char: " + e, input.getLocation());
             }
         }
 
@@ -339,15 +350,15 @@ public class ParsingEngine {
     }
 
     private Expression readReference(Input input) {
-        var begin = input.position();
+        var begin = input.getLocation();
         var keyword = readKeyword(input);  // TODO improve
-        var end = input.position();
-        return withLocation(new Reference(keyword), begin, end);
+        var end = input.getLocation();
+        return new Reference(begin, end, keyword);
     }
 
     private Expression readAction(Input input) {
-        var begin = input.position();
-        var end = input.position();
+        var begin = input.getLocation();
+        var end = input.getLocation();
 
         expect(input, '@');
         String id = readKeyword(input);
@@ -364,7 +375,7 @@ public class ParsingEngine {
 
         var content = readGroup(input);
 
-        return withLocation(actions.createAction(id, name, content), begin, end);
+        return actions.createAction(id, name, content, begin, end);
     }
 
     private void skipVoid(Input input, boolean multiline) {
@@ -394,7 +405,7 @@ public class ParsingEngine {
         var keyword = tryReadKeyword(input);
 
         if (keyword == null) {
-            throw new SyntaxException("expected keyword", input.position());
+            throw new SyntaxException("expected keyword", input.getLocation());
         }
 
         return keyword;
@@ -433,23 +444,11 @@ public class ParsingEngine {
         }
     }
 
-    private Expression withLocation(Expression expression, Position position) {
-        return withLocation(expression, position, position);
-    }
-
-    private Expression withLocation(Expression expression, Position begin, Position end) {
-        var location = new Location(begin, end);
-
-        expression.locations.add(location);
-
-        return expression;
-    }
-
     private void expect(Input input, char expected) {
         var actual = input.pull();
 
         if (actual != expected) {
-            throw new SyntaxException("expected char " + expected, input.position());
+            throw new SyntaxException("expected char " + expected, input.getLocation());
         }
     }
 

@@ -63,7 +63,7 @@ public class CopyManager {
     }
 
     public State copyState(State state) {
-        return stateMap.computeIfAbsent(state, k -> this.am.createState(state.wild));
+        return stateMap.computeIfAbsent(state, k -> this.am.createState(state.wild, state.locations));
     }
 
     public Transition copyTransition(Transition transition) {
@@ -82,7 +82,7 @@ public class CopyManager {
             else if (transition instanceof TransitionReference) {
                 var tr = (TransitionReference) transition;
 
-                return this.am.addReference(newSource, newTarget, tr.name, tr.level);
+                return this.am.addReference(newSource, newTarget, tr.name, tr.level, tr.reservedEnterID, tr.reservedExitID);
             }
             else if (transition instanceof TransitionAction) {
                 var ta = (TransitionAction) transition;

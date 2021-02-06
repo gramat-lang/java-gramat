@@ -11,6 +11,7 @@ import org.gramat.actions.PropertyBegin;
 import org.gramat.actions.PropertyEnd;
 import org.gramat.actions.TextBegin;
 import org.gramat.actions.TextEnd;
+import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
@@ -36,6 +37,8 @@ import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 import org.gramat.logging.Logger;
 
+import java.util.Set;
+
 public class AutomatingEngine {
 
     public static Machine automate(ExpressionProgram program, Logger logger) {
@@ -45,6 +48,8 @@ public class AutomatingEngine {
     }
 
     private final Logger logger;
+
+    private int currentActionID;
 
     private AutomatingEngine(Logger logger) {
         this.logger = logger;
@@ -86,7 +91,7 @@ public class AutomatingEngine {
         } else if (expr instanceof LiteralRange) {
             return automateLiteralRange((LiteralRange)expr, am);
         } else if (expr instanceof Wild) {
-            return automateWild(am);
+            return automateWild((Wild)expr, am);
         } else if (expr instanceof Sequence) {
             return automateSequence((Sequence) expr, am);
         } else if (expr instanceof Alternation) {
@@ -113,8 +118,8 @@ public class AutomatingEngine {
     }
 
     private Machine automateLiteralChar(LiteralChar chr, Automaton am) {
-        var begin = am.createState();
-        var end = am.createState();
+        var begin = am.createState(chr.beginLocation);
+        var end = am.createState(chr.endLocation);
 
         am.addSymbol(begin, end, am.getChar(chr.value));
 
@@ -122,13 +127,13 @@ public class AutomatingEngine {
     }
 
     private Machine automateLiteralString(LiteralString str, Automaton am) {
-        var begin = am.createState();
+        var begin = am.createState(str.beginLocation);
         var end = begin;
 
         for (var chr : str.value.toCharArray()) {
             var state = end;
 
-            end = am.createState();
+            end = am.createState(str.endLocation);  // TODO this is not the real location
 
             am.addSymbol(state, end, am.getChar(chr));
         }
@@ -137,16 +142,16 @@ public class AutomatingEngine {
     }
 
     private Machine automateLiteralRange(LiteralRange expr, Automaton am) {
-        var begin = am.createState();
-        var end = am.createState();
+        var begin = am.createState(expr.beginLocation);
+        var end = am.createState(expr.endLocation);
 
         am.addSymbol(begin, end, am.getRange(expr.begin, expr.end));
 
         return am.createMachine(begin, end);
     }
 
-    private Machine automateWild(Automaton am) {
-        var state = am.createWild();
+    private Machine automateWild(Wild wild, Automaton am) {
+        var state = am.createWild(Set.of(wild.beginLocation, wild.endLocation));
 
         return am.createMachine(state, state);
     }
@@ -176,8 +181,8 @@ public class AutomatingEngine {
             return automateExpression(alt.items.get(0), am);
         }
 
-        var begin = am.createState();
-        var end = am.createState();
+        var begin = am.createState(alt.beginLocation);
+        var end = am.createState(alt.endLocation);
 
         for (var item : alt.items) {
             var itemMachine = automateExpression(item, am);
@@ -190,8 +195,8 @@ public class AutomatingEngine {
     }
 
     private Machine automateOptional(Optional opt, Automaton am) {
-        var begin = am.createState();
-        var end = am.createState();
+        var begin = am.createState(opt.beginLocation);
+        var end = am.createState(opt.endLocation);
 
         var contentMachine = automateExpression(opt.content, am);
 
@@ -203,10 +208,10 @@ public class AutomatingEngine {
     }
 
     private Machine automateRepetition(Repetition rep, Automaton am) {
-        var begin = am.createState();
-        var loopBegin = am.createState();
-        var loopEnd = am.createState();
-        var end = am.createState();
+        var begin = am.createState(rep.beginLocation);
+        var loopBegin = am.createState(rep.beginLocation);
+        var loopEnd = am.createState(rep.endLocation);
+        var end = am.createState(rep.endLocation);
 
         var loopMachine = automateExpression(rep.content, am);
 
@@ -224,43 +229,76 @@ public class AutomatingEngine {
     }
 
     private Machine automateListWrapper(ListWrapper wrapper, Automaton am) {
-        return automateWrapper(new ListBegin(), wrapper.content, new ListEnd(wrapper.typeHint), am);
+        var beginState = am.createState(wrapper.beginLocation);
+        var beginAction = new ListBegin(nextActionID());
+        var contentMachine = automateExpression(wrapper.content, am);
+        var endAction = new ListEnd(nextActionID(), wrapper.typeHint);
+        var endState = am.createState(wrapper.endLocation);
+
+        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
     }
 
     private Machine automateObjectWrapper(ObjectWrapper wrapper, Automaton am) {
-        return automateWrapper(new ObjectBegin(), wrapper.content, new ObjectEnd(wrapper.typeHint), am);
+        var beginState = am.createState(wrapper.beginLocation);
+        var beginAction = new ObjectBegin(nextActionID());
+        var contentMachine = automateExpression(wrapper.content, am);
+        var endAction = new ObjectEnd(nextActionID(), wrapper.typeHint);
+        var endState = am.createState(wrapper.endLocation);
+
+        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
     }
 
     private Machine automatePropertyWrapper(PropertyWrapper wrapper, Automaton am) {
-        return automateWrapper(new PropertyBegin(), wrapper.content, new PropertyEnd(wrapper.nameHint), am);
+        var beginState = am.createState(wrapper.beginLocation);
+        var beginAction = new PropertyBegin(nextActionID());
+        var contentMachine = automateExpression(wrapper.content, am);
+        var endAction = new PropertyEnd(nextActionID(), wrapper.nameHint);
+        var endState = am.createState(wrapper.endLocation);
+
+        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
     }
 
     private Machine automateTextWrapper(TextWrapper wrapper, Automaton am) {
-        return automateWrapper(new TextBegin(), wrapper.content, new TextEnd(wrapper.parser), am);
+        var beginState = am.createState(wrapper.beginLocation);
+        var beginAction = new TextBegin(nextActionID());
+        var contentMachine = automateExpression(wrapper.content, am);
+        var endAction = new TextEnd(nextActionID(), wrapper.parser);
+        var endState = am.createState(wrapper.endLocation);
+
+        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
     }
 
     private Machine automateNameWrapper(NameWrapper wrapper, Automaton am) {
-        return automateWrapper(new NameBegin(), wrapper.content, new NameEnd(), am);
+        var beginState = am.createState(wrapper.beginLocation);
+        var beginAction = new NameBegin(nextActionID());
+        var contentMachine = automateExpression(wrapper.content, am);
+        var endAction = new NameEnd(nextActionID());
+        var endState = am.createState(wrapper.endLocation);
+
+        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
     }
 
-    private Machine automateWrapper(Action beginAction, Expression content, Action endAction, Automaton am) {
-        var machine = automateExpression(content, am);
-        var begin = am.createState();
-        var end = am.createState();
-
-        am.addAction(begin, machine.begin, beginAction, Direction.FORWARD);
-        am.addAction(machine.end, end, endAction, Direction.BACKWARD);
-
+    private Machine wrap(State begin, Action beginAction, Machine machine, Action endAction, State end, Automaton am) {
+        am.addAction(begin, machine.begin, new ActionPlace(beginAction, begin.locations), Direction.FORWARD);
+        am.addAction(machine.end, end, new ActionPlace(endAction, end.locations), Direction.BACKWARD);
         return am.createMachine(begin, end);
     }
 
     private Machine automateReference(Reference ref, Automaton am) {
-        var begin = am.createState();
-        var end = am.createState();
+        var begin = am.createState(ref.beginLocation);
+        var end = am.createState(ref.endLocation);
+        var level = am.createLevel();
+        var reservedEnterID = nextActionID();
+        var reservedExitID = nextActionID();
 
-        am.addReference(begin, end, ref.name, am.createLevel());
+        am.addReference(begin, end, ref.name, level, reservedEnterID, reservedExitID);
 
         return am.createMachine(begin, end);
+    }
+
+    private int nextActionID() {
+        currentActionID++;
+        return currentActionID;
     }
 
 }

@@ -1,7 +1,8 @@
 package org.gramat.automating.engines;
 
-import org.gramat.actions.RecursionBegin;
-import org.gramat.actions.RecursionEnd;
+import org.gramat.actions.HeapPop;
+import org.gramat.actions.HeapPush;
+import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
@@ -23,8 +24,6 @@ public class LinkingEngine {
     private final Logger logger;
     private final BiMap<String, Level, Machine> refLevelMachines;
     private final Automaton am;
-
-    private int nextPairID;
 
     private LinkingEngine(Logger logger) {
         this.logger = logger;
@@ -79,10 +78,14 @@ public class LinkingEngine {
             am.addEmpty(copyMachine.end, machine.end);
         }
 
-        nextPairID++;
-        var pairID = nextPairID;
-        am.addRecursion(reference.source, machine.begin, reference.name, reference.level, pairID, Direction.FORWARD);
-        am.addRecursion(machine.end, reference.target, reference.name, reference.level, pairID, Direction.BACKWARD);
+        var enterAction = new HeapPush(reference.reservedEnterID, reference.name);
+        var exitAction = new HeapPop(reference.reservedExitID, reference.name);
+
+        var enterPlace = new ActionPlace(enterAction, reference.source.locations);
+        var exitPlace = new ActionPlace(exitAction, reference.target.locations);
+
+        am.addRecursion(reference.source, machine.begin, reference.name, reference.level, enterPlace, Direction.FORWARD);
+        am.addRecursion(machine.end, reference.target, reference.name, reference.level, exitPlace, Direction.BACKWARD);
 
         am.removeTransition(reference);
     }

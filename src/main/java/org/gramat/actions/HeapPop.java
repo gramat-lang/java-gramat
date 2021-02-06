@@ -5,19 +5,20 @@ import org.gramat.util.Definition;
 
 public class HeapPop extends Action {
 
-    private final int level;
+    private final Object token;
 
-    public HeapPop(int level) {
-        this.level = level;
+    public HeapPop(int id, Object token) {
+        super(id);
+        this.token = token;
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.heap.pop(id, token);
     }
 
     @Override
     protected void define(Definition def) {
-        def.attr("level", level);
+        def.attr("token", token);
     }
 }

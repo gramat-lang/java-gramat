@@ -106,39 +106,39 @@ public class ResolvingEngine {
     }
 
     private Alternation resolveAlternation(Alternation expr) {
-        return new Alternation(expr.items.map(this::resolveExpression));
+        return new Alternation(expr.beginLocation, expr.endLocation, expr.items.map(this::resolveExpression));
     }
 
     private Sequence resolveSequence(Sequence expr) {
-        return new Sequence(expr.items.map(this::resolveExpression));
+        return new Sequence(expr.beginLocation, expr.endLocation, expr.items.map(this::resolveExpression));
     }
 
     private Optional resolveOptional(Optional expr) {
-        return new Optional(resolveExpression(expr.content));
+        return new Optional(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
     private Repetition resolveRepetition(Repetition expr) {
-        return new Repetition(resolveExpression(expr.content));
+        return new Repetition(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
     private ListWrapper resolveListWrapper(ListWrapper expr) {
-        return new ListWrapper(resolveExpression(expr.content), expr.typeHint);
+        return new ListWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.typeHint);
     }
 
     private ObjectWrapper resolveObjectWrapper(ObjectWrapper expr) {
-        return new ObjectWrapper(resolveExpression(expr.content), expr.typeHint);
+        return new ObjectWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.typeHint);
     }
 
     private PropertyWrapper resolvePropertyWrapper(PropertyWrapper expr) {
-        return new PropertyWrapper(resolveExpression(expr.content), expr.nameHint);
+        return new PropertyWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.nameHint);
     }
 
     private TextWrapper resolveTextWrapper(TextWrapper expr) {
-        return new TextWrapper(resolveExpression(expr.content), expr.parser);
+        return new TextWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.parser);
     }
 
     private NameWrapper resolveNameWrapper(NameWrapper expr) {
-        return new NameWrapper(resolveExpression(expr.content));
+        return new NameWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
     private Expression resolveReference(Reference ref) {

@@ -1,5 +1,7 @@
 package org.gramat.automating.transitions;
 
+import org.gramat.actions.Action;
+import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
 import org.gramat.automating.Level;
@@ -9,13 +11,13 @@ public class TransitionRecursion extends Transition {
     public final String name;
     public final Level level;
     public final Direction direction;
-    public final int pairID;  // TODO is this really useful?
+    public final ActionPlace action;
 
-    public TransitionRecursion(Automaton am, State source, State target, String name, Level level, int pairID, Direction direction) {
+    public TransitionRecursion(Automaton am, State source, State target, String name, Level level, ActionPlace action, Direction direction) {
         super(am, source, target);
         this.name = name;
         this.level = level;
-        this.pairID = pairID;
+        this.action = action;
         this.direction = direction;
 
         if (level == Level.ANY) {
@@ -25,6 +27,6 @@ public class TransitionRecursion extends Transition {
 
     @Override
     public Transition derive(State newSource, State newTarget) {
-        return new TransitionRecursion(am, newSource, newTarget, name, level, pairID, direction);
+        return new TransitionRecursion(am, newSource, newTarget, name, level, action, direction);
     }
 }

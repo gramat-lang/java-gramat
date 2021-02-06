@@ -5,9 +5,13 @@ import org.gramat.util.Definition;
 
 public class ListBegin extends Action {
 
+    public ListBegin(int id) {
+        super(id);
+    }
+
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.builder.performPushList(id);
     }
 
     @Override

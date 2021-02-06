@@ -6,13 +6,14 @@ import org.gramat.util.Definition;
 public class ObjectEnd extends Action {
     public final String typeHint;
 
-    public ObjectEnd(String typeHint) {
+    public ObjectEnd(int id, String typeHint) {
+        super(id);
         this.typeHint = typeHint;
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.builder.performPopObject(id, typeHint);
     }
 
     @Override

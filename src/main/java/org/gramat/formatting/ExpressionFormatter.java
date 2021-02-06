@@ -2,21 +2,12 @@ package org.gramat.formatting;
 
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
-import org.gramat.expressions.actions.ListBegin;
-import org.gramat.expressions.actions.ListEnd;
 import org.gramat.expressions.actions.ListWrapper;
-import org.gramat.expressions.actions.NameBegin;
-import org.gramat.expressions.actions.NameEnd;
 import org.gramat.expressions.actions.NameWrapper;
-import org.gramat.expressions.actions.ObjectBegin;
-import org.gramat.expressions.actions.ObjectEnd;
 import org.gramat.expressions.actions.ObjectWrapper;
-import org.gramat.expressions.actions.PropertyBegin;
-import org.gramat.expressions.actions.PropertyEnd;
 import org.gramat.expressions.actions.PropertyWrapper;
-import org.gramat.expressions.actions.TextBegin;
-import org.gramat.expressions.actions.TextEnd;
 import org.gramat.expressions.actions.TextWrapper;
+import org.gramat.expressions.engines.ActionFactory;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;
@@ -27,7 +18,6 @@ import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
-import org.gramat.expressions.engines.ActionFactory;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -100,36 +90,6 @@ public class ExpressionFormatter {
         else if (expr instanceof Reference) {
             writeReference((Reference)expr);
         }
-        else if (expr instanceof ObjectBegin) {
-            writeObjectBegin();
-        }
-        else if (expr instanceof ListBegin) {
-            writeListBegin();
-        }
-        else if (expr instanceof TextBegin) {
-            writeTextBegin();
-        }
-        else if (expr instanceof NameBegin) {
-            writeNameBegin();
-        }
-        else if (expr instanceof PropertyBegin) {
-            writePropertyBegin();
-        }
-        else if (expr instanceof ObjectEnd) {
-            writeObjectEnd((ObjectEnd)expr);
-        }
-        else if (expr instanceof ListEnd) {
-            writeListEnd((ListEnd)expr);
-        }
-        else if (expr instanceof TextEnd) {
-            writeTextEnd((TextEnd)expr);
-        }
-        else if (expr instanceof NameEnd) {
-            writeNameEnd();
-        }
-        else if (expr instanceof PropertyEnd) {
-            writePropertyEnd((PropertyEnd)expr);
-        }
         else if (expr instanceof Wild) {
             writeWild();
         }
@@ -140,14 +100,6 @@ public class ExpressionFormatter {
 
     private void writeNameWrapper(NameWrapper expr) {
         writeAction(ActionFactory.NAME_WRAPPER_ID, null, expr.content);
-    }
-
-    private void writeNameBegin() {
-        writeAction(ActionFactory.NAME_BEGIN_ID, null, null);
-    }
-
-    private void writeNameEnd() {
-        writeAction(ActionFactory.NAME_END_ID, null, null);
     }
 
     private void writeLiteralChar(LiteralChar expr) {
@@ -270,38 +222,6 @@ public class ExpressionFormatter {
 
     private void writeTextWrapper(TextWrapper expr) {
         writeAction(ActionFactory.TEXT_WRAPPER_ID, expr.parser, expr.content);
-    }
-
-    private void writePropertyEnd(PropertyEnd expr) {
-        writeAction(ActionFactory.PROPERTY_END_ID, expr.nameHint, null);
-    }
-
-    private void writeTextEnd(TextEnd expr) {
-        writeAction(ActionFactory.TEXT_END_ID, expr.parser, null);
-    }
-
-    private void writeListEnd(ListEnd expr) {
-        writeAction(ActionFactory.LIST_END_ID, expr.typeHint, null);
-    }
-
-    private void writeObjectEnd(ObjectEnd expr) {
-        writeAction(ActionFactory.OBJECT_END_ID, expr.typeHint, null);
-    }
-
-    private void writePropertyBegin() {
-        writeAction(ActionFactory.PROPERTY_BEGIN_ID, null, null);
-    }
-
-    private void writeTextBegin() {
-        writeAction(ActionFactory.TEXT_BEGIN_ID, null, null);
-    }
-
-    private void writeListBegin() {
-        writeAction(ActionFactory.LIST_BEGIN_ID, null, null);
-    }
-
-    private void writeObjectBegin() {
-        writeAction(ActionFactory.OBJECT_BEGIN_ID, null, null);
     }
 
     private void writeRecursion(Recursion expr) {

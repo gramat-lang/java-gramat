@@ -2,6 +2,7 @@ package org.gramat.expressions.actions;
 
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionContent;
+import org.gramat.inputs.Location;
 import org.gramat.util.Definition;
 
 public class ObjectWrapper extends ExpressionContent {
@@ -9,7 +10,8 @@ public class ObjectWrapper extends ExpressionContent {
     public final Expression content;
     public final String typeHint;
 
-    public ObjectWrapper(Expression content, String typeHint) {
+    public ObjectWrapper(Location begin, Location end, Expression content, String typeHint) {
+        super(begin, end);
         this.content = content;
         this.typeHint = typeHint;
     }

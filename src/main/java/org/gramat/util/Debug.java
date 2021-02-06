@@ -4,6 +4,9 @@ import org.gramat.automating.Automaton;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Machine;
 import org.gramat.eval.EvalNode;
+import org.gramat.eval.EvalProgram;
+import org.gramat.exceptions.EvalException;
+import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.formatting.AutomatonFormatting;
@@ -12,6 +15,7 @@ import org.gramat.formatting.ExpressionFormatter;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.io.PrintStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -92,6 +96,39 @@ public class Debug {
             Toolkit.getDefaultToolkit().getSystemClipboard()
                     .setContents(new StringSelection(buffer.toString()), null);
             System.out.println("Copied to clipboard!");
+        }
+    }
+
+    public static void print(PrintStream out, EvalException e, EvalProgram program) {
+        e.printStackTrace(out);
+
+        if (e.getNodeID() != null) {
+            out.println("Node ID: " + e.getNodeID());
+            var locations = program.sourceMap.getNodeLocations(e.getNodeID());
+
+            if (locations != null) {
+                for (var location : locations) {
+                    out.println(" - " + location);
+                }
+            }
+        }
+
+        else if (e.getActionID() != null) {
+            out.println("Action ID: " + e.getActionID());
+            var locations = program.sourceMap.getActionLocations(e.getActionID());
+
+            if (locations != null) {
+                for (var location : locations) {
+                    out.println(" - " + location);
+                }
+            }
+        }
+
+        if (e.getErrorDetail() != null) {
+            out.println("=".repeat(80));
+            out.println("== ERROR DETAILS: ");
+            e.getErrorDetail().printDetail(out);
+            out.println("=".repeat(80));
         }
     }
 }

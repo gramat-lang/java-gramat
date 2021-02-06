@@ -13,6 +13,7 @@ import org.gramat.codes.Code;
 import org.gramat.codes.CodeChar;
 import org.gramat.codes.CodeRange;
 import org.gramat.exceptions.GramatException;
+import org.gramat.inputs.Location;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -91,23 +92,28 @@ public class Automaton {
         return code;
     }
 
-    public State createState(boolean wild) {
+    public State createState(boolean wild, Set<Location> locations) {
         currentStateID++;
-        var s = new State(this, currentStateID, wild);
+        var s = new State(this, currentStateID, wild, locations);
         states.add(s);
         return s;
     }
 
-    public State createState() {
-        return createState(false);
+    public State createState(Location location) {
+        return createState(Set.of(location));
     }
 
-    public State createWild() {
-        return createState(true);
+    public State createState(Set<Location> locations) {
+        return createState(false, locations);
+    }
+
+    public State createWild(Set<Location> locations) {
+        return createState(true, locations);
     }
 
     public Machine createMachine() {
-        return new Machine(this, createState(), createState());
+        // TODO check if this method can be removed so we don't send empty sets
+        return new Machine(this, createState(Set.of()), createState(Set.of()));
     }
 
     public Machine createMachine(State begin, State end) {
@@ -126,38 +132,28 @@ public class Automaton {
         return t;
     }
 
-    public TransitionMerged addMerged(State source, State target, Code code, ActionList beginActions, ActionList endActions) {
+    public TransitionMerged addMerged(State source, State target, Code code, List<ActionPlace> beginActions, List<ActionPlace> endActions) {
         var t = new TransitionMerged(this, source, target, code, beginActions, endActions);
         transitions.add(t);
         return t;
     }
 
-    public TransitionAction addAction(State source, State target, Action action, Direction direction) {
+    public TransitionAction addAction(State source, State target, ActionPlace action, Direction direction) {
         var t = new TransitionAction(this, source, target, action, direction);
         transitions.add(t);
         return t;
     }
 
-    public TransitionRecursion addRecursion(State source, State target, String name, Level level, int pairID, Direction direction) {
-        var t = new TransitionRecursion(this, source, target, name, level, pairID, direction);
+    public TransitionRecursion addRecursion(State source, State target, String name, Level level, ActionPlace action, Direction direction) {
+        var t = new TransitionRecursion(this, source, target, name, level, action, direction);
         transitions.add(t);
         return t;
     }
 
-    public TransitionReference addReference(State source, State target, String name, Level level) {
-        var t = new TransitionReference(this, source, target, name, level);
+    public TransitionReference addReference(State source, State target, String name, Level level, int reservedEnterID, int reservedExitID) {
+        var t = new TransitionReference(this, source, target, name, level, reservedEnterID, reservedExitID);
         transitions.add(t);
         return t;
-    }
-
-    public void removeState(State state) {
-        for (var t : transitions) {
-            if (t.source == state || t.target == state) {
-                throw new GramatException("cannot remove state: " + state);
-            }
-        }
-
-        states.remove(state);
     }
 
     public void removeTransition(Transition transition) {

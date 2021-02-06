@@ -3,19 +3,27 @@ package org.gramat.eval;
 import org.gramat.actions.Action;
 import org.gramat.inputs.Input;
 import org.gramat.logging.Logger;
+import org.gramat.makers.Maker;
+import org.gramat.util.NamedMap;
 import org.gramat.util.PP;
 
 public class EvalEngine {
 
+    public final Input input;
     public final Logger logger;
     public final EvalHeap heap;
+    public final NamedMap<Maker> makers; // TODO create specialized map
+    public final EvalBuilder builder;
 
-    public EvalEngine(Logger logger) {
+    public EvalEngine(Input input, Logger logger) {
+        this.input = input;
         this.logger = logger;
         this.heap = new EvalHeap();
+        this.makers = new NamedMap<>();
+        this.builder = new EvalBuilder(this);
     }
 
-    public EvalNode run(EvalNode begin, Input input) {
+    public EvalNode run(EvalNode begin) {
         var node = begin;
 
         while (true) {
@@ -62,7 +70,4 @@ public class EvalEngine {
         }
     }
 
-    public Object getResult() {
-        return null;
-    }
 }

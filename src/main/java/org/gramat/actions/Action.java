@@ -1,24 +1,16 @@
 package org.gramat.actions;
 
 import org.gramat.eval.EvalEngine;
-import org.gramat.util.Definition;
+import org.gramat.util.DefinedObject;
 
-public abstract class Action {
+public abstract class Action extends DefinedObject {
+
+    public final int id;
+
+    protected Action(int id) {
+        this.id = id;
+    }
 
     public abstract void execute(EvalEngine engine);
 
-    protected abstract void define(Definition def);
-
-    private Definition definition() {
-        var def = new Definition(getClass());
-
-        define(def);
-
-        return def;
-    }
-
-    @Override
-    public final String toString() {
-        return definition().computeString();
-    }
 }

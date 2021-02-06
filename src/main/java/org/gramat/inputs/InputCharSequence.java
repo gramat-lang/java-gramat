@@ -47,7 +47,17 @@ public class InputCharSequence implements Input {
     }
 
     @Override
-    public Position position() {
-        return new Position(null, offset, line + 1, column + 1);
+    public String segment(int begin, int end) {
+        return sequence.subSequence(begin, end).toString();
+    }
+
+    @Override
+    public int getPosition() {
+        return offset;
+    }
+
+    @Override
+    public Location getLocation() {
+        return new Location(null, offset, line + 1, column + 1);
     }
 }

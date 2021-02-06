@@ -6,6 +6,7 @@ import org.gramat.automating.engines.MergingEngine;
 import org.gramat.automating.engines.LinkingEngine;
 import org.gramat.eval.EvalEngine;
 import org.gramat.eval.EvalNode;
+import org.gramat.eval.EvalProgram;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
@@ -31,11 +32,11 @@ public class Gramat {
         this.logger = logger;
     }
 
-    public EvalNode compile(Input input) {
+    public EvalProgram compile(Input input) {
         return compile(input, DEFAULT_RULE_NAME);
     }
 
-    public EvalNode compile(Input input, String ruleName) {
+    public EvalProgram compile(Input input, String ruleName) {
         var parser = new ParsingEngine();
 
         parser.readAll(input);
@@ -46,11 +47,11 @@ public class Gramat {
         return compile(main, rules);
     }
 
-    public EvalNode compile(Expression main, ExpressionMap dependencies) {
+    public EvalProgram compile(Expression main, ExpressionMap dependencies) {
         return compile(new ExpressionProgram(main, dependencies));
     }
 
-    public EvalNode compile(ExpressionProgram program) {
+    public EvalProgram compile(ExpressionProgram program) {
         var resolvedProgram = ResolvingEngine.resolve(program, logger);
 
         Debug.print(resolvedProgram);
@@ -67,22 +68,22 @@ public class Gramat {
 
         Debug.print(dMachine, false);
 
-        var node = EvalNodeEngine.run(dMachine, logger);
+        var eProgram = EvalNodeEngine.run(dMachine, logger);
 
-        Debug.print(node, true);
+        Debug.print(eProgram.node, true);
 
-        return node;
+        return eProgram;
     }
 
     public Object eval(EvalNode node, Input input) {
-        var engine = new EvalEngine(logger);
+        var engine = new EvalEngine(input, logger);
 
-        var nodeHalt = engine.run(node, input);
+        var nodeHalt = engine.run(node);
 
         if (!nodeHalt.accepted) {
             throw new GramatException("rejected");
         }
 
-        return engine.getResult();
+        return engine.builder.pop();
     }
 }

@@ -3,6 +3,7 @@ package org.gramat.automating.engines;
 import org.gramat.actions.ActionList;
 import org.gramat.actions.HeapPop;
 import org.gramat.actions.HeapPush;
+import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Closure;
 import org.gramat.automating.DeterministicMachine;
@@ -17,6 +18,7 @@ import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionSymbol;
 import org.gramat.codes.Code;
 import org.gramat.exceptions.GramatException;
+import org.gramat.inputs.Location;
 import org.gramat.logging.Logger;
 
 import java.util.ArrayDeque;
@@ -76,19 +78,8 @@ public class MergingEngine {
                     var targetClosureID = computeID(targetClosure);
                     var dTarget = mapClosure(targetClosure, targetClosureID);
 
-                    var enterLevels = listLevels(sourceTransitions, Direction.FORWARD);
-                    var exitLevels = listLevels(targetTransitions, Direction.BACKWARD);
-
                     var beginActions = listActions(sourceTransitions, Direction.FORWARD);
                     var endActions = listActions(targetTransitions, Direction.BACKWARD);
-
-                    for (var level : enterLevels) {
-                        beginActions.prepend(new HeapPush(level.id));
-                    }
-
-                    for (var level : exitLevels) {
-                        endActions.append(new HeapPop(level.id));
-                    }
 
                     dAuto.addMerged(dSource, dTarget, ts.code, beginActions, endActions);
 
@@ -103,36 +94,28 @@ public class MergingEngine {
         return new DeterministicMachine(dAuto, begin, ends);
     }
 
-    private Set<Level> listLevels(Collection<Transition> transitions, Direction dir) {
-        var levels = new LinkedHashSet<Level>();
-
-        for (var t : transitions) {
-            if (t instanceof TransitionRecursion) {
-                var tr = (TransitionRecursion) t;
-
-                if (tr.direction == dir) {
-                    levels.add(tr.level);
-                }
-            }
-        }
-
-        return levels;
-    }
-
-    private ActionList listActions(Collection<Transition> transitions, Direction dir) {
-        var levels = new ActionList();
+    private List<ActionPlace> listActions(Collection<Transition> transitions, Direction dir) {
+        var actions = new ArrayList<ActionPlace>();
 
         for (var t : transitions) {
             if (t instanceof TransitionAction) {
                 var ta = (TransitionAction) t;
 
                 if (ta.direction == dir) {
-                    levels.append(ta.action);
+                    actions.add(ta.action);
                 }
             }
+            else if (t instanceof TransitionRecursion) {
+                var tr = (TransitionRecursion) t;
+
+                if (tr.direction == dir) {
+                    actions.add(tr.action);
+                }
+            }
+            // TODO evaluate other transition types
         }
 
-        return levels;
+        return actions;
     }
 
     private static Set<State> emptyClosure(State source, List<Transition> transitions) {
@@ -169,7 +152,13 @@ public class MergingEngine {
 
     private State mapClosure(Set<State> closure, String closureID) {
         return idStates.computeIfAbsent(closureID, k -> {
-            var state = dAuto.createState();
+            var locations = new LinkedHashSet<Location>();
+
+            for (var s : closure) {
+                locations.addAll(s.locations);
+            }
+
+            var state = dAuto.createState(locations);
 
             idClosures.put(closureID, closure);
 

@@ -2,6 +2,7 @@ package org.gramat.expressions.groups;
 
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionContent;
+import org.gramat.inputs.Location;
 import org.gramat.util.Definition;
 
 import java.util.Objects;
@@ -10,7 +11,8 @@ public class Repetition extends ExpressionContent {
 
     public final Expression content;
 
-    public Repetition(Expression content) {
+    public Repetition(Location begin, Location end, Expression content) {
+        super(begin, end);
         this.content = Objects.requireNonNull(content);
     }
 

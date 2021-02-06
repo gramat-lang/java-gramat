@@ -6,13 +6,14 @@ import org.gramat.util.Definition;
 public class ListEnd extends Action {
     public final String typeHint;
 
-    public ListEnd(String typeHint) {
+    public ListEnd(int id, String typeHint) {
+        super(id);
         this.typeHint = typeHint;
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.builder.performPopList(id, typeHint);
     }
 
     @Override

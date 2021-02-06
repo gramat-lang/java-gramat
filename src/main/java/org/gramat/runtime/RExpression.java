@@ -20,7 +20,7 @@ public abstract class RExpression {
         run(input, rc);
 
         if (input.alive()) {
-            throw new GramatException("unexpected content at " + input.position());
+            throw new GramatException("unexpected content at " + input.getLocation());
         }
     }
 }

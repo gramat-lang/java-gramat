@@ -5,19 +5,20 @@ import org.gramat.util.Definition;
 
 public class HeapPush extends Action {
 
-    public final int level;
+    public final Object token;
 
-    public HeapPush(int level) {
-        this.level = level;
+    public HeapPush(int id, Object token) {
+        super(id);
+        this.token = token;
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.heap.push(id, token);
     }
 
     @Override
     protected void define(Definition def) {
-        def.attr("level", level);
+        def.attr("token", token);
     }
 }

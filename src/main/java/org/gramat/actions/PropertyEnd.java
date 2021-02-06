@@ -6,13 +6,14 @@ import org.gramat.util.Definition;
 public class PropertyEnd extends Action {
     public final String nameHint;
 
-    public PropertyEnd(String nameHint) {
+    public PropertyEnd(int id, String nameHint) {
+        super(id);
         this.nameHint = nameHint;
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        // TODO
+        engine.builder.performPopProperty(id, nameHint);
     }
 
     @Override

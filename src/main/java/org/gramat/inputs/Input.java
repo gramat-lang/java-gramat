@@ -7,5 +7,9 @@ public interface Input {
 
     boolean alive();
 
-    Position position();
+    Location getLocation();  // TODO rename
+
+    String segment(int begin, int end);
+
+    int getPosition();
 }

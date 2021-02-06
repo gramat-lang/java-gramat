@@ -1,7 +1,6 @@
 package org.gramat.util;
 
 import org.gramat.expressions.Expression;
-import org.gramat.runtime.RExpression;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -57,25 +56,6 @@ public class ExpressionList extends AbstractList<Expression> {
 
         for (Expression item : items) {
             result.add(mapper.apply(item));
-        }
-
-        return result;
-    }
-
-    public boolean containsOf(Class<? extends Expression> typeClass) {
-        for (var item : items) {
-            if (typeClass.isInstance(item)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public RExpression[] build() {
-        var result = new RExpression[items.length];
-
-        for (var i = 0; i < items.length; i++) {
-            result[i] = items[i].build();
         }
 
         return result;
