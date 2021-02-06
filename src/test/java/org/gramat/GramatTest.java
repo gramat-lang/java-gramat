@@ -20,7 +20,7 @@ class GramatTest {
         var program = gramat.compile(new InputCharSequence(code));
 
         try {
-            var result = gramat.eval(program.node, new InputCharSequence("{\"a\":[ 123, true, false]}"));
+            var result = gramat.eval(program.node, new InputCharSequence("{\"a\":[ true, false]}"));
 
             logger.debug("RESULT: %s", PP.str(result));
         }

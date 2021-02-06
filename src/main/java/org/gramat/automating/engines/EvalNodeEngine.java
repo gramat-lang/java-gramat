@@ -2,6 +2,7 @@ package org.gramat.automating.engines;
 
 import org.gramat.actions.Action;
 import org.gramat.actions.design.ActionMaker;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Direction;
 import org.gramat.automating.State;
@@ -14,10 +15,12 @@ import org.gramat.tracking.SourceMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class EvalNodeEngine {
 
@@ -55,30 +58,14 @@ public class EvalNodeEngine {
                     if (t instanceof TransitionMerged) {
                         var tm = (TransitionMerged)t;
                         var targetNode = verifyMapping(tm.target);
-                        var beginActions = new ArrayList<Action>();
-                        var endActions = new ArrayList<Action>();
-
-                        for (var template : tm.beginActions) {
-                            var action = ActionMaker.make(template);
-
-                            beginActions.add(action);
-
-                            sourceMap.addActionLocations(action.id, template.locations);
-                        }
-
-                        for (var template : tm.endActions) {
-                            var action = ActionMaker.make(template);
-
-                            endActions.add(action);
-
-                            sourceMap.addActionLocations(action.id, template.locations);
-                        }
+                        var beginActions = compileActions(tm.beginActions);
+                        var endActions = compileActions(tm.endActions);
 
                         var link = new EvalLink(
                                 tm.code,
                                 targetNode,
-                                compileActions(beginActions),
-                                compileActions(endActions));
+                                beginActions,
+                                endActions);
 
                         links.add(link);
 
@@ -103,12 +90,30 @@ public class EvalNodeEngine {
         return new EvalProgram(main, sourceMap);
     }
 
-    private Action[] compileActions(List<Action> actions) {
+    private Action[] compileActions(List<ActionTemplate> templates) {
+        var actions = new ArrayList<Action>();
+
+        for (var template : templates.stream().sorted(Comparator.comparingInt(a -> a.ordinal)).collect(Collectors.toList())) {
+            var add = true;
+
+            for (var action : actions) {
+                if (action.id == template.ordinal) {  // TODO this feels wrong
+                    add = false;
+                    break;
+                }
+            }
+
+            if (add) {
+                var action = ActionMaker.make(template);
+
+                actions.add(action);
+
+                sourceMap.addActionLocations(action.id, template.locations);
+            }
+        }
+
         if (actions.isEmpty()) {
             return null;
-        }
-        if (actions.size() > 3) {
-            actions.toArray();
         }
         return actions.toArray(Action[]::new);
     }

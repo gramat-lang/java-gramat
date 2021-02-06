@@ -21,6 +21,6 @@ public class MetadataEnd extends Action {
 
     @Override
     protected void define(Definition def) {
-        // nothing more
+        def.attr("name", name);
     }
 }

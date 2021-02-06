@@ -1,6 +1,7 @@
 package org.gramat.util;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,7 +13,7 @@ public class Definition {
 
     public Definition(Class<?> valueClass) {
         this.valueClass = valueClass;
-        this.attributes = new HashMap<>();
+        this.attributes = new LinkedHashMap<>();
     }
 
     public void attr(String name, Object value) {
@@ -52,6 +53,9 @@ public class Definition {
         }
         else if (value instanceof Number) {
             out.append(value.toString());
+        }
+        else if (value instanceof Enum) {
+            out.append(((Enum<?>)value).name());
         }
         else if (value instanceof Class) {
             out.append(((Class<?>)value).getSimpleName());

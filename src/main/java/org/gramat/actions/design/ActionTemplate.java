@@ -1,6 +1,7 @@
 package org.gramat.actions.design;
 
 import org.gramat.inputs.Location;
+import org.gramat.util.Definition;
 
 import java.util.Set;
 
@@ -17,5 +18,15 @@ public class ActionTemplate {
         this.role = role;
         this.ordinal = ordinal;
         this.argument = argument;
+    }
+
+    @Override
+    public String toString() {
+        var def = new Definition(getClass());
+        def.attr("ordinal", ordinal);
+        def.attr("scheme", scheme);
+        def.attr("role", role);
+        def.attr("argument", argument);
+        return def.computeString();
     }
 }
