@@ -4,6 +4,13 @@ import org.gramat.eval.EvalEngine;
 import org.gramat.util.Definition;
 
 public class PropertyEnd extends Action {
+
+    public static final String KEY = "property-end";
+
+    public static Action create(int id, ActionTemplate actionTemplate) {
+        throw new UnsupportedOperationException();
+    }
+
     public final String nameHint;
 
     public PropertyEnd(int id, String nameHint) {
