@@ -5,22 +5,22 @@ import org.gramat.util.Definition;
 
 import java.util.Objects;
 
-public class HeapPop extends Action {
+public class MetadataEnd extends Action {
 
-    private final Object token;
+    public final String name;
 
-    public HeapPop(int id, Object token) {
+    public MetadataEnd(int id, String name) {
         super(id);
-        this.token = Objects.requireNonNull(token);
+        this.name = Objects.requireNonNull(name);
     }
 
     @Override
     public void execute(EvalEngine engine) {
-        engine.heap.pop(id, token);
+        engine.builder.performPopMetadata(id, name);
     }
 
     @Override
     protected void define(Definition def) {
-        def.attr("token", token);
+        // nothing more
     }
 }

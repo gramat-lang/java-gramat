@@ -1,6 +1,7 @@
 package org.gramat.automating.transitions;
 
 import org.gramat.actions.ActionList;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
@@ -14,10 +15,10 @@ import java.util.List;
 public class TransitionMerged extends Transition {
 
     public final Code code;
-    public final List<ActionPlace> beginActions;
-    public final List<ActionPlace> endActions;
+    public final List<ActionTemplate> beginActions;
+    public final List<ActionTemplate> endActions;
 
-    public TransitionMerged(Automaton am, State source, State target, Code code, List<ActionPlace> beginActions, List<ActionPlace> endActions) {
+    public TransitionMerged(Automaton am, State source, State target, Code code, List<ActionTemplate> beginActions, List<ActionTemplate> endActions) {
         super(am, source, target);
         this.code = code;
         this.beginActions = beginActions;

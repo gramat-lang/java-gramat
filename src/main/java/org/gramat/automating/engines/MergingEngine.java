@@ -3,7 +3,7 @@ package org.gramat.automating.engines;
 import org.gramat.actions.ActionList;
 import org.gramat.actions.HeapPop;
 import org.gramat.actions.HeapPush;
-import org.gramat.automating.ActionPlace;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Closure;
 import org.gramat.automating.DeterministicMachine;
@@ -94,8 +94,8 @@ public class MergingEngine {
         return new DeterministicMachine(dAuto, begin, ends);
     }
 
-    private List<ActionPlace> listActions(Collection<Transition> transitions, Direction dir) {
-        var actions = new ArrayList<ActionPlace>();
+    private List<ActionTemplate> listActions(Collection<Transition> transitions, Direction dir) {
+        var actions = new ArrayList<ActionTemplate>();
 
         for (var t : transitions) {
             if (t instanceof TransitionAction) {

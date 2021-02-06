@@ -2,13 +2,12 @@ package org.gramat.eval;
 
 import org.gramat.builders.Builder;
 import org.gramat.builders.ListBuilder;
-import org.gramat.builders.NameBuilder;
+import org.gramat.builders.MetadataBuilder;
 import org.gramat.builders.ObjectBuilder;
 import org.gramat.builders.PropertyBuilder;
 import org.gramat.builders.RootBuilder;
 import org.gramat.builders.TextBuilder;
 import org.gramat.exceptions.EvalException;
-import org.gramat.exceptions.GramatException;
 import org.gramat.exceptions.reporting.ErrorReport;
 
 import java.util.ArrayDeque;
@@ -34,25 +33,25 @@ public class EvalBuilder {
         var listBuilder = popBuilder(actionID, ListBuilder.class);
 
         if (typeHint != null) {
-            listBuilder.setType(typeHint);
+            listBuilder.acceptType(typeHint);
         }
 
         var listValue = listBuilder.build(engine);
 
-        peekBuilder(actionID).accept(listValue);
+        peekBuilder(actionID).acceptContent(listValue);
     }
 
-    public void performPushName(int actionID) {
-        stack.push(new NameBuilder());
+    public void performPushMetadata(int actionID) {
+        stack.push(new MetadataBuilder());
     }
 
-    public void performPopName(int actionID) {
-        var nameBuilder = popBuilder(actionID, NameBuilder.class);
-        var nameValue = nameBuilder.build(engine);
+    public void performPopMetadata(int actionID, String metaName) {
+        var metadataBuilder = popBuilder(actionID, MetadataBuilder.class);
+        var metaValue = metadataBuilder.build(engine);
 
-        var propertyBuilder = peekBuilder(actionID, PropertyBuilder.class);
+        var builder = peekBuilder(actionID);
 
-        propertyBuilder.setName(nameValue);
+        builder.acceptMetadata(metaName, metaValue);
     }
 
     public void performPushProperty(int actionID) {
@@ -62,7 +61,7 @@ public class EvalBuilder {
     public void performPopProperty(int actionID, String nameHint) {
         var propertyBuilder = popBuilder(actionID, PropertyBuilder.class);
         if (nameHint != null) {
-            propertyBuilder.setName(nameHint);
+            propertyBuilder.acceptName(nameHint);
         }
 
         var propertyName = propertyBuilder.getName();
@@ -79,14 +78,13 @@ public class EvalBuilder {
 
     public void performPopObject(int actionID, String typeHint) {
         var objectBuilder = popBuilder(actionID, ObjectBuilder.class);
-
         if (typeHint != null) {
-            objectBuilder.setType(typeHint);
+            objectBuilder.acceptType(typeHint);
         }
 
         var objectValue = objectBuilder.build(engine);
 
-        peekBuilder(actionID).accept(objectValue);
+        peekBuilder(actionID).acceptContent(objectValue);
     }
 
     public void performPushText(int actionID, int beginPosition) {
@@ -95,16 +93,15 @@ public class EvalBuilder {
 
     public void performPopText(int actionID, int endPosition, String parserHint) {
         var textBuilder = popBuilder(actionID, TextBuilder.class);
+        if (parserHint != null) {
+            textBuilder.acceptParser(parserHint);
+        }
 
         textBuilder.setEndPosition(endPosition);
 
-        if (parserHint != null) {
-            textBuilder.setParser(parserHint);
-        }
-
         var textValue = textBuilder.build(engine);
 
-        peekBuilder(actionID).accept(textValue);
+        peekBuilder(actionID).acceptContent(textValue);
     }
 
     public Object pop() {

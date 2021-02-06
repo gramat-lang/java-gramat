@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class TextBegin extends Action {
 
-    public static final String KEY = "text-begin";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public TextBegin(int id) {
         super(id);
     }

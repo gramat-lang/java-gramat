@@ -13,20 +13,27 @@ public class TextBuilder implements Builder {
         this.beginPosition = beginPosition;
     }
 
-    public void setParser(String parser) {
-        this.parser = parser;
-    }
-
-    public String getParser() {
-        return parser;
-    }
-
     public void setEndPosition(int endPosition) {
         this.endPosition = endPosition;
     }
 
+    public void acceptParser(String parser) {
+        // TODO validate overrides
+        this.parser = parser;
+    }
+
     @Override
-    public void accept(Object value) {
+    public void acceptMetadata(String metaName, Object metaValue) {
+        if ("parser".equals(metaName)) {
+            acceptParser((String)metaValue); // TODO improve string conversion
+        }
+        else {
+            throw new GramatException("unsupported metadata: " + metaName);
+        }
+    }
+
+    @Override
+    public void acceptContent(Object value) {
         throw new GramatException("error! value cannot accept more values");
     }
 

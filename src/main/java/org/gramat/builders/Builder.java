@@ -4,8 +4,9 @@ import org.gramat.eval.EvalEngine;
 
 public interface Builder {
 
-    Object build(EvalEngine engine);
+    void acceptMetadata(String name, Object value);
+    void acceptContent(Object value);
 
-    void accept(Object value);
+    Object build(EvalEngine engine);
 
 }

@@ -1,6 +1,7 @@
 package org.gramat.automating.transitions;
 
 import org.gramat.actions.Action;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
@@ -11,9 +12,9 @@ public class TransitionRecursion extends Transition {
     public final String name;
     public final Level level;
     public final Direction direction;
-    public final ActionPlace action;
+    public final ActionTemplate action;
 
-    public TransitionRecursion(Automaton am, State source, State target, String name, Level level, ActionPlace action, Direction direction) {
+    public TransitionRecursion(Automaton am, State source, State target, String name, Level level, ActionTemplate action, Direction direction) {
         super(am, source, target);
         this.name = name;
         this.level = level;

@@ -2,6 +2,7 @@ package org.gramat.automating;
 
 import org.gramat.actions.Action;
 import org.gramat.actions.ActionList;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.transitions.Transition;
 import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
@@ -132,26 +133,26 @@ public class Automaton {
         return t;
     }
 
-    public TransitionMerged addMerged(State source, State target, Code code, List<ActionPlace> beginActions, List<ActionPlace> endActions) {
+    public TransitionMerged addMerged(State source, State target, Code code, List<ActionTemplate> beginActions, List<ActionTemplate> endActions) {
         var t = new TransitionMerged(this, source, target, code, beginActions, endActions);
         transitions.add(t);
         return t;
     }
 
-    public TransitionAction addAction(State source, State target, ActionPlace action, Direction direction) {
+    public TransitionAction addAction(State source, State target, ActionTemplate action, Direction direction) {
         var t = new TransitionAction(this, source, target, action, direction);
         transitions.add(t);
         return t;
     }
 
-    public TransitionRecursion addRecursion(State source, State target, String name, Level level, ActionPlace action, Direction direction) {
+    public TransitionRecursion addRecursion(State source, State target, String name, Level level, ActionTemplate action, Direction direction) {
         var t = new TransitionRecursion(this, source, target, name, level, action, direction);
         transitions.add(t);
         return t;
     }
 
-    public TransitionReference addReference(State source, State target, String name, Level level, int reservedEnterID, int reservedExitID) {
-        var t = new TransitionReference(this, source, target, name, level, reservedEnterID, reservedExitID);
+    public TransitionReference addReference(State source, State target, String name, Level level, ActionTemplate enterAction, ActionTemplate exitAction) {
+        var t = new TransitionReference(this, source, target, name, level, enterAction, exitAction);
         transitions.add(t);
         return t;
     }

@@ -3,19 +3,15 @@ package org.gramat.actions;
 import org.gramat.eval.EvalEngine;
 import org.gramat.util.Definition;
 
+import java.util.Objects;
+
 public class HeapPush extends Action {
-
-    public static final String KEY = "heap-push";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
 
     public final Object token;
 
     public HeapPush(int id, Object token) {
         super(id);
-        this.token = token;
+        this.token = Objects.requireNonNull(token);
     }
 
     @Override

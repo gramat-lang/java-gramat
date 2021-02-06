@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class ListEnd extends Action {
 
-    public static final String KEY = "list-end";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public final String typeHint;
 
     public ListEnd(int id, String typeHint) {

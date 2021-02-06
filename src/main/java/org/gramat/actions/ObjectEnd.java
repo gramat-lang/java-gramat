@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class ObjectEnd extends Action {
 
-    public static final String KEY = "object-end";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public final String typeHint;
 
     public ObjectEnd(int id, String typeHint) {

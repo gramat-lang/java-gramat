@@ -3,19 +3,19 @@ package org.gramat.builders;
 import org.gramat.eval.EvalEngine;
 import org.gramat.exceptions.GramatException;
 
-public class RootBuilder implements Builder {
+public class MetadataBuilder implements Builder {
     private Object value;
     private boolean defined;
 
     @Override
     public void acceptMetadata(String name, Object value) {
-        throw new GramatException("unsupported metadata: " + name);
+        throw new GramatException("metdata not supported");
     }
 
     @Override
     public void acceptContent(Object value) {
-        if (this.defined) {
-            throw new GramatException("rejected! too much root values");
+        if (defined) {
+            throw new GramatException("error! metadata already defined");
         }
 
         this.value = value;
@@ -24,6 +24,9 @@ public class RootBuilder implements Builder {
 
     @Override
     public Object build(EvalEngine engine) {
-        return value;
+        if (!this.defined) {
+            throw new GramatException("rejected! missing metadata value");
+        }
+        return this.value;
     }
 }

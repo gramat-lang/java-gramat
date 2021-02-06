@@ -1,6 +1,7 @@
 package org.gramat.automating.engines;
 
 import org.gramat.actions.Action;
+import org.gramat.actions.design.ActionMaker;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Direction;
 import org.gramat.automating.State;
@@ -59,16 +60,20 @@ public class EvalNodeEngine {
                         var beginActions = new ArrayList<Action>();
                         var endActions = new ArrayList<Action>();
 
-                        for (var actionPlace : tm.beginActions) {
-                            beginActions.add(actionPlace.action);
+                        for (var template : tm.beginActions) {
+                            var action = ActionMaker.make(template);
 
-                            sourceMap.addActionLocations(actionPlace.action.id, actionPlace.locations);
+                            beginActions.add(action);
+
+                            sourceMap.addActionLocations(action.id, template.locations);
                         }
 
-                        for (var actionPlace : tm.endActions) {
-                            endActions.add(actionPlace.action);
+                        for (var template : tm.endActions) {
+                            var action = ActionMaker.make(template);
 
-                            sourceMap.addActionLocations(actionPlace.action.id, actionPlace.locations);
+                            endActions.add(action);
+
+                            sourceMap.addActionLocations(action.id, template.locations);
                         }
 
                         var link = new EvalLink(

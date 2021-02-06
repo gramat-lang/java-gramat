@@ -12,14 +12,6 @@ public class ObjectBuilder implements Builder {
     private String type;
     private Map<String, Object> attributes;
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getType() {
-        return type;
-    }
-
     public void setAttribute(String name, Object value) {
         if (attributes == null) {
             attributes = new LinkedHashMap<>();
@@ -38,8 +30,23 @@ public class ObjectBuilder implements Builder {
         return attributes;
     }
 
+    public void acceptType(String type) {
+        // TODO validate override
+        this.type = type;
+    }
+
     @Override
-    public void accept(Object value) {
+    public void acceptMetadata(String name, Object value) {
+        if ("type".equals(name)) {
+            acceptType((String)value); // TODO improve string conversion
+        }
+        else {
+            throw new GramatException("unsupported metadata: " + name);
+        }
+    }
+
+    @Override
+    public void acceptContent(Object value) {
         throw new GramatException("rejected! objects only accepts properties");
     }
 

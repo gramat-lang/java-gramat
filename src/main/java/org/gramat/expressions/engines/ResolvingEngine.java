@@ -3,11 +3,6 @@ package org.gramat.expressions.engines;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.expressions.actions.ListWrapper;
-import org.gramat.expressions.actions.NameWrapper;
-import org.gramat.expressions.actions.ObjectWrapper;
-import org.gramat.expressions.actions.PropertyWrapper;
-import org.gramat.expressions.actions.TextWrapper;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;
@@ -15,6 +10,7 @@ import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.literals.LiteralString;
+import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 import org.gramat.logging.Logger;
@@ -82,20 +78,8 @@ public class ResolvingEngine {
         else if (expr instanceof Sequence) {
             return resolveSequence((Sequence) expr);
         }
-        else if (expr instanceof ListWrapper) {
-            return resolveListWrapper((ListWrapper) expr);
-        }
-        else if (expr instanceof ObjectWrapper) {
-            return resolveObjectWrapper((ObjectWrapper) expr);
-        }
-        else if (expr instanceof PropertyWrapper) {
-            return resolvePropertyWrapper((PropertyWrapper) expr);
-        }
-        else if (expr instanceof TextWrapper) {
-            return resolveTextWrapper((TextWrapper) expr);
-        }
-        else if (expr instanceof NameWrapper) {
-            return resolveNameWrapper((NameWrapper) expr);
+        else if (expr instanceof ActionExpression) {
+            return resolveAction((ActionExpression) expr);
         }
         else if (expr instanceof Reference) {
             return resolveReference((Reference) expr);
@@ -121,24 +105,8 @@ public class ResolvingEngine {
         return new Repetition(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
-    private ListWrapper resolveListWrapper(ListWrapper expr) {
-        return new ListWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.typeHint);
-    }
-
-    private ObjectWrapper resolveObjectWrapper(ObjectWrapper expr) {
-        return new ObjectWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.typeHint);
-    }
-
-    private PropertyWrapper resolvePropertyWrapper(PropertyWrapper expr) {
-        return new PropertyWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.nameHint);
-    }
-
-    private TextWrapper resolveTextWrapper(TextWrapper expr) {
-        return new TextWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content), expr.parser);
-    }
-
-    private NameWrapper resolveNameWrapper(NameWrapper expr) {
-        return new NameWrapper(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
+    private ActionExpression resolveAction(ActionExpression expr) {
+        return new ActionExpression(expr.beginLocation, expr.endLocation, expr.scheme, resolveExpression(expr.content), expr.argument);
     }
 
     private Expression resolveReference(Reference ref) {

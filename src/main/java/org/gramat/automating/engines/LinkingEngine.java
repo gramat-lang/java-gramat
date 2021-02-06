@@ -58,7 +58,7 @@ public class LinkingEngine {
     }
 
     private void resolveReference(TransitionReference reference, Automaton am0, ArrayList<Runnable> promises) {
-        logger.debug("Resolving reference %s %s...", reference.name, reference.level);
+        logger.debug("Resolving reference %s/%s...", reference.name, reference.level);
 
         var machine = refLevelMachines.get(reference.name, reference.level);
 
@@ -78,14 +78,8 @@ public class LinkingEngine {
             am.addEmpty(copyMachine.end, machine.end);
         }
 
-        var enterAction = new HeapPush(reference.reservedEnterID, reference.name);
-        var exitAction = new HeapPop(reference.reservedExitID, reference.name);
-
-        var enterPlace = new ActionPlace(enterAction, reference.source.locations);
-        var exitPlace = new ActionPlace(exitAction, reference.target.locations);
-
-        am.addRecursion(reference.source, machine.begin, reference.name, reference.level, enterPlace, Direction.FORWARD);
-        am.addRecursion(machine.end, reference.target, reference.name, reference.level, exitPlace, Direction.BACKWARD);
+        am.addRecursion(reference.source, machine.begin, reference.name, reference.level, reference.enterAction, Direction.FORWARD);
+        am.addRecursion(machine.end, reference.target, reference.name, reference.level, reference.exitAction, Direction.BACKWARD);
 
         am.removeTransition(reference);
     }

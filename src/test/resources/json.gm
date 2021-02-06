@@ -1,11 +1,11 @@
 Value = ws (String | Number | Object | Array | True | False | Null) ws
-Object = @object("{" { ws @set(@name(String) ws ":" Value) / "," } ws "}")
-Array = @list("[" { Value / "," } ws "]")
-String = @value("\"" { 'a-z A-Z' } "\"")
-Number = @value(["-"] ("0" | '1-9' {'0-9'}) ["." {+'0-9'}] ['e E' ['- +'] {+'0-9'}])
-True = @value("true")
-False = @value("false")
-Null = @value("null")
+Object = <@("{" { ws <=( <$name(String)$> ws ":" Value)=> / "," } ws "}")@>
+Array = <#("[" { Value / "," } ws "]")#>
+String = <%("\"" { 'a-z A-Z' } "\"")%>
+Number = <%(["-"] ("0" | '1-9' {'0-9'}) ["." {+'0-9'}] ['e E' ['- +'] {+'0-9'}])%>
+True = <%("true")%>
+False = <%("false")%>
+Null = <%("null")%>
 
 escaped-char = "\\" ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | "u" hex-digit hex-digit hex-digit hex-digit)
 hex-digit = 'a-f A-F 0-9'

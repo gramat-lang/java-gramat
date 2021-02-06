@@ -36,19 +36,10 @@ public class Gramat {
         return compile(input, DEFAULT_RULE_NAME);
     }
 
-    public EvalProgram compile(Input input, String ruleName) {
-        var parser = new ParsingEngine();
+    public EvalProgram compile(Input input, String mainName) {
+        var expressionProgram = ParsingEngine.run(input, mainName);
 
-        parser.readAll(input);
-
-        var rules = parser.getRules();
-        var main = rules.get(ruleName);
-
-        return compile(main, rules);
-    }
-
-    public EvalProgram compile(Expression main, ExpressionMap dependencies) {
-        return compile(new ExpressionProgram(main, dependencies));
+        return compile(expressionProgram);
     }
 
     public EvalProgram compile(ExpressionProgram program) {

@@ -1,7 +1,9 @@
 package org.gramat.expressions.engines;
 
+import org.gramat.actions.design.ActionScheme;
 import org.gramat.exceptions.SyntaxException;
 import org.gramat.expressions.Expression;
+import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;
@@ -9,29 +11,37 @@ import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.literals.LiteralString;
+import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Nop;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 import org.gramat.inputs.Input;
-import org.gramat.inputs.Location;
 import org.gramat.util.ExpressionList;
 import org.gramat.util.ExpressionMap;
 
 public class ParsingEngine {
 
+    public static ExpressionProgram run(Input input, String mainName) {
+        return new ParsingEngine(input).run(mainName);
+    }
+
+    private final Input input;
     private final ExpressionMap rules;
-    private final ActionFactory actions;
 
-    public ParsingEngine() {
+    private ParsingEngine(Input input) {
+        this.input = input;
         this.rules = new ExpressionMap();
-        this.actions = new ActionFactory();
     }
 
-    public ExpressionMap getRules() {
-        return rules;
+    private ExpressionProgram run(String mainName) {
+        readAll();
+
+        var main = rules.find(mainName);
+
+        return new ExpressionProgram(main, rules);
     }
 
-    public void readAll(Input input) {
+    private void readAll() {
         while (input.alive()) {
             skipBlockVoid(input);
 
@@ -152,7 +162,7 @@ public class ParsingEngine {
         else if (input.peek() == '[') {
             return readOptional(input);
         }
-        else if (input.peek() == '@') {
+        else if (input.peek() == '<') {
             return readAction(input);
         }
         else if (input.peek() == '\'') {
@@ -358,24 +368,52 @@ public class ParsingEngine {
 
     private Expression readAction(Input input) {
         var begin = input.getLocation();
-        var end = input.getLocation();
 
-        expect(input, '@');
-        String id = readKeyword(input);
-        String name;
+        expect(input, '<');
 
-        if (tryPull(input, ':')) {
-            name = readKeyword(input);
+        var actionSymbol = input.pull();
+        var actionScheme = findActionScheme(actionSymbol);
+
+        skipBlockVoid(input);
+
+        String argument = tryReadKeyword(input);
+
+        if (argument != null) {
+            skipBlockVoid(input);
         }
-        else {
-            name = null;
-        }
-
-        skipInlineVoid(input);
 
         var content = readGroup(input);
 
-        return actions.createAction(id, name, content, begin, end);
+        skipInlineVoid(input);
+
+        expect(input, actionSymbol);
+        expect(input, '>');
+
+        var end = input.getLocation();
+
+        return new ActionExpression(begin, end, actionScheme, content, argument);
+    }
+
+    public static ActionScheme findActionScheme(char chr) {
+        switch (chr) {
+            case '@': return ActionScheme.CREATE_OBJECT;
+            case '#': return ActionScheme.CREATE_LIST;
+            case '%': return ActionScheme.CREATE_TEXT;
+            case '$': return ActionScheme.SET_METADATA;
+            case '=': return ActionScheme.SET_PROPERTY;
+            default: throw new RuntimeException();
+        }
+    }
+
+    public static char findActionChar(ActionScheme scheme) {
+        switch (scheme) {
+            case CREATE_OBJECT: return '@';
+            case CREATE_LIST: return '#';
+            case CREATE_TEXT: return '%';
+            case SET_METADATA: return '$';
+            case SET_PROPERTY: return '=';
+            default: throw new RuntimeException();
+        }
     }
 
     private void skipVoid(Input input, boolean multiline) {

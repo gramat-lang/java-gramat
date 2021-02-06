@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class ListBegin extends Action {
 
-    public static final String KEY = "list-begin";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public ListBegin(int id) {
         super(id);
     }

@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class TextEnd extends Action {
 
-    public static final String KEY = "text-end";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public final String parser;
 
     public TextEnd(int id, String parser) {

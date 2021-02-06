@@ -2,12 +2,7 @@ package org.gramat.formatting;
 
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
-import org.gramat.expressions.actions.ListWrapper;
-import org.gramat.expressions.actions.NameWrapper;
-import org.gramat.expressions.actions.ObjectWrapper;
-import org.gramat.expressions.actions.PropertyWrapper;
-import org.gramat.expressions.actions.TextWrapper;
-import org.gramat.expressions.engines.ActionFactory;
+import org.gramat.expressions.engines.ParsingEngine;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;
@@ -15,6 +10,7 @@ import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.literals.LiteralString;
+import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
@@ -69,20 +65,8 @@ public class ExpressionFormatter {
         else if (expr instanceof Sequence) {
             writeSequence((Sequence)expr, wrapped);
         }
-        else if (expr instanceof ListWrapper) {
-            writeListWrapper((ListWrapper)expr);
-        }
-        else if (expr instanceof ObjectWrapper) {
-            writeObjectWrapper((ObjectWrapper)expr);
-        }
-        else if (expr instanceof PropertyWrapper) {
-            writePropertyWrapper((PropertyWrapper)expr);
-        }
-        else if (expr instanceof TextWrapper) {
-            writeTextWrapper((TextWrapper)expr);
-        }
-        else if (expr instanceof NameWrapper) {
-            writeNameWrapper((NameWrapper)expr);
+        else if (expr instanceof ActionExpression) {
+            writeAction((ActionExpression)expr);
         }
         else if (expr instanceof Recursion) {
             writeRecursion((Recursion)expr);
@@ -96,10 +80,6 @@ public class ExpressionFormatter {
         else {
             throw new GramatException("unsupported value: " + expr);
         }
-    }
-
-    private void writeNameWrapper(NameWrapper expr) {
-        writeAction(ActionFactory.NAME_WRAPPER_ID, null, expr.content);
     }
 
     private void writeLiteralChar(LiteralChar expr) {
@@ -208,22 +188,6 @@ public class ExpressionFormatter {
         writeRaw('*');
     }
 
-    private void writeListWrapper(ListWrapper expr) {
-        writeAction(ActionFactory.LIST_WRAPPER_ID, expr.typeHint, expr.content);
-    }
-
-    private void writeObjectWrapper(ObjectWrapper expr) {
-        writeAction(ActionFactory.OBJECT_WRAPPER_ID, expr.typeHint, expr.content);
-    }
-
-    private void writePropertyWrapper(PropertyWrapper expr) {
-        writeAction(ActionFactory.PROPERTY_WRAPPER_ID, expr.nameHint, expr.content);
-    }
-
-    private void writeTextWrapper(TextWrapper expr) {
-        writeAction(ActionFactory.TEXT_WRAPPER_ID, expr.parser, expr.content);
-    }
-
     private void writeRecursion(Recursion expr) {
         writeKeyword(expr.name);
     }
@@ -232,21 +196,25 @@ public class ExpressionFormatter {
         writeKeyword(expr.name);
     }
 
-    private void writeAction(String id, String keyword, Expression content) {
-        writeRaw('@');
-        writeRaw(id);
-        if (keyword != null) {
-            writeRaw(':');
-            writeKeyword(keyword);
+    private void writeAction(ActionExpression action) {
+        var symbol = ParsingEngine.findActionChar(action.scheme);
+
+        writeRaw('<');
+        writeRaw(symbol);
+
+        if (action.argument != null) {
+            writeKeyword(action.argument);
         }
-        if (content != null) {
-            writeRaw('(');
-            wbr();
-            write(content, false);
-            wbr();
-            writeRaw(')');
-            wbr();
-        }
+
+        writeRaw('(');
+        wbr();
+        write(action.content, false);
+        wbr();
+        writeRaw(')');
+        wbr();
+
+        writeRaw(symbol);
+        writeRaw('>');
     }
 
     private void writeKeyword(String keyword) {

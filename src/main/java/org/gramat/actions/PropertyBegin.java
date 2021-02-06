@@ -5,12 +5,6 @@ import org.gramat.util.Definition;
 
 public class PropertyBegin extends Action {
 
-    public static final String KEY = "property-begin";
-
-    public static Action create(int id, ActionTemplate actionTemplate) {
-        throw new UnsupportedOperationException();
-    }
-
     public PropertyBegin(int id) {
         super(id);
     }

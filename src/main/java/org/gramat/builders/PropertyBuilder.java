@@ -8,10 +8,6 @@ public class PropertyBuilder implements Builder {
     private Object value;
     private boolean defined;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getName() {
         if (name == null) {
             throw new GramatException("rejected! missing name");
@@ -19,8 +15,23 @@ public class PropertyBuilder implements Builder {
         return name;
     }
 
+    public void acceptName(String name) {
+        // TODO validate override
+        this.name = name;
+    }
+
     @Override
-    public void accept(Object value) {
+    public void acceptMetadata(String metaName, Object metaValue) {
+        if ("name".equals(metaName)) {
+            acceptName((String)metaValue); // TODO improve string conversion
+        }
+        else {
+            throw new GramatException("unsupported metadata: " + metaName);
+        }
+    }
+
+    @Override
+    public void acceptContent(Object value) {
         if (this.defined) {
             throw new GramatException("rejected! too much property values");
         }

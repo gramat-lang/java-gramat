@@ -12,16 +12,23 @@ public class ListBuilder implements Builder {
     private String type;
     private List<Object> items;
 
-    public void setType(String type) {
+    public void acceptType(String type) {
+        // TODO validate override
         this.type = type;
     }
 
-    public String getType() {
-        return type;
+    @Override
+    public void acceptMetadata(String name, Object value) {
+        if ("type".equals(name)) {
+            acceptType((String)value); // TODO improve string conversion
+        }
+        else {
+            throw new GramatException("unsupported metadata: " + name);
+        }
     }
 
     @Override
-    public void accept(Object value) {
+    public void acceptContent(Object value) {
         if (items == null) {
             items = new ArrayList<>();
         }

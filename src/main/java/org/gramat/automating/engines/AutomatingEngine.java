@@ -1,31 +1,19 @@
 package org.gramat.automating.engines;
 
-import org.gramat.actions.Action;
-import org.gramat.actions.ActionList;
 import org.gramat.actions.ListEnd;
-import org.gramat.actions.NameBegin;
-import org.gramat.actions.NameEnd;
-import org.gramat.actions.ObjectBegin;
-import org.gramat.actions.ObjectEnd;
-import org.gramat.actions.PropertyBegin;
-import org.gramat.actions.PropertyEnd;
-import org.gramat.actions.TextBegin;
-import org.gramat.actions.TextEnd;
+import org.gramat.actions.design.ActionMaker;
+import org.gramat.actions.design.ActionRole;
+import org.gramat.actions.design.ActionScheme;
+import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.ActionPlace;
 import org.gramat.automating.Automaton;
 import org.gramat.automating.Direction;
-import org.gramat.automating.Level;
 import org.gramat.automating.Machine;
 import org.gramat.automating.State;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.actions.ListBegin;
-import org.gramat.expressions.actions.ListWrapper;
-import org.gramat.expressions.actions.NameWrapper;
-import org.gramat.expressions.actions.ObjectWrapper;
-import org.gramat.expressions.actions.PropertyWrapper;
-import org.gramat.expressions.actions.TextWrapper;
 import org.gramat.expressions.groups.Alternation;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Repetition;
@@ -33,6 +21,7 @@ import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.literals.LiteralString;
+import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 import org.gramat.logging.Logger;
@@ -49,7 +38,7 @@ public class AutomatingEngine {
 
     private final Logger logger;
 
-    private int currentActionID;
+    private int currentActionOrdinal;
 
     private AutomatingEngine(Logger logger) {
         this.logger = logger;
@@ -100,16 +89,8 @@ public class AutomatingEngine {
             return automateOptional((Optional) expr, am);
         } else if (expr instanceof Repetition) {
             return automateRepetition((Repetition) expr, am);
-        } else if (expr instanceof ListWrapper) {
-            return automateListWrapper((ListWrapper) expr, am);
-        } else if (expr instanceof ObjectWrapper) {
-            return automateObjectWrapper((ObjectWrapper) expr, am);
-        } else if (expr instanceof PropertyWrapper) {
-            return automatePropertyWrapper((PropertyWrapper) expr, am);
-        } else if (expr instanceof TextWrapper) {
-            return automateTextWrapper((TextWrapper) expr, am);
-        } else if (expr instanceof NameWrapper) {
-            return automateNameWrapper((NameWrapper) expr, am);
+        } else if (expr instanceof ActionExpression) {
+            return automateAction((ActionExpression) expr, am);
         } else if (expr instanceof Reference) {
             return automateReference((Reference) expr, am);
         } else {
@@ -228,77 +209,55 @@ public class AutomatingEngine {
         return am.createMachine(begin, end);
     }
 
-    private Machine automateListWrapper(ListWrapper wrapper, Automaton am) {
-        var beginState = am.createState(wrapper.beginLocation);
-        var beginAction = new ListBegin(nextActionID());
-        var contentMachine = automateExpression(wrapper.content, am);
-        var endAction = new ListEnd(nextActionID(), wrapper.typeHint);
-        var endState = am.createState(wrapper.endLocation);
+    private Machine automateAction(ActionExpression action, Automaton am) {
+        var beginState = am.createState(action.beginLocation);
+        var beginAction = new ActionTemplate(
+                Set.of(action.beginLocation),
+                action.scheme,
+                ActionRole.BEGIN,
+                nextActionOrdinal(),
+                action.argument);
+        var contentMachine = automateExpression(action.content, am);
+        var endAction = new ActionTemplate(
+                Set.of(action.beginLocation),
+                action.scheme,
+                ActionRole.END,
+                nextActionOrdinal(),
+                action.argument);
+        var endState = am.createState(action.endLocation);
 
-        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
-    }
+        am.addAction(beginState, contentMachine.begin, beginAction, Direction.FORWARD);
+        am.addAction(contentMachine.end, endState, endAction, Direction.BACKWARD);
 
-    private Machine automateObjectWrapper(ObjectWrapper wrapper, Automaton am) {
-        var beginState = am.createState(wrapper.beginLocation);
-        var beginAction = new ObjectBegin(nextActionID());
-        var contentMachine = automateExpression(wrapper.content, am);
-        var endAction = new ObjectEnd(nextActionID(), wrapper.typeHint);
-        var endState = am.createState(wrapper.endLocation);
-
-        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
-    }
-
-    private Machine automatePropertyWrapper(PropertyWrapper wrapper, Automaton am) {
-        var beginState = am.createState(wrapper.beginLocation);
-        var beginAction = new PropertyBegin(nextActionID());
-        var contentMachine = automateExpression(wrapper.content, am);
-        var endAction = new PropertyEnd(nextActionID(), wrapper.nameHint);
-        var endState = am.createState(wrapper.endLocation);
-
-        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
-    }
-
-    private Machine automateTextWrapper(TextWrapper wrapper, Automaton am) {
-        var beginState = am.createState(wrapper.beginLocation);
-        var beginAction = new TextBegin(nextActionID());
-        var contentMachine = automateExpression(wrapper.content, am);
-        var endAction = new TextEnd(nextActionID(), wrapper.parser);
-        var endState = am.createState(wrapper.endLocation);
-
-        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
-    }
-
-    private Machine automateNameWrapper(NameWrapper wrapper, Automaton am) {
-        var beginState = am.createState(wrapper.beginLocation);
-        var beginAction = new NameBegin(nextActionID());
-        var contentMachine = automateExpression(wrapper.content, am);
-        var endAction = new NameEnd(nextActionID());
-        var endState = am.createState(wrapper.endLocation);
-
-        return wrap(beginState, beginAction, contentMachine, endAction, endState, am);
-    }
-
-    private Machine wrap(State begin, Action beginAction, Machine machine, Action endAction, State end, Automaton am) {
-        am.addAction(begin, machine.begin, new ActionPlace(beginAction, begin.locations), Direction.FORWARD);
-        am.addAction(machine.end, end, new ActionPlace(endAction, end.locations), Direction.BACKWARD);
-        return am.createMachine(begin, end);
+        return am.createMachine(beginState, endState);
     }
 
     private Machine automateReference(Reference ref, Automaton am) {
         var begin = am.createState(ref.beginLocation);
         var end = am.createState(ref.endLocation);
+        var heapToken = ref.name;
         var level = am.createLevel();
-        var reservedEnterID = nextActionID();
-        var reservedExitID = nextActionID();
+        var beginAction = new ActionTemplate(
+                Set.of(ref.beginLocation),
+                ActionScheme.WRAP_RECURSION,
+                ActionRole.BEGIN,
+                nextActionOrdinal(),
+                heapToken);
+        var endAction = new ActionTemplate(
+                Set.of(ref.beginLocation),
+                ActionScheme.WRAP_RECURSION,
+                ActionRole.END,
+                nextActionOrdinal(),
+                heapToken);
 
-        am.addReference(begin, end, ref.name, level, reservedEnterID, reservedExitID);
+        am.addReference(begin, end, ref.name, level, beginAction, endAction);
 
         return am.createMachine(begin, end);
     }
 
-    private int nextActionID() {
-        currentActionID++;
-        return currentActionID;
+    private int nextActionOrdinal() {
+        currentActionOrdinal++;
+        return currentActionOrdinal;
     }
 
 }
