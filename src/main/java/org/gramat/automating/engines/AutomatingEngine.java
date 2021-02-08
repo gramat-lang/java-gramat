@@ -16,7 +16,6 @@ import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
-import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
@@ -71,8 +70,6 @@ public class AutomatingEngine {
     private Machine automateExpression(Expression expr, Automaton am) {
         if (expr instanceof LiteralChar) {
             return automateLiteralChar((LiteralChar)expr, am);
-        } else if (expr instanceof LiteralString) {
-            return automateLiteralString((LiteralString)expr, am);
         } else if (expr instanceof LiteralRange) {
             return automateLiteralRange((LiteralRange)expr, am);
         } else if (expr instanceof Wild) {
@@ -99,21 +96,6 @@ public class AutomatingEngine {
         var end = am.createState(chr.endLocation);
 
         am.addSymbol(begin, end, am.getChar(chr.value));
-
-        return am.createMachine(begin, end);
-    }
-
-    private Machine automateLiteralString(LiteralString str, Automaton am) {
-        var begin = am.createState(str.beginLocation);
-        var end = begin;
-
-        for (var chr : str.value.toCharArray()) {
-            var state = end;
-
-            end = am.createState(str.endLocation);  // TODO this is not the real location
-
-            am.addSymbol(state, end, am.getChar(chr));
-        }
 
         return am.createMachine(begin, end);
     }

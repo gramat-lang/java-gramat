@@ -9,7 +9,6 @@ import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
-import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
@@ -47,9 +46,6 @@ public class ExpressionFormatter {
         if (expr instanceof LiteralChar) {
             writeLiteralChar((LiteralChar)expr);
         }
-        else if (expr instanceof LiteralString) {
-            writeLiteralString((LiteralString)expr);
-        }
         else if (expr instanceof LiteralRange) {
             writeLiteralRange((LiteralRange)expr);
         }
@@ -85,15 +81,6 @@ public class ExpressionFormatter {
     private void writeLiteralChar(LiteralChar expr) {
         writeRaw('\"');
         writeCharItem(expr.value);
-        writeRaw('\"');
-        wbr();
-    }
-
-    private void writeLiteralString(LiteralString expr) {
-        writeRaw('\"');
-        for (var c : expr.value.toCharArray()) {
-            writeCharItem(c);
-        }
         writeRaw('\"');
         wbr();
     }

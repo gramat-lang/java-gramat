@@ -10,7 +10,6 @@ import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
-import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Nop;
 import org.gramat.expressions.misc.Reference;
@@ -18,6 +17,8 @@ import org.gramat.expressions.misc.Wild;
 import org.gramat.inputs.Input;
 import org.gramat.util.ExpressionList;
 import org.gramat.util.ExpressionMap;
+
+import java.util.ArrayList;
 
 public class ParsingEngine {
 
@@ -189,21 +190,23 @@ public class ParsingEngine {
 
     private Expression readLiteral(Input input) {
         var begin = input.getLocation();
-        var buffer = new StringBuilder();
+        var items = ExpressionList.builder();
 
         expect(input, '"');
 
         while (input.alive() && input.peek() != '"') {
+            var cBegin = input.getLocation();
             var c = readCharItem(input);
+            var cEnd = input.getLocation();
 
-            buffer.append(c);
+            items.add(new LiteralChar(cBegin, cEnd, c));
         }
 
         expect(input, '"');
 
         var end = input.getLocation();
-        var value = buffer.toString();
-        return new LiteralString(begin, end, value);
+
+        return new Sequence(begin, end, items.build());
     }
 
     private Expression readGroup(Input input) {

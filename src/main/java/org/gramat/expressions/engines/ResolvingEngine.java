@@ -9,7 +9,6 @@ import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
-import org.gramat.expressions.literals.LiteralString;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
@@ -61,7 +60,6 @@ public class ResolvingEngine {
 
     private Expression resolveExpression(Expression expr) {
         if (expr instanceof LiteralChar
-                || expr instanceof LiteralString
                 || expr instanceof LiteralRange
                 || expr instanceof Wild) {
             return expr;
