@@ -10,7 +10,7 @@ import org.gramat.eval.EvalProgram;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.engines.ParsingEngine;
-import org.gramat.expressions.engines.ResolvingEngine;
+import org.gramat.expressions.resolving.ResolvingEngine;
 import org.gramat.inputs.Input;
 import org.gramat.logging.Logger;
 import org.gramat.logging.NullLogger;

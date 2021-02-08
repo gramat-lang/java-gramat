@@ -57,7 +57,7 @@ public class MergingEngine {
         var levels = nAuto.listLevels();
         var codes = nAuto.listCodes();
 
-        logger.debug("Resolving %s codes and %s levels...", codes.size(), levels.size());
+        logger.debug("ResolvingExpression %s codes and %s levels...", codes.size(), levels.size());
 
         do {
             var closure = queue.remove();

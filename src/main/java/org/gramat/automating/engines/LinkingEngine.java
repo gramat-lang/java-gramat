@@ -55,7 +55,7 @@ public class LinkingEngine {
     }
 
     private void resolveReference(TransitionReference reference, Automaton am0, ArrayList<Runnable> promises) {
-        logger.debug("Resolving reference %s/%s...", reference.name, reference.level);
+        logger.debug("ResolvingExpression reference %s/%s...", reference.name, reference.level);
 
         var machine = refLevelMachines.get(reference.name, reference.level);
 

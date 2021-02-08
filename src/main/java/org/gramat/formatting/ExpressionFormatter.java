@@ -10,6 +10,7 @@ import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.misc.ActionExpression;
+import org.gramat.expressions.misc.Halt;
 import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
@@ -72,6 +73,9 @@ public class ExpressionFormatter {
         }
         else if (expr instanceof Wild) {
             writeWild();
+        }
+        else if (expr instanceof Halt) {
+            writeHalt();
         }
         else {
             throw new GramatException("unsupported value: " + expr);
@@ -174,6 +178,10 @@ public class ExpressionFormatter {
 
     private void writeWild() {
         writeRaw('*');
+    }
+
+    private void writeHalt() {
+        writeRaw('^');
     }
 
     private void writeRecursion(Recursion expr) {

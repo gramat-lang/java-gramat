@@ -27,7 +27,21 @@ public class ExpressionList extends AbstractList<Expression> {
 
     public static class ExpressionListBuilder extends ArrayList<Expression> {
         public ExpressionList build() {
-            return new ExpressionList(toArray(Expression[]::new));
+            return new ExpressionList(super.toArray(Expression[]::new));
+        }
+
+        public Expression first() {
+            if (super.isEmpty()) {
+                throw new NoSuchElementException();
+            }
+            return super.get(0);
+        }
+
+        public Expression last() {
+            if (super.isEmpty()) {
+                throw new NoSuchElementException();
+            }
+            return super.get(super.size()-1);
         }
     }
 
@@ -39,6 +53,10 @@ public class ExpressionList extends AbstractList<Expression> {
 
     public Expression first() {
         return items[0];
+    }
+
+    public Expression last() {
+        return items[items.length-1];
     }
 
     public ExpressionList map(UnaryOperator<Expression> mapper) {
@@ -115,6 +133,15 @@ public class ExpressionList extends AbstractList<Expression> {
     @Override
     public int hashCode() {
         return Arrays.hashCode(items);
+    }
+
+    public boolean containsOf(Class<? extends Expression> type) {
+        for (var item : items) {
+            if (type.isInstance(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
