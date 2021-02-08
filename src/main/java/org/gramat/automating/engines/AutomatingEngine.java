@@ -11,8 +11,8 @@ import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.groups.Alternation;
+import org.gramat.expressions.groups.Cycle;
 import org.gramat.expressions.groups.Optional;
-import org.gramat.expressions.groups.Repetition;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
@@ -83,8 +83,8 @@ public class AutomatingEngine {
             return automateAlternation((Alternation) expr, am);
         } else if (expr instanceof Optional) {
             return automateOptional((Optional) expr, am);
-        } else if (expr instanceof Repetition) {
-            return automateRepetition((Repetition) expr, am);
+        } else if (expr instanceof Cycle) {
+            return automateCycle((Cycle) expr, am);
         } else if (expr instanceof ActionExpression) {
             return automateAction((ActionExpression) expr, am);
         } else if (expr instanceof Reference) {
@@ -184,15 +184,14 @@ public class AutomatingEngine {
         return am.createMachine(begin, end);
     }
 
-    private Machine automateRepetition(Repetition rep, Automaton am) {
-        var begin = am.createState(rep.beginLocation);
-        var loopBegin = am.createState(rep.beginLocation);
-        var loopEnd = am.createState(rep.endLocation);
-        var end = am.createState(rep.endLocation);
+    private Machine automateCycle(Cycle expr, Automaton am) {
+        var begin = am.createState(expr.beginLocation);
+        var loopBegin = am.createState(expr.beginLocation);
+        var loopEnd = am.createState(expr.endLocation);
+        var end = am.createState(expr.endLocation);
 
-        var loopMachine = automateExpression(rep.content, am);
+        var loopMachine = automateExpression(expr.content, am);
 
-        am.addEmpty(begin, end);
         am.addEmpty(begin, loopBegin);
 
         am.addEmpty(loopBegin, loopMachine.begin);

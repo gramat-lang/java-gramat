@@ -4,8 +4,8 @@ import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.engines.ParsingEngine;
 import org.gramat.expressions.groups.Alternation;
+import org.gramat.expressions.groups.Cycle;
 import org.gramat.expressions.groups.Optional;
-import org.gramat.expressions.groups.Repetition;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
@@ -59,8 +59,8 @@ public class ExpressionFormatter {
         else if (expr instanceof Optional) {
             writeOptional((Optional)expr);
         }
-        else if (expr instanceof Repetition) {
-            writeRepetition((Repetition)expr);
+        else if (expr instanceof Cycle) {
+            writeCycle((Cycle)expr);
         }
         else if (expr instanceof Sequence) {
             writeSequence((Sequence)expr, wrapped);
@@ -151,8 +151,9 @@ public class ExpressionFormatter {
         wbr();
     }
 
-    private void writeRepetition(Repetition expr) {
+    private void writeCycle(Cycle expr) {
         writeRaw('{');
+        writeRaw('+');
         wbr();
 
         write(expr.content, false);

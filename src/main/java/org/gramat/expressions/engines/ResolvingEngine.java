@@ -4,8 +4,8 @@ import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.groups.Alternation;
+import org.gramat.expressions.groups.Cycle;
 import org.gramat.expressions.groups.Optional;
-import org.gramat.expressions.groups.Repetition;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
@@ -72,8 +72,8 @@ public class ResolvingEngine {
         else if (expr instanceof Optional) {
             return resolveOptional((Optional) expr);
         }
-        else if (expr instanceof Repetition) {
-            return resolveRepetition((Repetition) expr);
+        else if (expr instanceof Cycle) {
+            return resolveCycle((Cycle) expr);
         }
         else if (expr instanceof Sequence) {
             return resolveSequence((Sequence) expr);
@@ -101,8 +101,8 @@ public class ResolvingEngine {
         return new Optional(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
-    private Repetition resolveRepetition(Repetition expr) {
-        return new Repetition(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
+    private Cycle resolveCycle(Cycle expr) {
+        return new Cycle(expr.beginLocation, expr.endLocation, resolveExpression(expr.content));
     }
 
     private ActionExpression resolveAction(ActionExpression expr) {

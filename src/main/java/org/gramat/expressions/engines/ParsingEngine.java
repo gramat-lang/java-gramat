@@ -5,8 +5,8 @@ import org.gramat.exceptions.SyntaxException;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.groups.Alternation;
+import org.gramat.expressions.groups.Cycle;
 import org.gramat.expressions.groups.Optional;
-import org.gramat.expressions.groups.Repetition;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
@@ -249,30 +249,41 @@ public class ParsingEngine {
         var end = input.getLocation();
 
         if (min == 0 && max == 0) {
+            // { c / s } → [c [{+ s c }]]
             if (separator != null) {
                 return new Optional(begin, end,
                         new Sequence(begin, end,
                                 content,
-                                new Repetition(begin, end,
+                                new Optional(begin, end,
+                                        new Cycle(begin, end,
+                                            new Sequence(begin, end, separator, content)
+                                        )
+                                )
+                        )
+                );
+            }
+            else {
+                // { c } → [{+ c }]
+                return new Optional(begin, end,
+                        new Cycle(begin, end, content)
+                );
+            }
+        }
+        else if (min == 1 && max == 0) {
+            if (separator != null) {
+                // {+ c / s } → c [{+ s c }]
+                return new Sequence(begin, end,
+                        content,
+                        new Optional(begin, end,
+                                new Cycle(begin, end,
                                         new Sequence(begin, end, separator, content)
                                 )
                         )
                 );
             }
             else {
-                return new Repetition(begin, end, content);
-            }
-        }
-        else if (min == 1 && max == 0) {
-            if (separator != null) {
-                return new Sequence(begin, end, content,
-                        new Repetition(begin, end,
-                                new Sequence(begin, end, separator, content)
-                        )
-                );
-            }
-            else {
-                return new Sequence(begin, end, content, new Repetition(begin, end, content));
+                // Pure cycle
+                return new Cycle(begin, end, content);
             }
         }
         else {
