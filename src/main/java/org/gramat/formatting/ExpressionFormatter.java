@@ -11,7 +11,6 @@ import org.gramat.expressions.literals.LiteralChar;
 import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Halt;
-import org.gramat.expressions.misc.Recursion;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
 
@@ -64,9 +63,6 @@ public class ExpressionFormatter {
         }
         else if (expr instanceof ActionExpression) {
             writeAction((ActionExpression)expr);
-        }
-        else if (expr instanceof Recursion) {
-            writeRecursion((Recursion)expr);
         }
         else if (expr instanceof Reference) {
             writeReference((Reference)expr);
@@ -182,10 +178,6 @@ public class ExpressionFormatter {
 
     private void writeHalt() {
         writeRaw('^');
-    }
-
-    private void writeRecursion(Recursion expr) {
-        writeKeyword(expr.name);
     }
 
     private void writeReference(Reference expr) {
