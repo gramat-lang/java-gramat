@@ -6,10 +6,18 @@ group 'org.gramat'
 version '1.0.0'
 
 repositories {
+    maven {
+        url 'https://maven.pkg.github.com/bakasoft/java-beat'
+        credentials {
+            username System.getenv("GITHUB_USERNAME")
+            password System.getenv("GITHUB_TOKEN")
+        }
+    }
     mavenCentral()
 }
 
 dependencies {
+    implementation 'org.bakasoft:beat:1.0.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }

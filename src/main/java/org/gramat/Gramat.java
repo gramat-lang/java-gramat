@@ -16,6 +16,8 @@ import org.gramat.logging.Logger;
 import org.gramat.logging.NullLogger;
 import org.gramat.util.Debug;
 
+import java.io.InputStream;
+
 public class Gramat {
 
     private final String DEFAULT_RULE_NAME = "main";
@@ -73,5 +75,13 @@ public class Gramat {
         }
 
         return engine.builder.pop();
+    }
+
+    public EvalProgram loadProgram(InputStream stream) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void saveProgram(EvalProgram program) {
+        // TODO
     }
 }
