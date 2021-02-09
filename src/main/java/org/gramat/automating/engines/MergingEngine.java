@@ -11,6 +11,7 @@ import org.gramat.automating.transitions.TransitionAction;
 import org.gramat.automating.transitions.TransitionEmpty;
 import org.gramat.automating.transitions.TransitionRecursion;
 import org.gramat.automating.transitions.TransitionSymbol;
+import org.gramat.codes.Code;
 import org.gramat.exceptions.GramatException;
 import org.gramat.inputs.Location;
 import org.gramat.logging.Logger;
@@ -50,7 +51,7 @@ public class MergingEngine {
         var nAuto = nMachine.am;
         var queue = new LinkedList<Set<State>>();
         var control = new HashSet<String>();
-        var closure0 = emptyClosure(nMachine.begin, null);
+        var closure0 = emptyClosure(nAuto, Set.of(nMachine.begin), null);
 
         queue.add(closure0);
 
@@ -65,17 +66,20 @@ public class MergingEngine {
             if (control.add(closureID)) {
                 var dSource = mapClosure(closure, closureID);
 
-                for (var ts : findTransitionSymbols(nAuto, closure)) {
-                    var sourceTransitions = PathEngine.between(closure, ts.source);
+                for (var code : codes) {
+                    var transitionSymbols = findTransitionSymbols(nAuto, closure, code);
+                    var transitionSources = collectSources(transitionSymbols);
+                    var transitionTargets = collectTargets(transitionSymbols);
+                    var sourceTransitions = PathEngine.between(closure, transitionSources);
                     var targetTransitions = new ArrayList<Transition>();
-                    var targetClosure = emptyClosure(ts.target, targetTransitions);
+                    var targetClosure = emptyClosure(nAuto, transitionTargets, targetTransitions);
                     var targetClosureID = computeID(targetClosure);
                     var dTarget = mapClosure(targetClosure, targetClosureID);
 
                     var beginActions = listActions(sourceTransitions, Direction.FORWARD);
                     var endActions = listActions(targetTransitions, Direction.BACKWARD);
 
-                    dAuto.addMerged(dSource, dTarget, ts.code, beginActions, endActions);
+                    dAuto.addMerged(dSource, dTarget, code, beginActions, endActions);
 
                     queue.add(targetClosure);
                 }
@@ -86,6 +90,22 @@ public class MergingEngine {
         var begin = unmapClosure(closure0);
         var ends = unmapWith(nMachine.end);
         return new DeterministicMachine(dAuto, begin, ends);
+    }
+
+    private Set<State> collectSources(Set<? extends Transition> transitions) {
+        var sources = new LinkedHashSet<State>();
+        for (var t : transitions) {
+            sources.add(t.source);
+        }
+        return sources;
+    }
+
+    private Set<State> collectTargets(Set<? extends Transition> transitions) {
+        var sources = new LinkedHashSet<State>();
+        for (var t : transitions) {
+            sources.add(t.target);
+        }
+        return sources;
     }
 
     private List<ActionTemplate> listActions(Collection<Transition> transitions, Direction dir) {
@@ -112,15 +132,12 @@ public class MergingEngine {
         return actions;
     }
 
-    private static Set<State> emptyClosure(State source, List<Transition> transitions) {
-        var am = source.am;
+    private static Set<State> emptyClosure(Automaton am, Set<State> sources, List<Transition> transitions) {
         var states = new LinkedHashSet<State>();
-        var queue = new ArrayDeque<State>();
         var control = new HashSet<State>();
+        var queue = new ArrayDeque<>(sources);
 
-        queue.add(source);
-
-        do {
+        while (!queue.isEmpty()) {
             var state = queue.remove();
 
             if (control.add(state)) {
@@ -139,7 +156,7 @@ public class MergingEngine {
                     }
                 }
             }
-        } while (!queue.isEmpty());
+        }
 
         return states;
     }
@@ -160,13 +177,16 @@ public class MergingEngine {
         });
     }
 
-    private Set<TransitionSymbol> findTransitionSymbols(Automaton am, Set<State> source) {
+    private Set<TransitionSymbol> findTransitionSymbols(Automaton am, Set<State> source, Code code) {
         var result = new LinkedHashSet<TransitionSymbol>();
         for (var state : source) {
             for (var t : am.findTransitions(state, Direction.FORWARD)) {
                 if (t instanceof TransitionSymbol) {
                     var ts = (TransitionSymbol) t;
-                    result.add(ts);
+
+                    if (code.equals(ts.code)) {
+                        result.add(ts);
+                    }
                 }
                 else {
                     // TODO check for unsupported transitions

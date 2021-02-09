@@ -11,6 +11,9 @@ import org.gramat.expressions.literals.LiteralRange;
 import org.gramat.expressions.misc.ActionExpression;
 import org.gramat.expressions.misc.Reference;
 import org.gramat.expressions.misc.Wild;
+import org.gramat.formatting.ExpressionFormatter;
+import org.gramat.util.ExpressionList;
+import org.gramat.util.PP;
 
 public interface ResolvingExpression {
     static Expression resolve(ResolvingContext rc, Expression expr) {
@@ -19,27 +22,46 @@ public interface ResolvingExpression {
                 || expr instanceof Wild) {
             return expr;
         }
-        else if (expr instanceof Alternation) {
-            return ResolvingAlternation.resolve(rc, (Alternation) expr);
+
+        Expression result;
+        var hits0 = rc.getHits();
+
+        if (expr instanceof Alternation) {
+            result = ResolvingAlternation.resolve(rc, (Alternation) expr);
         }
         else if (expr instanceof Optional) {
-            return ResolvingOptional.resolve(rc, (Optional) expr);
+            result = ResolvingOptional.resolve(rc, (Optional) expr);
         }
         else if (expr instanceof Cycle) {
-            return ResolvingCycle.resolve(rc, (Cycle) expr);
+            result = ResolvingCycle.resolve(rc, (Cycle) expr);
         }
         else if (expr instanceof Sequence) {
-            return ResolvingSequence.resolve(rc, (Sequence) expr);
+            result = ResolvingSequence.resolve(rc, (Sequence) expr);
         }
         else if (expr instanceof ActionExpression) {
-            return ResolvingAction.resolve(rc, (ActionExpression) expr);
+            result = ResolvingAction.resolve(rc, (ActionExpression) expr);
         }
         else if (expr instanceof Reference) {
-            return ResolvingReference.resolve(rc, (Reference) expr);
+            result = ResolvingReference.resolve(rc, (Reference) expr);
         }
         else {
             throw new GramatException("unsupported value: " + expr);
         }
+
+        if (hits0 != rc.getHits()) {
+            System.out.println(">".repeat(80));
+            new ExpressionFormatter(System.out).write(expr);
+            System.out.println();
+            System.out.println("-".repeat(80));
+            new ExpressionFormatter(System.out).write(result);
+            System.out.println();
+            System.out.println("<".repeat(80));
+        }
+
+        return result;
     }
 
+    static ExpressionList resolveAll(ResolvingContext rc, ExpressionList items) {
+        return items.map(item -> resolve(rc, item));
+    }
 }

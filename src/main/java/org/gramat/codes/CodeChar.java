@@ -16,6 +16,23 @@ public class CodeChar implements Code {
     }
 
     @Override
+    public boolean intersects(Code code) {
+        if (code instanceof CodeChar) {
+            var cc = (CodeChar)code;
+
+            return cc.value == value;
+        }
+        else if (code instanceof CodeRange) {
+            var cr = (CodeRange) code;
+
+            return cr.test(value);
+        }
+        else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    @Override
     public String toString() {
         return "Char(" + PP.str(value) + ")";
     }

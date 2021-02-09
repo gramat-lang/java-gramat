@@ -10,9 +10,20 @@ public class ResolvingContext {
     public final ExpressionMap originalRules;
     public final Set<String> recursiveNames;
 
+    private int hits;
+
     public ResolvingContext(Logger logger, Set<String> recursiveNames, ExpressionMap originalRules) {
         this.logger = logger;
         this.originalRules = originalRules;
         this.recursiveNames = recursiveNames;
+    }
+
+    public void hit(String description) {
+        logger.debug("Resolved: " + description);
+        hits++;
+    }
+
+    public int getHits() {
+        return hits;
     }
 }

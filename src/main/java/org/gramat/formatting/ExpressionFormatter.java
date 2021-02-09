@@ -19,6 +19,14 @@ import java.util.regex.Pattern;
 
 public class ExpressionFormatter {
 
+    public static String toString(Expression expr) {
+        var buffer = new StringBuilder();
+
+        new ExpressionFormatter(buffer).write(expr);
+
+        return buffer.toString();
+    }
+
     private final Appendable out;
 
     private int maxWidth;

@@ -1,39 +1,71 @@
 package org.gramat.expressions.resolving;
 
 import org.gramat.expressions.Expression;
+import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.groups.Alternation;
+import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.misc.Nop;
 import org.gramat.util.ExpressionList;
 
 public interface ResolvingAlternation {
     static Expression resolve(ResolvingContext rc, Alternation alt) {
-        if (alt.items.isEmpty()) {
+        var newItems = ResolvingExpression.resolveAll(rc, alt.items);
+
+        if (newItems.isEmpty()) {
+            rc.hit("() → NOP");
             return new Nop(alt.beginLocation, alt.endLocation);
         }
-        else if (alt.items.size() == 1) {
-            return alt.items.get(0);
+        else if (newItems.size() == 1) {
+            rc.hit("(x) → x");
+            return newItems.get(0);
+        }
+        else if (newItems.containsOf(Alternation.class)) {
+            return flattenAlternations(rc, newItems);
+        }
+        else if (newItems.containsOf(Optional.class)) {
+            return promoteOptionals(rc, newItems);
         }
 
-        return mergeSubAlternations(rc, alt);
+        return ExpressionFactory.alternation(newItems);
     }
 
-    static Alternation mergeSubAlternations(ResolvingContext rc, Alternation alt) {
+    static Expression flattenAlternations(ResolvingContext rc, ExpressionList items) {
         var newItems = ExpressionList.builder();
 
-        for (var oldItem : alt.items) {
-            var newItem = ResolvingExpression.resolve(rc, oldItem);
-
-            if (newItem instanceof Alternation) {
-                var subAlt = (Alternation) newItem;
+        for (var item : items) {
+            if (item instanceof Alternation) {
+                var subAlt = (Alternation) item;
 
                 newItems.addAll(subAlt.items);
             }
             else {
-                newItems.add(newItem);
+                newItems.add(item);
             }
         }
 
-        return new Alternation(alt.beginLocation, alt.endLocation, newItems.build());
+        rc.hit("(x|(y|z)) → (x|y|z)");
+        return ExpressionFactory.alternation(newItems.build());
     }
+
+    static Expression promoteOptionals(ResolvingContext rc, ExpressionList items) {
+        var newItems = ExpressionList.builder();
+
+        for (var item : items) {
+            if (item instanceof Optional) {
+                var optional = (Optional) item;
+
+                newItems.add(optional.content);
+            }
+            else {
+                newItems.add(item);
+            }
+        }
+
+        rc.hit("(x|[y]|z) → [x|y|z]");
+        return ExpressionFactory.optional(
+                ExpressionFactory.alternation(newItems.build())
+        );
+    }
+
 
 }

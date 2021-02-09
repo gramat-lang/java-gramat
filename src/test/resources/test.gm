@@ -1,5 +1,5 @@
 Value = Array|Token|Object
-Object = <@("(" { <= <$ name(Token) $> "=" Value => / "," } ")")@>
+Object = <@("(" { <=(<$ name(Token) $> "=" Value)=> / "," } ")")@>
 Array = <#("[" { Value / "," } "]")#>
 Token = <%('x')%>
 

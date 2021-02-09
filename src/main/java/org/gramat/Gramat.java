@@ -4,9 +4,11 @@ import org.gramat.automating.engines.AutomatingEngine;
 import org.gramat.automating.engines.EvalNodeEngine;
 import org.gramat.automating.engines.LinkingEngine;
 import org.gramat.automating.engines.MergingEngine;
+import org.gramat.automating.engines.ValidationEngine;
 import org.gramat.eval.EvalEngine;
 import org.gramat.eval.EvalNode;
 import org.gramat.eval.EvalProgram;
+import org.gramat.exceptions.EvalException;
 import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.engines.ParsingEngine;
@@ -62,6 +64,8 @@ public class Gramat {
 
         Debug.print(eProgram.node, true);
 
+        ValidationEngine.validate(eProgram.node);
+
         return eProgram;
     }
 
@@ -71,7 +75,7 @@ public class Gramat {
         var nodeHalt = engine.run(node);
 
         if (!nodeHalt.accepted) {
-            throw new GramatException("rejected");
+            throw new EvalException("rejected " + input.getLocation(), null, nodeHalt.id);
         }
 
         return engine.builder.pop();
