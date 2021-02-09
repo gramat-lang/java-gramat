@@ -51,7 +51,7 @@ public class MergingEngine {
         var nAuto = nMachine.am;
         var queue = new LinkedList<Set<State>>();
         var control = new HashSet<String>();
-        var closure0 = emptyClosure(nAuto, Set.of(nMachine.begin), null);
+        var closure0 = emptyClosure(nMachine.begin, null);
 
         queue.add(closure0);
 
@@ -66,20 +66,17 @@ public class MergingEngine {
             if (control.add(closureID)) {
                 var dSource = mapClosure(closure, closureID);
 
-                for (var code : codes) {
-                    var transitionSymbols = findTransitionSymbols(nAuto, closure, code);
-                    var transitionSources = collectSources(transitionSymbols);
-                    var transitionTargets = collectTargets(transitionSymbols);
-                    var sourceTransitions = PathEngine.between(closure, transitionSources);
+                for (var ts : findTransitionSymbols(nAuto, closure)) {
+                    var sourceTransitions = PathEngine.between(closure, ts.source);
                     var targetTransitions = new ArrayList<Transition>();
-                    var targetClosure = emptyClosure(nAuto, transitionTargets, targetTransitions);
+                    var targetClosure = emptyClosure(ts.target, targetTransitions);
                     var targetClosureID = computeID(targetClosure);
                     var dTarget = mapClosure(targetClosure, targetClosureID);
 
                     var beginActions = listActions(sourceTransitions, Direction.FORWARD);
                     var endActions = listActions(targetTransitions, Direction.BACKWARD);
 
-                    dAuto.addMerged(dSource, dTarget, code, beginActions, endActions);
+                    dAuto.addMerged(dSource, dTarget, ts.code, beginActions, endActions);
 
                     queue.add(targetClosure);
                 }
@@ -90,22 +87,6 @@ public class MergingEngine {
         var begin = unmapClosure(closure0);
         var ends = unmapWith(nMachine.end);
         return new DeterministicMachine(dAuto, begin, ends);
-    }
-
-    private Set<State> collectSources(Set<? extends Transition> transitions) {
-        var sources = new LinkedHashSet<State>();
-        for (var t : transitions) {
-            sources.add(t.source);
-        }
-        return sources;
-    }
-
-    private Set<State> collectTargets(Set<? extends Transition> transitions) {
-        var sources = new LinkedHashSet<State>();
-        for (var t : transitions) {
-            sources.add(t.target);
-        }
-        return sources;
     }
 
     private List<ActionTemplate> listActions(Collection<Transition> transitions, Direction dir) {
@@ -132,12 +113,15 @@ public class MergingEngine {
         return actions;
     }
 
-    private static Set<State> emptyClosure(Automaton am, Set<State> sources, List<Transition> transitions) {
+    private static Set<State> emptyClosure(State source, List<Transition> transitions) {
+        var am = source.am;
         var states = new LinkedHashSet<State>();
+        var queue = new ArrayDeque<State>();
         var control = new HashSet<State>();
-        var queue = new ArrayDeque<>(sources);
 
-        while (!queue.isEmpty()) {
+        queue.add(source);
+
+        do {
             var state = queue.remove();
 
             if (control.add(state)) {
@@ -156,7 +140,7 @@ public class MergingEngine {
                     }
                 }
             }
-        }
+        } while (!queue.isEmpty());
 
         return states;
     }
@@ -177,16 +161,14 @@ public class MergingEngine {
         });
     }
 
-    private Set<TransitionSymbol> findTransitionSymbols(Automaton am, Set<State> source, Code code) {
+    private Set<TransitionSymbol> findTransitionSymbols(Automaton am, Set<State> source) {
         var result = new LinkedHashSet<TransitionSymbol>();
         for (var state : source) {
             for (var t : am.findTransitions(state, Direction.FORWARD)) {
                 if (t instanceof TransitionSymbol) {
                     var ts = (TransitionSymbol) t;
 
-                    if (code.equals(ts.code)) {
-                        result.add(ts);
-                    }
+                    result.add(ts);
                 }
                 else {
                     // TODO check for unsupported transitions
