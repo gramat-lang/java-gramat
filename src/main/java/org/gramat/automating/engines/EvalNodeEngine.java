@@ -1,7 +1,6 @@
 package org.gramat.automating.engines;
 
 import org.gramat.actions.Action;
-import org.gramat.actions.design.ActionMaker;
 import org.gramat.actions.design.ActionTemplate;
 import org.gramat.automating.DeterministicMachine;
 import org.gramat.automating.Direction;
@@ -15,12 +14,10 @@ import org.gramat.tracking.SourceMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class EvalNodeEngine {
 
@@ -91,26 +88,7 @@ public class EvalNodeEngine {
     }
 
     private Action[] compileActions(List<ActionTemplate> templates) {
-        var actions = new ArrayList<Action>();
-
-        for (var template : templates.stream().sorted(Comparator.comparingInt(a -> a.ordinal)).collect(Collectors.toList())) {
-            var add = true;
-
-            for (var action : actions) {
-                if (action.id == template.ordinal) {  // TODO this feels wrong
-                    add = false;
-                    break;
-                }
-            }
-
-            if (add) {
-                var action = ActionMaker.make(template);
-
-                actions.add(action);
-
-                sourceMap.addActionLocations(action.id, template.locations);
-            }
-        }
+        var actions = ActionEngine.compileTemplates(templates, sourceMap);
 
         if (actions.isEmpty()) {
             return null;

@@ -84,14 +84,14 @@ public interface DetEngine {
     }
 
     static List<ActionTemplate> collectActions(List<TransitionMerged> transitions, ActionRole role) {
-        var result = new ArrayList<ActionTemplate>();
+        List<ActionTemplate> result = new ArrayList<>();
 
         for (var t : transitions) {
             if (role == ActionRole.BEGIN) {
-                result.addAll(t.beginActions);
+                result = ActionEngine.joinTemplates(result, t.beginActions);
             }
             else if (role == ActionRole.END) {
-                result.addAll(t.endActions);
+                result = ActionEngine.joinTemplates(result, t.endActions);
             }
             else {
                 throw new IllegalStateException();

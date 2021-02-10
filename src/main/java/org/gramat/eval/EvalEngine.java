@@ -63,7 +63,7 @@ public class EvalEngine {
     private void execute(Action[] actions) {
         if (actions != null) {
             for (var action : actions) {
-                logger.debug("Executing %s...", action);
+                logger.debug("Executing %s (%s)...", action, action.id);
 
                 action.execute(this);
             }

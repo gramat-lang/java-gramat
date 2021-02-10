@@ -34,7 +34,7 @@ public class TextBuilder implements Builder {
 
     @Override
     public void acceptContent(Object value) {
-        throw new GramatException("error! value cannot accept more values");
+        throw new GramatException("error! text cannot accept values");
     }
 
     @Override
