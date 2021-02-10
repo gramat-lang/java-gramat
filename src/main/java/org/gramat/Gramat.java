@@ -9,10 +9,9 @@ import org.gramat.eval.EvalEngine;
 import org.gramat.eval.EvalNode;
 import org.gramat.eval.EvalProgram;
 import org.gramat.exceptions.EvalException;
-import org.gramat.exceptions.GramatException;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.engines.ParsingEngine;
-import org.gramat.expressions.resolving.ResolvingEngine;
+import org.gramat.expressions.transform.TransformEngine;
 import org.gramat.inputs.Input;
 import org.gramat.logging.Logger;
 import org.gramat.logging.NullLogger;
@@ -44,7 +43,7 @@ public class Gramat {
     }
 
     public EvalProgram compile(ExpressionProgram program) {
-        var resolvedProgram = ResolvingEngine.resolve(program, logger);
+        var resolvedProgram = TransformEngine.run(program, logger);
 
         Debug.print(resolvedProgram);
 

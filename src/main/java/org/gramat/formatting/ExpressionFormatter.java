@@ -35,7 +35,7 @@ public class ExpressionFormatter {
 
     public ExpressionFormatter(Appendable out) {
         this.out = out;
-        this.maxWidth = 80;
+        this.maxWidth = 160;
     }
 
     public void setMaxWidth(int maxWidth) {

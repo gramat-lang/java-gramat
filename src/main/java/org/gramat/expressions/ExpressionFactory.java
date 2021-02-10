@@ -5,11 +5,19 @@ import org.gramat.expressions.groups.Cycle;
 import org.gramat.expressions.groups.Optional;
 import org.gramat.expressions.groups.Sequence;
 import org.gramat.expressions.misc.ActionExpression;
+import org.gramat.expressions.misc.Halt;
+import org.gramat.expressions.misc.Nop;
 import org.gramat.inputs.Location;
 import org.gramat.util.ExpressionList;
 
+import java.util.List;
+
 public interface ExpressionFactory {
     static Sequence sequence(Expression... items) {
+        return sequence(ExpressionList.of(items));
+    }
+
+    static Sequence sequence(List<Expression> items) {
         return sequence(ExpressionList.of(items));
     }
 
@@ -24,6 +32,10 @@ public interface ExpressionFactory {
     }
 
     static Expression alternation(Expression... items) {
+        return alternation(ExpressionList.of(items));
+    }
+
+    static Expression alternation(List<Expression> items) {
         return alternation(ExpressionList.of(items));
     }
 
@@ -60,5 +72,13 @@ public interface ExpressionFactory {
 
     static Cycle cycle(Expression content) {
         return new Cycle(content.beginLocation, content.endLocation, content);
+    }
+
+    static Expression halt(Location location) {
+        return new Halt(location, location);
+    }
+
+    static Expression nop(Location location) {
+        return new Nop(location, location);
     }
 }

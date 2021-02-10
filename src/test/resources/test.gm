@@ -3,4 +3,4 @@ Object = <@("(" { <=(<$ name(Token) $> "=" Value)=> / "," } ")")@>
 Array = <#("[" { Value / "," } "]")#>
 Token = <%('x')%>
 
-main = Value
+main = ["a"]["b"]["c"]["d"]

@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+// TODO optimize this data-structure
 public class ExpressionList extends AbstractList<Expression> {
 
     public static ExpressionList of(Expression... items) {
@@ -21,13 +22,21 @@ public class ExpressionList extends AbstractList<Expression> {
         return new ExpressionList(items.toArray(Expression[]::new));
     }
 
-    public static ExpressionListBuilder builder() {
-        return new ExpressionListBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public static class ExpressionListBuilder extends ArrayList<Expression> {
+    public boolean isPresent() {
+        return items.length > 0;
+    }
+
+    public static class Builder extends ArrayList<Expression> {
         public ExpressionList build() {
             return new ExpressionList(super.toArray(Expression[]::new));
+        }
+
+        public boolean isPresent() {
+            return !isEmpty();
         }
 
         public Expression first() {
@@ -42,6 +51,16 @@ public class ExpressionList extends AbstractList<Expression> {
                 throw new NoSuchElementException();
             }
             return super.get(super.size()-1);
+        }
+
+        public Expression removeLast() {
+            if (super.isEmpty()) {
+                throw new RuntimeException();
+            }
+            var lastIndex = super.size()-1;
+            var last = super.get(lastIndex);
+            super.remove(lastIndex);
+            return last;
         }
     }
 
@@ -133,6 +152,16 @@ public class ExpressionList extends AbstractList<Expression> {
     @Override
     public int hashCode() {
         return Arrays.hashCode(items);
+    }
+
+    public int countOf(Class<? extends Expression> type) {
+        var count = 0;
+        for (var item : items) {
+            if (type.isInstance(item)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public boolean containsOf(Class<? extends Expression> type) {
