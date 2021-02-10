@@ -58,11 +58,11 @@ public class MergingEngine {
         var levels = nAuto.listLevels();
         var codes = nAuto.listCodes();
 
-        logger.debug("SimplifyExpression %s codes and %s levels...", codes.size(), levels.size());
+        logger.debug("Merging %s codes and %s levels...", codes.size(), levels.size());
 
         do {
             var closure = queue.remove();
-            var closureID = computeID(closure);
+            var closureID = State.computeID(closure);
             if (control.add(closureID)) {
                 var dSource = mapClosure(closure, closureID);
 
@@ -70,7 +70,7 @@ public class MergingEngine {
                     var sourceTransitions = PathEngine.between(closure, ts.source);
                     var targetTransitions = new ArrayList<Transition>();
                     var targetClosure = emptyClosure(ts.target, targetTransitions);
-                    var targetClosureID = computeID(targetClosure);
+                    var targetClosureID = State.computeID(targetClosure);
                     var dTarget = mapClosure(targetClosure, targetClosureID);
 
                     var beginActions = listActions(sourceTransitions, Direction.FORWARD);
@@ -179,7 +179,7 @@ public class MergingEngine {
     }
 
     private State unmapClosure(Set<State> closure) {
-        var closureID = computeID(closure);
+        var closureID = State.computeID(closure);
         var state = idStates.get(closureID);
         if (state == null) {
             throw new GramatException("state not found: " + closureID);
@@ -199,12 +199,5 @@ public class MergingEngine {
         }
 
         return result;
-    }
-
-    private static String computeID(Set<State> states) {
-        return states.stream()
-                .sorted(Comparator.comparingInt(a -> a.id))
-                .map(a -> String.valueOf(a.id))
-                .collect(Collectors.joining("_"));
     }
 }

@@ -266,6 +266,9 @@ public class Automaton {
             if (t instanceof TransitionSymbol) {
                 codes.add(((TransitionSymbol) t).code);
             }
+            else if (t instanceof TransitionMerged) {
+                codes.add(((TransitionMerged) t).code);
+            }
         }
         return codes;
     }

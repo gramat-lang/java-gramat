@@ -1,6 +1,7 @@
 package org.gramat;
 
 import org.gramat.automating.engines.AutomatingEngine;
+import org.gramat.automating.engines.DetEngine;
 import org.gramat.automating.engines.EvalNodeEngine;
 import org.gramat.automating.engines.LinkingEngine;
 import org.gramat.automating.engines.MergingEngine;
@@ -47,15 +48,19 @@ public class Gramat {
 
         Debug.print(resolvedProgram);
 
-        var nMachine = AutomatingEngine.automate(resolvedProgram, logger);
+        var eMachine = AutomatingEngine.automate(resolvedProgram, logger);
+
+        Debug.print(eMachine, false);
+
+        var eLinked = LinkingEngine.run(eMachine, logger);
+
+        Debug.print(eLinked, false);
+
+        var nMachine = MergingEngine.resolve(eLinked, logger);
 
         Debug.print(nMachine, false);
 
-        var nLinked = LinkingEngine.run(nMachine, logger);
-
-        Debug.print(nLinked, false);
-
-        var dMachine = MergingEngine.resolve(nLinked, logger);
+        var dMachine = DetEngine.run(nMachine, logger);
 
         Debug.print(dMachine, false);
 

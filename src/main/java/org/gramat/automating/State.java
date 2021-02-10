@@ -3,7 +3,9 @@ package org.gramat.automating;
 import org.gramat.inputs.Location;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class State {
 
@@ -17,6 +19,13 @@ public class State {
         this.id = id;
         this.wild = wild;
         this.locations = Collections.unmodifiableSet(locations);
+    }
+
+    public static String computeID(Set<State> states) {
+        return states.stream()
+                .sorted(Comparator.comparingInt(a -> a.id))
+                .map(a -> String.valueOf(a.id))
+                .collect(Collectors.joining("_"));
     }
 
 }
