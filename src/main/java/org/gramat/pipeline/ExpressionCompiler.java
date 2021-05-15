@@ -99,6 +99,8 @@ public class ExpressionCompiler {
     private void compileWrapping(Wrapping wrapping, Node source, Node target) {
         var initialLinks = DataUtils.copy(graph.links);
 
+        // TODO consider empty closures
+
         compileExpression(wrapping.content, source, target);
 
         // Compute links created by the compiled expression

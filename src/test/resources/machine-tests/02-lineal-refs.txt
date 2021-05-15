@@ -1,0 +1,41 @@
+title
+expression-input
+machine-code
+==========
+lit ref lit
+
+main = "a" ref "c"
+ref = "b"
+
+->1
+1->2 : a
+2->3 : b
+3->4 : c
+4<=
+----------
+lit ref* lit
+
+main = "a" ref-1 "d"
+ref-1 = "b" ref-2
+ref-2 = "c"
+
+->1
+1->2 : a
+2->3 : b
+3->4 : c
+4->5 : d
+5<=
+----------
+lit ref-1 lit ref-2
+
+main = "a" ref-1 "c" ref-2
+ref-1 = "b"
+ref-2 = "d"
+
+->1
+1->2 : a
+2->3 : b
+3->4 : c
+4->5 : d
+5<=
+----------

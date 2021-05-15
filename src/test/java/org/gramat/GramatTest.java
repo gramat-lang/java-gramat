@@ -40,9 +40,9 @@ class GramatTest {
 
             machineFormatter.writeProgram(System.out, machineProgram);
 
-            var machineContract = MachineLinker.run(machineProgram);
+            //var machineContract = MachineLinker.run(machineProgram);
 
-            machineFormatter.writeMachine(System.out, machineContract);
+            //machineFormatter.writeMachine(System.out, machineContract);
 
             assertNotNull(machineProgram);
         }
