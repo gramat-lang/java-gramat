@@ -8,6 +8,7 @@ import org.gramat.machines.MachineContract;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
 
+import javax.crypto.Mac;
 import java.io.IOException;
 
 public class MachineFormatter {
@@ -22,6 +23,14 @@ public class MachineFormatter {
             writeComment(output, entry.getKey());
             writeMachine(output, entry.getValue());
         }
+    }
+
+    public String writeMachine(Machine machine) {
+        var builder = new StringBuilder();
+
+        writeMachine(builder, machine);
+
+        return builder.toString();
     }
 
     public void writeMachine(Appendable output, Machine machine) {

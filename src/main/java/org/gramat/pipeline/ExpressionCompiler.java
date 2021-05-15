@@ -68,9 +68,7 @@ public class ExpressionCompiler {
         return new Machine(source, target, graph.links);
     }
 
-    private List<Link> compileExpression(Expression expression, Node source, Node target) {
-        var initialLinks = DataUtils.copy(graph.links);
-
+    private void compileExpression(Expression expression, Node source, Node target) {
         if (expression instanceof Wrapping) {
             compileWrapping((Wrapping)expression, source, target);
         }
@@ -98,15 +96,17 @@ public class ExpressionCompiler {
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
-
-        // Compute links created by the compiled expression
-        var result = DataUtils.copy(graph.links);
-        result.removeAll(initialLinks);
-        return result;
     }
 
     private void compileWrapping(Wrapping wrapping, Node source, Node target) {
-        var newLinks = compileExpression(wrapping.content, source, target);
+        var initialLinks = DataUtils.copy(graph.links);
+
+        compileExpression(wrapping.content, source, target);
+
+        // Compute links created by the compiled expression
+        var newLinks = DataUtils.copy(graph.links);
+        newLinks.removeAll(initialLinks);
+
         var beginAction = wrapping.createBeginAction();
         var endAction = wrapping.createEndAction();
         var ignoreBeginAction = ActionFactory.ignore(beginAction);
@@ -198,17 +198,16 @@ public class ExpressionCompiler {
         for (var i = 0 ; i < length; i++) {
             var item = sequence.items.get(i);
             if (i == lastIndex) {
+                compileExpression(item, lastNode, target);
+
+                lastNode = target;
+            }
+            else {
                 var aux = graph.createNode();
 
                 compileExpression(item, lastNode, aux);
 
                 lastNode = aux;
-            }
-            else {
-                // only the last item
-                compileExpression(item, lastNode, target);
-
-                lastNode = target;
             }
         }
     }
