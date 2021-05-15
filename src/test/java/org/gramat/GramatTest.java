@@ -1,4 +1,4 @@
-package org.gramat.parsing;
+package org.gramat;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.pipeline.ExpressionCompiler;
@@ -12,11 +12,10 @@ import tools.Resources;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
-class ExpressionParserTest {
+class GramatTest {
 
     @Test
     void test() {
@@ -28,10 +27,9 @@ class ExpressionParserTest {
         for (var resource : resources) {
             log.debug("parsing {}...", resource);
 
-            var parser = new ExpressionParser();
             var input = CharInput.of(Resources.loadString(resource), resource);
 
-            var map = parser.parseFile(input);
+            var map = ExpressionParser.parseFile(input);
 
             var program = ExpressionExpander.run(map, "main");
 

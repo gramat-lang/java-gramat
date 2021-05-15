@@ -13,10 +13,24 @@ import java.util.Optional;
 
 public class ExpressionParser {
 
-    public ExpressionMap parseFile(CharInput input) {
-        var rules = parseRules(input);
+    public static ExpressionMap parseFile(CharInput input) {
+        return new ExpressionParser(input).parseFile();
+    }
 
-        skipBlockVoid(input);
+    public static Expression parseExpression(CharInput input) {
+        return new ExpressionParser(input).parseMain();
+    }
+
+    private final CharInput input;
+
+    private ExpressionParser(CharInput input) {
+        this.input = input;
+    }
+
+    private ExpressionMap parseFile() {
+        var rules = parseRules();
+
+        skipBlockVoid();
 
         if (input.isAlive()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
@@ -26,13 +40,31 @@ public class ExpressionParser {
         return rules;
     }
 
-    private ExpressionMap parseRules(CharInput input) {
+    private Expression parseMain() {
+        var exprOp = parseExpression(true);
+
+        if (exprOp.isEmpty()) {
+            throw ErrorFactory.syntaxError(input.getLocation(),
+                    "Expected expression");
+        }
+
+        skipBlockVoid();
+
+        if (input.isAlive()) {
+            throw ErrorFactory.syntaxError(input.getLocation(),
+                    "Unexpected char: %s", input.peek());
+        }
+
+        return exprOp.get();
+    }
+
+    private ExpressionMap parseRules() {
         var rules = new ArrayList<ExpressionRule>();
 
         while (input.isAlive()) {
-            skipBlockVoid(input);
+            skipBlockVoid();
 
-            var ruleOp = parseRule(input);
+            var ruleOp = parseRule();
             if (ruleOp.isEmpty()) {
                 break;
             }
@@ -43,7 +75,7 @@ public class ExpressionParser {
         return ExpressionMap.of(rules);
     }
 
-    private void skipInlineVoid(CharInput input) {
+    private void skipInlineVoid() {
         while (input.isAlive()) {
             if (isInlineVoidSymbol(input.peek())) {
                 input.move();
@@ -59,7 +91,7 @@ public class ExpressionParser {
         }
     }
 
-    private void skipBlockVoid(CharInput input) {
+    private void skipBlockVoid() {
         while (input.isAlive()) {
             if (isBlockVoidSymbol(input.peek())) {
                 input.move();
@@ -80,22 +112,22 @@ public class ExpressionParser {
         }
     }
 
-    private Optional<ExpressionRule> parseRule(CharInput input) {
-        var nameOp = parseName(input);
+    private Optional<ExpressionRule> parseRule() {
+        var nameOp = parseName();
 
         if (nameOp.isEmpty()) {
             return Optional.empty();
         }
 
-        skipInlineVoid(input);
+        skipInlineVoid();
 
-        expect(input, '=');
+        expect('=');
 
         var location = input.beginLocation();
 
-        skipInlineVoid(input);
+        skipInlineVoid();
 
-        var exprOp = parseExpression(input, false);
+        var exprOp = parseExpression(false);
 
         if (exprOp.isEmpty()) {
             throw ErrorFactory.syntaxError(location.build(),
@@ -105,7 +137,7 @@ public class ExpressionParser {
         return Optional.of(new ExpressionRule(nameOp.get(), exprOp.get()));
     }
 
-    private void expect(CharInput input, char symbol) {
+    private void expect(char symbol) {
         var location = input.beginLocation();
         if (input.peek() != symbol) {
             throw ErrorFactory.syntaxError(location.build(),
@@ -115,7 +147,7 @@ public class ExpressionParser {
         input.move();
     }
 
-    private Optional<String> parseName(CharInput input) {
+    private Optional<String> parseName() {
         var name = new StringBuilder();
 
         if (isNameBeginSymbol(input.peek())) {
@@ -155,10 +187,10 @@ public class ExpressionParser {
         return symbol == ' ' || symbol == '\t' || symbol == '\r' || symbol == '\n';
     }
 
-    private Optional<Expression> parseExpression(CharInput input, boolean blockMode) {
+    private Optional<Expression> parseExpression(boolean blockMode) {
         var location = input.beginLocation();
 
-        var firstOp = parseSequence(input, blockMode);
+        var firstOp = parseSequence(blockMode);
         if (firstOp.isEmpty()) {
             return Optional.empty();
         }
@@ -167,12 +199,12 @@ public class ExpressionParser {
 
         sequences.add(firstOp.get());
 
-        skipInlineVoid(input);
+        skipInlineVoid();
 
         while (input.pull('|')) {
-            skipInlineVoid(input);
+            skipInlineVoid();
 
-            var sequenceOp = parseSequence(input, blockMode);
+            var sequenceOp = parseSequence(blockMode);
             if (sequenceOp.isEmpty()) {
                 throw ErrorFactory.syntaxError(input.getLocation(),
                         "Alternation option expression expected");
@@ -194,22 +226,22 @@ public class ExpressionParser {
         return Optional.of(alternation);
     }
 
-    private Optional<Expression> parseSequence(CharInput input, boolean blockMode) {
+    private Optional<Expression> parseSequence(boolean blockMode) {
         var items = new ArrayList<Expression>();
         var location = input.beginLocation();
 
         while (input.isAlive()) {
-            var itemOp = parseExpressionItem(input);
+            var itemOp = parseExpressionItem();
 
             if (itemOp.isEmpty()) {
                 break;
             }
 
             if (blockMode) {
-                skipBlockVoid(input);
+                skipBlockVoid();
             }
             else {
-                skipInlineVoid(input);
+                skipInlineVoid();
             }
 
             items.add(itemOp.get());
@@ -228,28 +260,30 @@ public class ExpressionParser {
         return Optional.of(sequence);
     }
 
-    private Optional<Expression> parseExpressionItem(CharInput input) {
+    private Optional<Expression> parseExpressionItem() {
         var symbol = input.peek();
 
         switch (symbol) {
-            case '*': return parseWildcard(input);
-            case '(': return parseGroup(input);
-            case '<': return parseWrapping(input);
-            case '[': return parseOptional(input);
-            case '{': return parseRepetition(input);
-            case '\"': return parseLiteral(input);
-            case '\'': return parseCharClass(input);
+            case '*': return parseWildcard();
+            case '(': return parseGroup();
+            case '<': return parseWrapping();
+            case '[': return parseOptional();
+            case '{': return parseRepetition();
+            case '\"':
+            case '\'':
+                return parseLiteral(symbol);
+            case '`': return parseCharClass();
             default:
                 if (isNameBeginSymbol(symbol)) {
-                    return parseReference(input);
+                    return parseReference();
                 }
                 return Optional.empty();
         }
     }
 
-    private Optional<Expression> parseReference(CharInput input) {
+    private Optional<Expression> parseReference() {
         var location = input.beginLocation();
-        var nameOp = parseName(input);
+        var nameOp = parseName();
 
         if (nameOp.isEmpty()) {
             return Optional.empty();
@@ -261,19 +295,19 @@ public class ExpressionParser {
         return Optional.of(reference);
     }
 
-    private Optional<Expression> parseCharClass(CharInput input) {
+    private Optional<Expression> parseCharClass() {
         var location = input.beginLocation();
         var options = new ArrayList<Expression>();
 
-        expect(input, '\'');
+        expect('\'');
 
         do {
-            var option = parseCharClassOption(input);
+            var option = parseCharClassOption();
 
             options.add(option);
         } while (input.pull(' '));
 
-        expect(input, '\'');
+        expect('\'');
 
         if (options.isEmpty()) {
             return Optional.empty();
@@ -286,7 +320,7 @@ public class ExpressionParser {
         return Optional.of(alternation);
     }
 
-    private Expression parseCharClassOption(CharInput input) {
+    private Expression parseCharClassOption() {
         var location = input.beginLocation();
 
         if (input.peek() == ' ') {
@@ -294,7 +328,7 @@ public class ExpressionParser {
                     "Invalid space position, try with '\\s' instead");
         }
 
-        var symbol = parseStringChar(input);
+        var symbol = parseStringChar();
 
         if (!input.pull('-')) {
             input.endLocation(location);
@@ -305,14 +339,14 @@ public class ExpressionParser {
                     "Invalid space position, try with '\\s' instead");
         }
 
-        var end = parseStringChar(input);
+        var end = parseStringChar();
 
         input.endLocation(location);
 
         return ExpressionFactory.literal(location.build(), symbol, end);
     }
 
-    private char parseStringChar(CharInput input) {
+    private char parseStringChar() {
         if (!input.isAlive()) {
             throw ErrorFactory.syntaxError(
                     input.getLocation(), "String char expected");
@@ -345,15 +379,15 @@ public class ExpressionParser {
         }
     }
 
-    private Optional<Expression> parseLiteral(CharInput input) {
+    private Optional<Expression> parseLiteral(char delimiter) {
         var location = input.beginLocation();
         var content = new ArrayList<Expression>();
 
-        expect(input, '\"');
+        expect(delimiter);
 
-        while (input.peek() != '\"') {
+        while (input.peek() != delimiter) {
             var symbolLocation = input.beginLocation();
-            var symbol = parseStringChar(input);
+            var symbol = parseStringChar();
 
             input.endLocation(symbolLocation);
 
@@ -362,7 +396,7 @@ public class ExpressionParser {
             content.add(symbolExpression);
         }
 
-        expect(input, '\"');
+        expect(delimiter);
 
         if (content.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
@@ -375,30 +409,30 @@ public class ExpressionParser {
         return Optional.of(sequence);
     }
 
-    private Optional<Expression> parseRepetition(CharInput input) {
+    private Optional<Expression> parseRepetition() {
         var location = input.beginLocation();
 
-        expect(input, '{');
+        expect('{');
 
         var oneOrMore = input.pull('+');
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        var expressionOp = parseExpression(input, true);
+        var expressionOp = parseExpression(true);
 
         if (expressionOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Repetition content expression expected");
         }
 
-        skipInlineVoid(input);
+        skipInlineVoid();
 
         Optional<Expression> separator;
 
         if (input.pull('/')) {
-            skipInlineVoid(input);
+            skipInlineVoid();
 
-            separator = parseExpression(input, true);
+            separator = parseExpression(true);
 
             if (separator.isEmpty()) {
                 throw ErrorFactory.syntaxError(input.getLocation(),
@@ -409,9 +443,9 @@ public class ExpressionParser {
             separator = Optional.empty();
         }
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        expect(input, '}');
+        expect('}');
 
         input.endLocation(location);
 
@@ -424,23 +458,23 @@ public class ExpressionParser {
         return Optional.of(option);
     }
 
-    private Optional<Expression> parseOptional(CharInput input) {
+    private Optional<Expression> parseOptional() {
         var location = input.beginLocation();
 
-        expect(input, '[');
+        expect('[');
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        var expressionOp = parseExpression(input, true);
+        var expressionOp = parseExpression(true);
 
         if (expressionOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Optional content expression expected");
         }
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        expect(input, ']');
+        expect(']');
 
         input.endLocation(location);
 
@@ -448,14 +482,14 @@ public class ExpressionParser {
         return Optional.of(option);
     }
 
-    private Optional<Expression> parseWrapping(CharInput input) {
+    private Optional<Expression> parseWrapping() {
         var location = input.beginLocation();
 
-        expect(input, '<');
+        expect('<');
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        var rawTypeOp = parseName(input);
+        var rawTypeOp = parseName();
         if (rawTypeOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Wrapping type expected");
@@ -467,27 +501,27 @@ public class ExpressionParser {
                     "Invalid wrapping type: %s", rawTypeOp.get());
         }
 
-        skipInlineVoid(input);
+        skipInlineVoid();
 
-        var argumentOp = parseName(input);
+        var argumentOp = parseName();
         if (argumentOp.isPresent()) {
-            skipInlineVoid(input);
+            skipInlineVoid();
         }
 
-        expect(input, ':');
+        expect(':');
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        var expressionOp = parseExpression(input, true);
+        var expressionOp = parseExpression(true);
 
         if (expressionOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Wrapping content expression expected");
         }
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        expect(input, '>');
+        expect('>');
 
         input.endLocation(location);
 
@@ -499,26 +533,26 @@ public class ExpressionParser {
         return Optional.of(wrapping);
     }
 
-    private Optional<Expression> parseGroup(CharInput input) {
-        expect(input, '(');
+    private Optional<Expression> parseGroup() {
+        expect('(');
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        var expressionOp = parseExpression(input, true);
+        var expressionOp = parseExpression(true);
 
         if (expressionOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Group content expression expected");
         }
 
-        skipBlockVoid(input);
+        skipBlockVoid();
 
-        expect(input, ')');
+        expect(')');
 
         return expressionOp;
     }
 
-    private Optional<Expression> parseWildcard(CharInput input) {
+    private Optional<Expression> parseWildcard() {
         var location = input.beginLocation();
         var count = 0;
 

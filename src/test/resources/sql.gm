@@ -1,4 +1,4 @@
-Identifier = <value: 'a-z A-Z' {'a-z A-Z _ 0-9'}>
+Identifier = <value: `a-z A-Z` {`a-z A-Z _ 0-9`}>
 
 Select-Columns = <list: {+ Identifier / ws "," ws }>
 
@@ -7,6 +7,6 @@ Select = <map:(
     "FROM" ws <put tableName: Identifier>
 )>
 
-ws = {'\s \t \r \n'}
+ws = {`\s \t \r \n`}
 
 main = Select
