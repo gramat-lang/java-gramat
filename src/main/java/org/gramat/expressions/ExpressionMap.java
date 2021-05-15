@@ -51,4 +51,8 @@ public class ExpressionMap {
 
         return rules;
     }
+
+    public int size() {
+        return data.size();
+    }
 }

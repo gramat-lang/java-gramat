@@ -1,5 +1,6 @@
 package org.gramat.pipeline;
 
+import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionMap;
@@ -9,8 +10,10 @@ import org.gramat.expressions.WrappingType;
 import org.gramat.tools.CharInput;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 public class ExpressionParser {
 
     public static ExpressionMap parseFile(CharInput input) {
@@ -22,12 +25,16 @@ public class ExpressionParser {
     }
 
     private final CharInput input;
+    private final ExpressionFactory factory;
 
     private ExpressionParser(CharInput input) {
         this.input = input;
+        this.factory = new ExpressionFactory();
     }
 
     private ExpressionMap parseFile() {
+        log.debug("Parsing {} file...", Objects.requireNonNullElse(input.getResource(), "expression"));
+
         var rules = parseRules();
 
         skipBlockVoid();
@@ -37,10 +44,14 @@ public class ExpressionParser {
                     "Unexpected char: %s", input.peek());
         }
 
+        log.debug("Expression file parsed: {} rule(s), {} item(s)", rules.size(), factory.getCount());
+
         return rules;
     }
 
     private Expression parseMain() {
+        log.debug("Parsing {} expression...", Objects.requireNonNullElse(input.getResource(), "main"));
+
         var exprOp = parseExpression(true);
 
         if (exprOp.isEmpty()) {
@@ -54,6 +65,8 @@ public class ExpressionParser {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Unexpected char: %s", input.peek());
         }
+
+        log.debug("Expression parsed: {} item(s)", factory.getCount());
 
         return exprOp.get();
     }
@@ -222,7 +235,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var alternation = ExpressionFactory.alternation(location.build(), sequences);
+        var alternation = factory.alternation(location.build(), sequences);
         return Optional.of(alternation);
     }
 
@@ -256,7 +269,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var sequence = ExpressionFactory.sequence(location.build(), items);
+        var sequence = factory.sequence(location.build(), items);
         return Optional.of(sequence);
     }
 
@@ -269,8 +282,7 @@ public class ExpressionParser {
             case '<': return parseWrapping();
             case '[': return parseOptional();
             case '{': return parseRepetition();
-            case '\"':
-            case '\'':
+            case '\"', '\'':
                 return parseLiteral(symbol);
             case '`': return parseCharClass();
             default:
@@ -291,7 +303,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var reference = ExpressionFactory.reference(location.build(), nameOp.get());
+        var reference = factory.reference(location.build(), nameOp.get());
         return Optional.of(reference);
     }
 
@@ -316,7 +328,7 @@ public class ExpressionParser {
             return Optional.of(options.get(0));
         }
 
-        var alternation = ExpressionFactory.alternation(location.build(), options);
+        var alternation = factory.alternation(location.build(), options);
         return Optional.of(alternation);
     }
 
@@ -332,7 +344,7 @@ public class ExpressionParser {
 
         if (!input.pull('-')) {
             input.endLocation(location);
-            return ExpressionFactory.literal(location.build(), symbol);
+            return factory.literal(location.build(), symbol);
         }
         else if (input.peek() == ' ') {
             throw ErrorFactory.syntaxError(location.build(),
@@ -343,7 +355,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        return ExpressionFactory.literal(location.build(), symbol, end);
+        return factory.literal(location.build(), symbol, end);
     }
 
     private char parseStringChar() {
@@ -391,7 +403,7 @@ public class ExpressionParser {
 
             input.endLocation(symbolLocation);
 
-            var symbolExpression = ExpressionFactory.literal(symbolLocation.build(), symbol);
+            var symbolExpression = factory.literal(symbolLocation.build(), symbol);
 
             content.add(symbolExpression);
         }
@@ -405,7 +417,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var sequence = ExpressionFactory.sequence(location.build(), content);
+        var sequence = factory.sequence(location.build(), content);
         return Optional.of(sequence);
     }
 
@@ -449,12 +461,12 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var repeat = ExpressionFactory.repeat(location.build(), expressionOp.get(), separator.orElse(null));
+        var repeat = factory.repeat(location.build(), expressionOp.get(), separator.orElse(null));
         if (oneOrMore) {
             return Optional.of(repeat);
         }
 
-        var option = ExpressionFactory.option(location.build(), repeat);
+        var option = factory.option(location.build(), repeat);
         return Optional.of(option);
     }
 
@@ -478,7 +490,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var option = ExpressionFactory.option(location.build(), expressionOp.get());
+        var option = factory.option(location.build(), expressionOp.get());
         return Optional.of(option);
     }
 
@@ -525,7 +537,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var wrapping = ExpressionFactory.wrapping(
+        var wrapping = factory.wrapping(
                 location.build(),
                 typeOp.get(),
                 argumentOp.orElse(null),
@@ -566,7 +578,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        var wildcard = ExpressionFactory.wildcard(location.build(), count);
+        var wildcard = factory.wildcard(location.build(), count);
         return Optional.of(wildcard);
     }
 

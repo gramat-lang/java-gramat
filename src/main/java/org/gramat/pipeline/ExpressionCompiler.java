@@ -14,7 +14,6 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.machines.Graph;
-import org.gramat.machines.Link;
 import org.gramat.machines.LinkAction;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineProgram;
@@ -25,7 +24,6 @@ import org.gramat.tools.IdentifierProvider;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -113,8 +111,7 @@ public class ExpressionCompiler {
         var cancelEndAction = ActionFactory.cancel(endAction);
 
         for (var link : newLinks) {
-            if (link instanceof LinkAction) {
-                var linkAct = (LinkAction) link;
+            if (link instanceof LinkAction linkAct) {
                 if (linkAct.source == source) {
                     linkAct.beginActions.add(beginAction);
                 }

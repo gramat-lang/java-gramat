@@ -1,33 +1,22 @@
 package org.gramat.pipeline;
 
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.machines.Machine;
 import org.gramat.tools.CharInput;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExpressionCompilerTest {
 
-    @Test
-    void testAlternation(TestInfo testInfo) {
-        var actual = compile("'a'|'b'", testInfo);
-
-        var expected = """
-                ->1
-                1->2 : a
-                1->2 : b
-                2<=
-                """;
-
-        assertEquals(expected, actual);
-    }
-
-    private static String compile(String expressionInput, TestInfo testInfo) {
-        var input = CharInput.of(expressionInput, testInfo.getDisplayName());
+    @ParameterizedTest
+    @MethodSource
+    void testExpression(String title, String expressionInput, String expected) {
+        var input = CharInput.of(expressionInput, title);
         var expression = ExpressionParser.parseExpression(input);
         var expressionProgram = new ExpressionProgram(expression, Map.of());
         var machineProgram = ExpressionCompiler.run(expressionProgram);
@@ -35,8 +24,70 @@ class ExpressionCompilerTest {
         assertTrue(machineProgram.dependencies.isEmpty(), "Dependencies map must be empty");
 
         var formatter = new MachineFormatter();
+        var actual = formatter.writeMachine(machineProgram.main);
 
-        return formatter.writeMachine(machineProgram.main);
+        assertEquals(expected, actual);
+    }
+
+    static Stream<Arguments> testExpression() {
+        return Stream.of(
+                Arguments.of(
+                        "Alternation",
+                        "'a'|'b'|'c'",
+                        """
+                        ->1
+                        1->2 : a
+                        1->2 : b
+                        1->2 : c
+                        2<=
+                        """
+                ),
+                Arguments.of(
+                        "Option",
+                        "['a']",
+                        """
+                        ->1
+                        1->2 : a
+                        1->2
+                        2<=
+                        """),
+                Arguments.of(
+                        "Repeat",
+                        "{+'a'}",
+                        """
+                        ->1
+                        1->2 : a
+                        2->2 : a
+                        2<=
+                        """),
+                Arguments.of(
+                        "Repeat with separator",
+                        "{+'a'/'b'}",
+                        """
+                        ->1
+                        1->2 : a
+                        2->3 : b
+                        3->2 : a
+                        2<=
+                        """),
+                Arguments.of(
+                        "Sequence",
+                        "'a' 'b' 'c'",
+                        """
+                        ->1
+                        1->3 : a
+                        3->4 : b
+                        4->2 : c
+                        2<=
+                        """),
+                Arguments.of(
+                        "Literal",
+                        "'a'", """
+                        ->1
+                        1->2 : a
+                        2<=
+                        """)
+        );
     }
 
 }

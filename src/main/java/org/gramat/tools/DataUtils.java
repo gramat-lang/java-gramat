@@ -13,13 +13,13 @@ import java.util.Set;
 
 public class DataUtils {
 
-    public static <T> List<T> immutableCopy(List<T> data) {
+    public static <T> List<T> immutableCopy(List<? extends T> data) {
         return new ImmutableList.Builder<T>()
                 .addAll(data)
                 .build();
     }
 
-    public static <T> Set<T> immutableCopy(Set<T> data) {
+    public static <T> Set<T> immutableCopy(Set<? extends T> data) {
         return new ImmutableSet.Builder<T>()
                 .addAll(data)
                 .build();

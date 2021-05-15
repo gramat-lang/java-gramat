@@ -22,6 +22,10 @@ public class CharInput {
         this.position = 0;
     }
 
+    public String getResource() {
+        return resource;
+    }
+
     public boolean isAlive() {
         return position < content.length;
     }

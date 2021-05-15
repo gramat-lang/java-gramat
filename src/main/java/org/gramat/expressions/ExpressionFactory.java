@@ -2,50 +2,64 @@ package org.gramat.expressions;
 
 import org.gramat.location.Location;
 import org.gramat.symbols.SymbolFactory;
+import org.gramat.tools.DataUtils;
 
 import java.util.List;
 
 public class ExpressionFactory {
 
-    public static Wrapping wrapping(Location location, WrappingType type, String argument, Expression content) {
+    private int count;
+
+    public ExpressionFactory() {
+        count = 0;
+    }
+
+    public Wrapping wrapping(Location location, WrappingType type, String argument, Expression content) {
+        count++;
         return new Wrapping(location, type, argument, content);
     }
 
-    public static Reference reference(Location location, String name) {
+    public Reference reference(Location location, String name) {
+        count++;
         return new Reference(location, name);
     }
 
-    public static Sequence sequence(Location location, List<? extends Expression> items) {
-        return new Sequence(location, seal(items));
+    public Sequence sequence(Location location, List<? extends Expression> items) {
+        count++;
+        return new Sequence(location, DataUtils.immutableCopy(items));
     }
 
-    public static Alternation alternation(Location location, List<? extends Expression> items) {
-        return new Alternation(location, seal(items));
+    public Alternation alternation(Location location, List<? extends Expression> items) {
+        count++;
+        return new Alternation(location, DataUtils.immutableCopy(items));
     }
 
-    public static Wildcard wildcard(Location location, int level) {
+    public Wildcard wildcard(Location location, int level) {
+        count++;
         return new Wildcard(location, level);
     }
 
-    public static Option option(Location location, Expression content) {
+    public Option option(Location location, Expression content) {
+        count++;
         return new Option(location, content);
     }
 
-    public static Repeat repeat(Location location, Expression content, Expression separator) {
+    public Repeat repeat(Location location, Expression content, Expression separator) {
+        count++;
         return new Repeat(location, content, separator);
     }
 
-    public static Literal literal(Location location, char value) {
+    public Literal literal(Location location, char value) {
+        count++;
         return new Literal(location, SymbolFactory.character(value));
     }
 
-    public static Literal literal(Location location, char begin, char end) {
+    public Literal literal(Location location, char begin, char end) {
+        count++;
         return new Literal(location, SymbolFactory.range(begin, end));
     }
 
-    private static List<Expression> seal(List<? extends Expression> items) {
-        return List.of(items.toArray(new Expression[0]));
+    public int getCount() {
+        return count;
     }
-
-    private ExpressionFactory() {}
 }
