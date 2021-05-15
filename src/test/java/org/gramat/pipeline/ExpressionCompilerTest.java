@@ -15,10 +15,13 @@ class ExpressionCompilerTest {
     @Test
     void testAlternation(TestInfo testInfo) {
         var actual = compile("'a'|'b'", testInfo);
-        var expected = "->1\n" +
-                "1->2 : a\n" +
-                "1->2 : b\n" +
-                "2<=\n";
+
+        var expected = """
+                ->1
+                1->2 : a
+                1->2 : b
+                2<=
+                """;
 
         assertEquals(expected, actual);
     }

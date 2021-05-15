@@ -1,9 +1,12 @@
 plugins {
-    id 'java'
+    id 'java-library'
 }
 
 group 'org.gramat'
 version '0.0.1'
+
+sourceCompatibility = '16'
+targetCompatibility = '16'
 
 repositories {
     mavenCentral()
