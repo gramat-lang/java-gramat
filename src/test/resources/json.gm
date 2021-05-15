@@ -1,0 +1,14 @@
+Value = ws (String | Number | Object | Array | True | False | Null) ws
+Object = <map: "{" { ws <put: <key:String> ws ":" Value> / "," } ws "}">
+Array = <list: "[" { Value / "," } ws "]">
+String = <value: "\"" { 'a-z A-Z' } "\"">
+Number = <value: ["-"] ("0" | '1-9' {'0-9'}) ["." {+'0-9'}] ['e E' ['- +'] {+'0-9'}]>
+True = <value: "true">
+False = <value: "false">
+Null = <value: "null">
+
+escaped-char = "\\" ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | "u" hex-digit hex-digit hex-digit hex-digit)
+hex-digit = 'a-f A-F 0-9'
+ws = {'\s \r \n \t'}
+
+main = Value

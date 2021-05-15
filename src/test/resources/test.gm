@@ -1,0 +1,6 @@
+Value = Array|Token|Object
+Object = <map: "(" { <put: <key:Token> "=" Value> / "," } ")">
+Array = <list: "[" { Value / "," } "]">
+Token = <value: 'x'>
+
+main = Value

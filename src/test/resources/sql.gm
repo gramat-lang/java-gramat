@@ -1,0 +1,12 @@
+Identifier = <value: 'a-z A-Z' {'a-z A-Z _ 0-9'}>
+
+Select-Columns = <list: {+ Identifier / ws "," ws }>
+
+Select = <map:(
+    "SELECT" ws <put columns: Select-Columns> ws
+    "FROM" ws <put tableName: Identifier>
+)>
+
+ws = {'\s \t \r \n'}
+
+main = Select
