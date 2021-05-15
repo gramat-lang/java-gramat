@@ -41,7 +41,11 @@ public class MachineLinker {
     }
 
     private Machine run(Machine main) {
+        log.debug("Linking main machine...");
+
         resolveMachine(main);
+
+        log.debug("Linking completed: {} link(s)", graph.links.size());
 
         var source = unmap(main.source);
         var target = unmap(main.target);

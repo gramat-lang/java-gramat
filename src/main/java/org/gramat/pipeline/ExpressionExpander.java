@@ -39,17 +39,22 @@ public class ExpressionExpander {
     }
 
     private ExpressionProgram expand(Expression main) {
-        var recursiveNames = computeRecursiveNames(main);
-        var newDependencies = new LinkedHashMap<String, Expression>();
+        log.debug("Expanding main expression...");
 
+        var recursiveNames = computeRecursiveNames(main);
+        var newMain = expand(main, recursiveNames);
+
+        var newDependencies = new LinkedHashMap<String, Expression>();
         for (var name : recursiveNames) {
+            log.debug("Expanding {} dependency...", name);
+
             var expr = dependencies.find(name);
             var newExpr = expand(expr, recursiveNames);
 
             newDependencies.put(name, newExpr);
         }
 
-        var newMain = expand(main, recursiveNames);
+        log.debug("Expanding completed: {} rule(s)", 1 + newDependencies.size());
 
         return new ExpressionProgram(newMain, newDependencies);
     }
