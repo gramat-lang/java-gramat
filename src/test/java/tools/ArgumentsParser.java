@@ -12,7 +12,6 @@ public class ArgumentsParser {
 
     private static final String END_HEAD = "==========";
     private static final String END_ITEM = "----------";
-    private static final String END_FILE = "**********";
 
     public static List<Arguments> parse(String... resources) {
         var arguments = new ArrayList<Arguments>();
@@ -47,23 +46,16 @@ public class ArgumentsParser {
 
         boolean flushValue;
         boolean flushArgument;
-        boolean exit;
 
         while (lines.hasNext()) {
             var line = lines.next();
 
             flushValue = false;
             flushArgument = false;
-            exit = false;
 
             if (line.equals(END_ITEM)) {
                 flushValue = true;
                 flushArgument = true;
-            }
-            else if (line.equals(END_FILE)) {
-                flushValue = true;
-                flushArgument = true;
-                exit = true;
             }
             else if (line.isEmpty()) {
                 flushValue = true;
@@ -93,10 +85,10 @@ public class ArgumentsParser {
 
                 fieldValues.clear();
             }
+        }
 
-            if (exit) {
-                break;
-            }
+        if (!valueLines.isEmpty() || !fieldValues.isEmpty()) {
+            throw new AssertionError("Missing end line.");
         }
     }
 
