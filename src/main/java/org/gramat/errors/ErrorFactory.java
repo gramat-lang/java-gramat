@@ -28,5 +28,9 @@ public class ErrorFactory {
         return new RuntimeException(message);
     }
 
+    public static RuntimeException notImplemented() {
+        return new UnsupportedOperationException();
+    }
+
     private ErrorFactory() {}
 }

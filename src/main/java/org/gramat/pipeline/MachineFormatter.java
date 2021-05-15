@@ -2,6 +2,7 @@ package org.gramat.pipeline;
 
 import org.gramat.errors.ErrorFactory;
 import org.gramat.machines.Link;
+import org.gramat.machines.LinkSymbol;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineContract;
 import org.gramat.machines.MachineProgram;
@@ -73,6 +74,17 @@ public class MachineFormatter {
     private String generateLabel(Link link) {
         var label = new StringBuilder();
 
+        if (link instanceof LinkSymbol) {
+            generateLabel((LinkSymbol)link, label);
+        }
+
+        return label.toString()
+                .replace("\\", "\\\\")
+                .replace(":", "\\:")
+                .replace(",", "\\,");
+    }
+
+    private void generateLabel(LinkSymbol link, StringBuilder label) {
         if (!ignoreActions) {
             for (var action : link.beginActions) {
                 label.append(action.toString());
@@ -92,11 +104,6 @@ public class MachineFormatter {
                 label.append(action.toString());
             }
         }
-
-        return label.toString()
-                .replace("\\", "\\\\")
-                .replace(":", "\\:")
-                .replace(",", "\\,");
     }
 
     private void writeName(Appendable output, Node node) {

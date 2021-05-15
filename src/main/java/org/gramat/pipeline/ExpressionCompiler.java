@@ -14,11 +14,11 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.machines.Graph;
+import org.gramat.machines.LinkSymbol;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
 import org.gramat.machines.NodeSet;
-import org.gramat.machines.RecursionSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 
@@ -114,20 +114,23 @@ public class ExpressionCompiler {
         var cancelEndAction = ActionFactory.cancel(endAction);
 
         for (var link : graph.links) {
-            if (link.source == source) {
-                link.beginActions.add(beginAction);
-            }
+            if (link instanceof LinkSymbol) {
+                var linkSymbol = (LinkSymbol) link;
+                if (linkSymbol.source == source) {
+                    linkSymbol.beginActions.add(beginAction);
+                }
 
-            if (link.target == source) {
-                link.beginActions.add(ignoreBeginAction);
-            }
+                if (linkSymbol.target == source) {
+                    linkSymbol.beginActions.add(ignoreBeginAction);
+                }
 
-            if (targets.contains(link.target)) {
-                link.endActions.add(endAction);
-            }
+                if (targets.contains(linkSymbol.target)) {
+                    linkSymbol.endActions.add(endAction);
+                }
 
-            if (targets.contains(link.source)) {
-                link.beginActions.add(cancelEndAction);
+                if (targets.contains(linkSymbol.source)) {
+                    linkSymbol.beginActions.add(cancelEndAction);
+                }
             }
         }
 
@@ -157,44 +160,35 @@ public class ExpressionCompiler {
     }
 
     private Set<Node> compileReference(Reference reference, Graph graph, Node source, Set<Node> targets) {
-        var refMap = searchReferenceMap(reference.name);
-
-        Symbol symbol;
-
-        if (refMap != null) {
-            symbol = new RecursionSymbol(refMap.newName);
+        ReferenceMap refMap = null;
+        for (var item : referenceStack) {
+            if (item.oldName.equals(reference.name)) {
+                refMap = item;
+                break;
+            }
         }
-        else {
+        if (refMap == null) {
             var id = recursionIds.next();
             var newName = String.format("%s-%s", reference.name, id);
+            var dependency = dependencies.get(reference.name);
+            if (dependency == null) {
+                throw ErrorFactory.notFound(reference.name);
+            }
 
-            symbol = new RecursionSymbol(newName);
+            refMap = new ReferenceMap(reference.name, newName);
 
-            compileDependency(reference.name, newName);
+            log.debug("Compiling {} -> {}", reference.name, newName);
+
+            referenceStack.addFirst(refMap);
+            var newDependency = compileMachine(dependency);
+            referenceStack.removeFirst();
+
+            newDependencies.put(newName, newDependency);
         }
 
-        for (var target : targets) {
-            graph.createLink(source, target, symbol, null);
-        }
+        graph.createLink(source, targets, refMap.newName, null, null, null);
 
         return targets;
-    }
-
-    private void compileDependency(String oldName, String newName) {
-        var dependency = dependencies.get(oldName);
-        if (dependency == null) {
-            throw ErrorFactory.notFound(oldName);
-        }
-
-        log.debug("Compiling {} -> {}", oldName, newName);
-
-        referenceStack.addFirst(new ReferenceMap(oldName, newName));
-
-        var newDependency = compileMachine(dependency);
-
-        newDependencies.put(newName, newDependency);
-
-        referenceStack.removeFirst();
     }
 
     private Set<Node> compileRepeat(Repeat repeat, Graph graph, Node source, Set<Node> targets) {
@@ -257,15 +251,6 @@ public class ExpressionCompiler {
         }
 
         return targets;
-    }
-
-    private ReferenceMap searchReferenceMap(String name) {
-        for (var item : referenceStack) {
-            if (item.oldName.equals(name)) {
-                return item;
-            }
-        }
-        return null;
     }
 
     private static class ReferenceMap {

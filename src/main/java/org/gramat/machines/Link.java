@@ -1,32 +1,18 @@
 package org.gramat.machines;
 
-import org.gramat.actions.Action;
-import org.gramat.symbols.Symbol;
-import org.gramat.tools.DataUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class Link {
+public abstract class Link {
 
     public final Node source;
     public final Node target;
 
-    public final Symbol symbol;
-    public final String token;
-
-    public final Set<Action> beginActions;
-    public final Set<Action> endActions;
-
-    public Link(Node source, Node target, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+    protected Link(Node source, Node target) {
         this.source = Objects.requireNonNull(source);
         this.target = Objects.requireNonNull(target);
-        this.symbol = Objects.requireNonNull(symbol);
-        this.token = token;
-        this.beginActions = DataUtils.mutableCopy(beginActions);
-        this.endActions = DataUtils.mutableCopy(endActions);
     }
 
     public static List<Link> findFrom(Node source, List<Link> links) {

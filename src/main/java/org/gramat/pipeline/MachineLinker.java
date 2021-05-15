@@ -6,11 +6,14 @@ import org.gramat.errors.ErrorFactory;
 import org.gramat.machines.Graph;
 import org.gramat.machines.GraphMapper;
 import org.gramat.machines.Link;
+import org.gramat.machines.LinkAction;
+import org.gramat.machines.LinkEmpty;
+import org.gramat.machines.LinkReference;
+import org.gramat.machines.LinkSymbol;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineContract;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
-import org.gramat.machines.RecursionSymbol;
 import org.gramat.tools.DataUtils;
 
 import java.util.ArrayList;
@@ -50,32 +53,32 @@ public class MachineLinker {
 
         // First, only copy recursive links
         for (var link : machine.links) {
-            if (link.symbol instanceof RecursionSymbol) {
-                var recursion = (RecursionSymbol) link.symbol;
-                var recursiveSegment = recursiveSegments.get(recursion.name);
+            if (link instanceof LinkReference) {
+                var linkRef = (LinkReference) link;
+                var recursiveSegment = recursiveSegments.get(linkRef.name);
                 if (recursiveSegment != null) {
-                    log.debug("Connecting recursion {}", recursion.name);
+                    log.debug("Connecting recursion {}", linkRef.name);
                     connectSegment(
-                            recursion.name,
-                            mapper.map(link.source), mapper.map(link.target),
-                            link.beginActions, link.endActions,
+                            linkRef.name,
+                            mapper.map(linkRef.source), mapper.map(linkRef.target),
+                            linkRef.beginActions, linkRef.endActions,
                             recursiveSegment);
                 }
                 else {
-                    log.debug("Creating recursion {}", recursion.name);
+                    log.debug("Creating recursion {}", linkRef.name);
 
-                    var dependency = findDependency(recursion.name);
+                    var dependency = findDependency(linkRef.name);
                     var newSources = mapper.map(link.source);
                     var newTargets = mapper.map(dependency.targets);
 
-                    recursiveSegments.put(recursion.name, new RecursiveSegment(newSources, newTargets));
+                    recursiveSegments.put(linkRef.name, new RecursiveSegment(newSources, newTargets));
 
                     mapper.map(link.target, newTargets);
                     mapper.map(newSources, link.source);
 
-                    resolveRecursion(recursion.name,
+                    resolveRecursion(linkRef.name,
                             newSources, newTargets, dependency,
-                            link.beginActions, link.endActions);
+                            linkRef.beginActions, linkRef.endActions);
                 }
             }
             else {
@@ -88,7 +91,17 @@ public class MachineLinker {
             var newSources = mapper.map(link.source);
             var newTargets = mapper.map(link.target);
 
-            graph.createLink(newSources, newTargets, link.symbol, null, link.beginActions, link.endActions);
+            if (link instanceof LinkSymbol) {
+                var linkSymbol = (LinkSymbol) link;
+
+                graph.createLink(newSources, newTargets, linkSymbol.symbol, null, linkSymbol.beginActions, linkSymbol.endActions);
+            }
+            else if (link instanceof LinkEmpty) {
+                graph.createLink(newSources, newTargets);
+            }
+            else {
+                throw ErrorFactory.notImplemented();
+            }
         }
     }
 
@@ -97,23 +110,23 @@ public class MachineLinker {
 
         // Recursive links first
         for (var link : machine.links) {
-            if (link.symbol instanceof RecursionSymbol) {
-                var linkInfo = computeLinkInfo(link, machine, rootSources, rootTargets, rootBeginActions, rootEndActions);
-                var recursion = (RecursionSymbol) link.symbol;
-                var recursiveSegment = recursiveSegments.get(recursion.name);
+            if (link instanceof LinkReference) {
+                var linkRef = (LinkReference) link;
+                var linkInfo = computeLinkInfo(linkRef, machine, rootSources, rootTargets, rootBeginActions, rootEndActions);
+                var recursiveSegment = recursiveSegments.get(linkRef.name);
                 if (recursiveSegment != null) {
-                    connectSegment(recursion.name,
+                    connectSegment(linkRef.name,
                             linkInfo.newSources, linkInfo.newTargets,
                             linkInfo.beginActions, linkInfo.endActions,
                             recursiveSegment);
                 }
                 else {
-                    recursiveSegments.put(recursion.name, new RecursiveSegment(linkInfo.newSources, linkInfo.newTargets));
+                    recursiveSegments.put(linkRef.name, new RecursiveSegment(linkInfo.newSources, linkInfo.newTargets));
 
                     resolveRecursion(
-                            recursion.name,
+                            linkRef.name,
                             linkInfo.newSources, linkInfo.newTargets,
-                            findDependency(recursion.name),
+                            findDependency(linkRef.name),
                             linkInfo.beginActions, linkInfo.endActions);
                 }
             }
@@ -124,28 +137,71 @@ public class MachineLinker {
 
         for (var link : nonRecursiveLinks) {
             var linkInfo = computeLinkInfo(link, machine, rootSources, rootTargets, rootBeginActions, rootEndActions);
-            graph.createLink(
-                    linkInfo.newSources, linkInfo.newTargets,
-                    link.symbol, null,
-                    linkInfo.beginActions, linkInfo.endActions);
+            if (link instanceof LinkSymbol) {
+                var linkSymbol = (LinkSymbol) link;
+                graph.createLink(
+                        linkInfo.newSources, linkInfo.newTargets,
+                        linkSymbol.symbol, null,
+                        linkInfo.beginActions, linkInfo.endActions);
+            }
+            else if (link instanceof LinkEmpty) {
+                graph.createLink(linkInfo.newSources, linkInfo.newTargets);
+            }
+            else {
+                throw ErrorFactory.notImplemented();
+            }
         }
     }
 
     private void connectSegment(String name, Set<Node> newSources, Set<Node> newTargets, Set<Action> beginActions, Set<Action> endActions, RecursiveSegment recursiveSegment) {
         for (var fromLink : Link.findFrom(recursiveSegment.sources, graph.links)) {
-            graph.createLink(
-                    newSources, fromLink.target,
-                    fromLink.symbol, name,
-                    DataUtils.join(beginActions, fromLink.beginActions),
-                    fromLink.endActions);
+            if (fromLink instanceof LinkReference) {
+                var linkRef = (LinkReference) fromLink;
+                graph.createLink(
+                        newSources, fromLink.target,
+                        linkRef.name, name,
+                        DataUtils.join(beginActions, linkRef.beginActions),
+                        linkRef.endActions);
+            }
+            else if (fromLink instanceof LinkSymbol) {
+                var linkSym = (LinkSymbol) fromLink;
+                graph.createLink(
+                        newSources, fromLink.target,
+                        linkSym.symbol, name,
+                        DataUtils.join(beginActions, linkSym.beginActions),
+                        linkSym.endActions);
+            }
+            else if (fromLink instanceof LinkEmpty) {
+                graph.createLink(newSources, fromLink.target);
+            }
+            else {
+                throw ErrorFactory.notImplemented();
+            }
         }
 
         for (var toLink : Link.findTo(recursiveSegment.targets, graph.links)) {
-            graph.createLink(
-                    toLink.source, newTargets,
-                    toLink.symbol, name,
-                    toLink.beginActions,
-                    DataUtils.join(toLink.endActions, endActions));
+            if (toLink instanceof LinkReference) {
+                var linkRef = (LinkReference) toLink;
+                graph.createLink(
+                        linkRef.source, newTargets,
+                        linkRef.name, name,
+                        linkRef.beginActions,
+                        DataUtils.join(linkRef.endActions, endActions));
+            }
+            else if (toLink instanceof LinkSymbol) {
+                var linkSym = (LinkSymbol) toLink;
+                graph.createLink(
+                        linkSym.source, newTargets,
+                        linkSym.symbol, name,
+                        linkSym.beginActions,
+                        DataUtils.join(linkSym.endActions, endActions));
+            }
+            else if (toLink instanceof LinkEmpty) {
+                graph.createLink(toLink.source, newTargets);
+            }
+            else {
+                throw ErrorFactory.notImplemented();
+            }
         }
     }
 
@@ -154,61 +210,73 @@ public class MachineLinker {
         Set<Node> newTargets;
         Set<Action> beginActions;
         Set<Action> endActions;
+        Set<Action> linkBeginActions;
+        Set<Action> linkEndActions;
+
+        if (link instanceof LinkAction) {
+            var linkAct = (LinkAction) link;
+            linkBeginActions = linkAct.beginActions;
+            linkEndActions = linkAct.endActions;
+        }
+        else {
+            linkBeginActions = Set.of();
+            linkEndActions = Set.of();
+        }
 
         var dir = computeDirection(link, machine);
         if (dir == Direction.S_S) {
             newSources = rootSources;
             newTargets = rootSources;
-            beginActions = DataUtils.join(rootBeginActions, link.beginActions);
-            endActions = link.endActions;
+            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
+            endActions = linkEndActions;
         }
         else if (dir == Direction.S_T) {
             newSources = rootSources;
             newTargets = rootTargets;
-            beginActions = DataUtils.join(rootBeginActions, link.beginActions);
-            endActions = link.endActions;
+            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
+            endActions = linkEndActions;
         }
         else if (dir == Direction.S_N) {
             newSources = rootSources;
             newTargets = mapper.map(link.target);
-            beginActions = DataUtils.join(rootBeginActions, link.beginActions);
-            endActions = link.endActions;
+            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
+            endActions = linkEndActions;
         }
         else if (dir == Direction.T_S) {
             newSources = rootTargets;
             newTargets = rootSources;
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else if (dir == Direction.T_T) {
             newSources = rootTargets;
             newTargets = rootTargets;
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else if (dir == Direction.T_N) {
             newSources = rootTargets;
             newTargets = mapper.map(link.target);
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else if (dir == Direction.N_S) {
             newSources = mapper.map(link.source);
             newTargets = rootSources;
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else if (dir == Direction.N_T) {
             newSources = mapper.map(link.source);
             newTargets = rootTargets;
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else if (dir == Direction.N_N) {
             newSources = mapper.map(link.source);
             newTargets = mapper.map(link.target);
-            beginActions = link.beginActions;
-            endActions = link.endActions;
+            beginActions = linkBeginActions;
+            endActions = linkEndActions;
         }
         else {
             throw ErrorFactory.internalError("not implemented: " + dir);
