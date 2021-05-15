@@ -133,7 +133,11 @@ public class ExpressionCompiler {
 
     private void compileAlternation(Alternation alternation, Node source, Node target) {
         for (var item : alternation.items) {
-            compileExpression(item, source, target);
+            var aux = graph.createNode();
+
+            compileExpression(item, source, aux);
+
+            graph.createLink(aux, target);
         }
     }
 

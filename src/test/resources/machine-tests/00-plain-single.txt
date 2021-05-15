@@ -2,17 +2,20 @@ title
 expression-input
 machine-code
 ==========
-Alternation
+alternation
 
 main = 'a'|'b'|'c'
 
 ->1
 1->2 : a
-1->2 : b
-1->2 : c
-2<=
+2->3 : empty
+1->4 : b
+4->3 : empty
+1->5 : c
+5->3 : empty
+3<=
 ----------
-Option
+option
 
 main = ['a']
 
@@ -21,7 +24,7 @@ main = ['a']
 1->2 : empty
 2<=
 ----------
-Repeat
+repeat
 
 main = {+'a'}
 
@@ -30,7 +33,7 @@ main = {+'a'}
 2->2 : a
 2<=
 ----------
-Repeat with separator
+repeat with separator
 
 main = {+'a'/'b'}
 
@@ -40,7 +43,7 @@ main = {+'a'/'b'}
 3->2 : a
 2<=
 ----------
-Sequence
+sequence
 
 main = 'a' 'b' 'c'
 
@@ -50,7 +53,7 @@ main = 'a' 'b' 'c'
 3->4 : c
 4<=
 ----------
-Literal
+literal
 
 main = 'a'
 
