@@ -4,7 +4,7 @@ machine-code
 ==========
 Alternation
 
-'a'|'b'|'c'
+main = 'a'|'b'|'c'
 
 ->1
 1->2 : a
@@ -14,7 +14,7 @@ Alternation
 ----------
 Option
 
-['a']
+main = ['a']
 
 ->1
 1->2 : a
@@ -23,7 +23,7 @@ Option
 ----------
 Repeat
 
-{+'a'}
+main = {+'a'}
 
 ->1
 1->2 : a
@@ -32,7 +32,7 @@ Repeat
 ----------
 Repeat with separator
 
-{+'a'/'b'}
+main = {+'a'/'b'}
 
 ->1
 1->2 : a
@@ -42,17 +42,17 @@ Repeat with separator
 ----------
 Sequence
 
-'a' 'b' 'c'
+main = 'a' 'b' 'c'
 
 ->1
-1->3 : a
-3->4 : b
-4->2 : c
-2<=
+1->2 : a
+2->3 : b
+3->4 : c
+4<=
 ----------
 Literal
 
-'a'
+main = 'a'
 
 ->1
 1->2 : a

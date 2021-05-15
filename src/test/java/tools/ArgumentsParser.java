@@ -1,25 +1,35 @@
 package tools;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
+@Slf4j
 public class ArgumentsParser {
 
     private static final String END_HEAD = "==========";
     private static final String END_ITEM = "----------";
     private static final String END_FILE = "**********";
 
-    public static List<Arguments> parse(String resource) {
-        var lines = Arrays.stream(Resources.loadLines(resource)).iterator();
-        var fieldNames = readHead(lines);
-        return readItems(fieldNames, lines);
+    public static List<Arguments> parse(String... resources) {
+        var arguments = new ArrayList<Arguments>();
+
+        for (var resource : resources) {
+            log.debug("Reading arguments from {}...", resource);
+
+            readResource(resource, arguments);
+        }
+
+        log.debug("Reading arguments completed: {} set(s)", arguments.size());
+
+        return arguments;
     }
 
-    private static List<String> readHead(Iterator<String> lines) {
+    private static void readResource(String resource, List<Arguments> arguments) {
+        var lines = Arrays.stream(Resources.loadLines(resource)).iterator();
         var fieldNames = new ArrayList<String>();
         while (lines.hasNext()) {
             var line = lines.next();
@@ -32,11 +42,6 @@ public class ArgumentsParser {
             }
         }
 
-        return fieldNames;
-    }
-
-    private static List<Arguments> readItems(List<String> fieldNames, Iterator<String> lines) {
-        var arguments = new ArrayList<Arguments>();
         var valueLines = new ArrayList<String>();
         var fieldValues = new ArrayList<String>();
 
@@ -93,8 +98,6 @@ public class ArgumentsParser {
                 break;
             }
         }
-
-        return arguments;
     }
 
 }
