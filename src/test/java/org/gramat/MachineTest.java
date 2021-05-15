@@ -1,7 +1,5 @@
 package org.gramat;
 
-import org.gramat.pipeline.ExpressionCompiler;
-import org.gramat.pipeline.ExpressionParser;
 import org.gramat.pipeline.MachineFormatter;
 import org.gramat.tools.CharInput;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,13 +9,13 @@ import tools.ArgumentsParser;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MachineTest {
 
     @ParameterizedTest
     @MethodSource
-    void testExpression(String title, String expressionInput, String expected) {
+    void testExpressionVsMachine(String title, String expressionInput, String expected) {
         var gramat = new Gramat();
         var input = CharInput.of(expressionInput, title);
         var machine = gramat.compile(input);
@@ -27,9 +25,11 @@ class MachineTest {
         assertEquals(expected + "\n", actual);
     }
 
-    static List<Arguments> testExpression() {
+    static List<Arguments> testExpressionVsMachine() {
         return ArgumentsParser.parse(
-                "/machine-tests/00-simple-test.txt"
+                "/machine-tests/00-plain-single.txt",
+                "/machine-tests/01-plain-mixed.txt",
+                "/machine-tests/02-not-recursive.txt"
         );
     }
 
