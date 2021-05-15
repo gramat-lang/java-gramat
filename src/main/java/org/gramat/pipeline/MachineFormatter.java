@@ -76,8 +76,12 @@ public class MachineFormatter {
 
         var label = generateLabel(link);
 
-        if (!label.isBlank()) {
-            write(output, " : ");
+        write(output, " : ");
+
+        if (label.isBlank()) {
+            write(output, "empty");
+        }
+        else {
             write(output, label);
         }
 
