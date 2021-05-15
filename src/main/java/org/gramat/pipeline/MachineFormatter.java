@@ -31,9 +31,7 @@ public class MachineFormatter {
             writeLink(output, link);
         }
 
-        for (var target : machine.targets) {
-            writeAccepted(output, target);
-        }
+        writeAccepted(output, machine.target);
     }
 
     public void writeMachine(Appendable output, MachineContract machine) {
@@ -66,8 +64,14 @@ public class MachineFormatter {
         writeName(output, link.source);
         write(output, "->");
         writeName(output, link.target);
-        write(output, " : ");
-        write(output, generateLabel(link));
+
+        var label = generateLabel(link);
+
+        if (!label.isBlank()) {
+            write(output, " : ");
+            write(output, label);
+        }
+
         writeNewLine(output);
     }
 

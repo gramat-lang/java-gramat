@@ -16,7 +16,15 @@ public abstract class Link {
     }
 
     public static List<Link> findFrom(Node source, List<Link> links) {
-        return findFrom(Set.of(source), links);
+        var result = new ArrayList<Link>();
+
+        for (var link : links) {
+            if (link.source == source) {
+                result.add(link);
+            }
+        }
+
+        return result;
     }
 
     public static List<Link> findFrom(Set<Node> sources, List<Link> links) {
@@ -36,6 +44,18 @@ public abstract class Link {
 
         for (var link : links) {
             if (targets.contains(link.target)) {
+                result.add(link);
+            }
+        }
+
+        return result;
+    }
+
+    public static List<Link> findTo(Node target, List<Link> links) {
+        var result = new ArrayList<Link>();
+
+        for (var link : links) {
+            if (link.target == target) {
                 result.add(link);
             }
         }

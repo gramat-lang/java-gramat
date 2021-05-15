@@ -16,11 +16,7 @@ public class Graph {
     public final List<Link> links;
 
     public Graph() {
-        this(IdentifierProvider.create(1));
-    }
-
-    public Graph(IdentifierProvider ids) {
-        this.ids = ids;
+        this.ids = IdentifierProvider.create(1);
         this.nodes = new ArrayList<>();
         this.links = new ArrayList<>();
     }
@@ -39,6 +35,10 @@ public class Graph {
 
     public void createLink(Node source, Set<Node> targets, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
         createLink(Set.of(source), targets, name, token, beginActions, endActions);
+    }
+
+    public void createLink(Node source, Node target, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
+        links.add(new LinkReference(source, target, beginActions, endActions, name, token));
     }
 
     public void createLink(Set<Node> sources, Set<Node> targets, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
@@ -60,6 +60,10 @@ public class Graph {
         links.add(new LinkReference(source, target, null, null, name, token));
     }
 
+    public void createLink(Node source, Node target) {
+        links.add(new LinkEmpty(source, target));
+    }
+
     public void createLink(Set<Node> sources, Node target, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
         createLink(sources, Set.of(target), symbol, token, beginActions, endActions);
     }
@@ -77,6 +81,10 @@ public class Graph {
                 links.add(new LinkSymbol(source, target, beginActions, endActions, symbol, token));
             }
         }
+    }
+
+    public void createLink(Node source, Node target, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+        links.add(new LinkSymbol(source, target, beginActions, endActions, symbol, token));
     }
 
     public void createLink(Node source, Set<Node> targets) {

@@ -24,28 +24,28 @@ import java.util.Set;
 @Slf4j
 public class MachineLinker {
 
-    public static MachineContract run(MachineProgram program) {
+    public static Machine run(MachineProgram program) {
         return new MachineLinker(program.dependencies).run(program.main);
     }
 
     private final Graph graph;
     private final Map<String, Machine> dependencies;
-    private final GraphMapper mapper;
     private final Map<String, RecursiveSegment> recursiveSegments;
+    private final Map<Node, Node> nodeMap;
 
     private MachineLinker(Map<String, Machine> dependencies) {
         this.dependencies = dependencies;
         this.graph = new Graph();
-        this.mapper = new GraphMapper(graph);
         this.recursiveSegments = new HashMap<>();
+        this.nodeMap = new HashMap<>();
     }
 
-    private MachineContract run(Machine main) {
+    private Machine run(Machine main) {
         resolveMachine(main);
 
-        var sources = mapper.unmap(main.source);
-        var targets = mapper.unmap(main.targets);
-        return new MachineContract(sources, targets, graph.links);
+        var source = unmap(main.source);
+        var target = unmap(main.target);
+        return new Machine(source, target, graph.links);
     }
 
     private void resolveMachine(Machine machine) {
@@ -55,12 +55,14 @@ public class MachineLinker {
         for (var link : machine.links) {
             if (link instanceof LinkReference) {
                 var linkRef = (LinkReference) link;
+                var newSource = map(link.source);
+                var newTarget = map(link.target);
                 var recursiveSegment = recursiveSegments.get(linkRef.name);
                 if (recursiveSegment != null) {
                     log.debug("Connecting segment {}", linkRef.name);
                     connectSegment(
                             linkRef.name,
-                            mapper.map(linkRef.source), mapper.map(linkRef.target),
+                            newSource, newTarget,
                             linkRef.beginActions, linkRef.endActions,
                             recursiveSegment);
                 }
@@ -68,16 +70,11 @@ public class MachineLinker {
                     log.debug("Creating segment {}", linkRef.name);
 
                     var dependency = findDependency(linkRef.name);
-                    var newSources = mapper.map(link.source);
-                    var newTargets = mapper.map(dependency.targets);
 
-                    recursiveSegments.put(linkRef.name, new RecursiveSegment(newSources, newTargets));
-
-                    mapper.map(link.target, newTargets);
-                    mapper.map(newSources, link.source);
+                    recursiveSegments.put(linkRef.name, new RecursiveSegment(newSource, newTarget));
 
                     resolveReference(linkRef.name,
-                            newSources, newTargets, dependency,
+                            newSource, newTarget, dependency,
                             linkRef.beginActions, linkRef.endActions);
                 }
             }
@@ -88,16 +85,16 @@ public class MachineLinker {
 
         // Then, copy non-recursive
         for (var link : nonRecursiveLinks) {
-            var newSources = mapper.map(link.source);
-            var newTargets = mapper.map(link.target);
+            var newSource = map(link.source);
+            var newTarget = map(link.target);
 
             if (link instanceof LinkSymbol) {
-                var linkSymbol = (LinkSymbol) link;
+                var linkSym = (LinkSymbol) link;
 
-                graph.createLink(newSources, newTargets, linkSymbol.symbol, null, linkSymbol.beginActions, linkSymbol.endActions);
+                graph.createLink(newSource, newTarget, linkSym.symbol, null, linkSym.beginActions, linkSym.endActions);
             }
             else if (link instanceof LinkEmpty) {
-                graph.createLink(newSources, newTargets);
+                graph.createLink(newSource, newTarget);
             }
             else {
                 throw ErrorFactory.notImplemented();
@@ -105,27 +102,27 @@ public class MachineLinker {
         }
     }
 
-    private void resolveReference(String name, Set<Node> rootSources, Set<Node> rootTargets, Machine machine, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
+    private void resolveReference(String name, Node rootSource, Node rootTarget, Machine machine, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
         var nonRecursiveLinks = new ArrayList<Link>();
 
         // Recursive links first
         for (var link : machine.links) {
             if (link instanceof LinkReference) {
                 var linkRef = (LinkReference) link;
-                var linkInfo = computeLinkInfo(linkRef, machine, rootSources, rootTargets, rootBeginActions, rootEndActions);
+                var linkInfo = computeLinkInfo(linkRef, machine, rootSource, rootTarget, rootBeginActions, rootEndActions);
                 var recursiveSegment = recursiveSegments.get(linkRef.name);
                 if (recursiveSegment != null) {
                     connectSegment(linkRef.name,
-                            linkInfo.newSources, linkInfo.newTargets,
+                            linkInfo.newSource, linkInfo.newTarget,
                             linkInfo.beginActions, linkInfo.endActions,
                             recursiveSegment);
                 }
                 else {
-                    recursiveSegments.put(linkRef.name, new RecursiveSegment(linkInfo.newSources, linkInfo.newTargets));
+                    recursiveSegments.put(linkRef.name, new RecursiveSegment(linkInfo.newSource, linkInfo.newTarget));
 
                     resolveReference(
                             linkRef.name,
-                            linkInfo.newSources, linkInfo.newTargets,
+                            linkInfo.newSource, linkInfo.newTarget,
                             findDependency(linkRef.name),
                             linkInfo.beginActions, linkInfo.endActions);
                 }
@@ -136,16 +133,16 @@ public class MachineLinker {
         }
 
         for (var link : nonRecursiveLinks) {
-            var linkInfo = computeLinkInfo(link, machine, rootSources, rootTargets, rootBeginActions, rootEndActions);
+            var linkInfo = computeLinkInfo(link, machine, rootSource, rootTarget, rootBeginActions, rootEndActions);
             if (link instanceof LinkSymbol) {
-                var linkSymbol = (LinkSymbol) link;
+                var linkSym = (LinkSymbol) link;
                 graph.createLink(
-                        linkInfo.newSources, linkInfo.newTargets,
-                        linkSymbol.symbol, null,
+                        linkInfo.newSource, linkInfo.newTarget,
+                        linkSym.symbol, null,
                         linkInfo.beginActions, linkInfo.endActions);
             }
             else if (link instanceof LinkEmpty) {
-                graph.createLink(linkInfo.newSources, linkInfo.newTargets);
+                graph.createLink(linkInfo.newSource, linkInfo.newTarget);
             }
             else {
                 throw ErrorFactory.notImplemented();
@@ -153,12 +150,12 @@ public class MachineLinker {
         }
     }
 
-    private void connectSegment(String name, Set<Node> newSources, Set<Node> newTargets, Set<Action> beginActions, Set<Action> endActions, RecursiveSegment recursiveSegment) {
-        for (var fromLink : Link.findFrom(recursiveSegment.sources, graph.links)) {
+    private void connectSegment(String name, Node newSource, Node newTarget, Set<Action> beginActions, Set<Action> endActions, RecursiveSegment recursiveSegment) {
+        for (var fromLink : Link.findFrom(recursiveSegment.source, graph.links)) {
             if (fromLink instanceof LinkReference) {
                 var linkRef = (LinkReference) fromLink;
                 graph.createLink(
-                        newSources, fromLink.target,
+                        newSource, fromLink.target,
                         linkRef.name, name,
                         DataUtils.join(beginActions, linkRef.beginActions),
                         linkRef.endActions);
@@ -166,24 +163,24 @@ public class MachineLinker {
             else if (fromLink instanceof LinkSymbol) {
                 var linkSym = (LinkSymbol) fromLink;
                 graph.createLink(
-                        newSources, fromLink.target,
+                        newSource, fromLink.target,
                         linkSym.symbol, name,
                         DataUtils.join(beginActions, linkSym.beginActions),
                         linkSym.endActions);
             }
             else if (fromLink instanceof LinkEmpty) {
-                graph.createLink(newSources, fromLink.target);
+                graph.createLink(newSource, fromLink.target);
             }
             else {
                 throw ErrorFactory.notImplemented();
             }
         }
 
-        for (var toLink : Link.findTo(recursiveSegment.targets, graph.links)) {
+        for (var toLink : Link.findTo(recursiveSegment.target, graph.links)) {
             if (toLink instanceof LinkReference) {
                 var linkRef = (LinkReference) toLink;
                 graph.createLink(
-                        linkRef.source, newTargets,
+                        linkRef.source, newTarget,
                         linkRef.name, name,
                         linkRef.beginActions,
                         DataUtils.join(linkRef.endActions, endActions));
@@ -191,13 +188,13 @@ public class MachineLinker {
             else if (toLink instanceof LinkSymbol) {
                 var linkSym = (LinkSymbol) toLink;
                 graph.createLink(
-                        linkSym.source, newTargets,
+                        linkSym.source, newTarget,
                         linkSym.symbol, name,
                         linkSym.beginActions,
                         DataUtils.join(linkSym.endActions, endActions));
             }
             else if (toLink instanceof LinkEmpty) {
-                graph.createLink(toLink.source, newTargets);
+                graph.createLink(toLink.source, newTarget);
             }
             else {
                 throw ErrorFactory.notImplemented();
@@ -205,9 +202,9 @@ public class MachineLinker {
         }
     }
 
-    private RecursiveLinkInfo computeLinkInfo(Link link, Machine machine, Set<Node> rootSources, Set<Node> rootTargets, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
-        Set<Node> newSources;
-        Set<Node> newTargets;
+    private RecursiveLinkInfo computeLinkInfo(Link link, Machine machine, Node rootSource, Node rootTarget, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
+        Node newSource;
+        Node newTarget;
         Set<Action> beginActions;
         Set<Action> endActions;
         Set<Action> linkBeginActions;
@@ -225,56 +222,56 @@ public class MachineLinker {
 
         var dir = computeDirection(link, machine);
         if (dir == Direction.S_S) {
-            newSources = rootSources;
-            newTargets = rootSources;
+            newSource = rootSource;
+            newTarget = rootSource;
             beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
             endActions = linkEndActions;
         }
         else if (dir == Direction.S_T) {
-            newSources = rootSources;
-            newTargets = rootTargets;
+            newSource = rootSource;
+            newTarget = rootTarget;
             beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
             endActions = linkEndActions;
         }
         else if (dir == Direction.S_N) {
-            newSources = rootSources;
-            newTargets = mapper.map(link.target);
+            newSource = rootSource;
+            newTarget = map(link.target);
             beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
             endActions = linkEndActions;
         }
         else if (dir == Direction.T_S) {
-            newSources = rootTargets;
-            newTargets = rootSources;
+            newSource = rootTarget;
+            newTarget = rootSource;
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
         else if (dir == Direction.T_T) {
-            newSources = rootTargets;
-            newTargets = rootTargets;
+            newSource = rootTarget;
+            newTarget = rootTarget;
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
         else if (dir == Direction.T_N) {
-            newSources = rootTargets;
-            newTargets = mapper.map(link.target);
+            newSource = rootTarget;
+            newTarget = map(link.target);
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
         else if (dir == Direction.N_S) {
-            newSources = mapper.map(link.source);
-            newTargets = rootSources;
+            newSource = map(link.source);
+            newTarget = rootSource;
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
         else if (dir == Direction.N_T) {
-            newSources = mapper.map(link.source);
-            newTargets = rootTargets;
+            newSource = map(link.source);
+            newTarget = rootTarget;
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
         else if (dir == Direction.N_N) {
-            newSources = mapper.map(link.source);
-            newTargets = mapper.map(link.target);
+            newSource = map(link.source);
+            newTarget = map(link.target);
             beginActions = linkBeginActions;
             endActions = linkEndActions;
         }
@@ -282,7 +279,7 @@ public class MachineLinker {
             throw ErrorFactory.internalError("not implemented: " + dir);
         }
 
-        return new RecursiveLinkInfo(newSources, newTargets, beginActions, endActions);
+        return new RecursiveLinkInfo(newSource, newTarget, beginActions, endActions);
     }
 
     private Machine findDependency(String name) {
@@ -295,9 +292,9 @@ public class MachineLinker {
 
     private Direction computeDirection(Link link, Machine machine) {
         var fromSource = (machine.source == link.source);
-        var fromTarget = (machine.targets.contains(link.source));
+        var fromTarget = (machine.target == link.source);
         var toSource = (machine.source == link.target);
-        var toTarget = (machine.targets.contains(link.target));
+        var toTarget = (machine.target == link.target);
 
         if (fromSource) {
             if (toSource) {
@@ -328,25 +325,45 @@ public class MachineLinker {
         }
     }
 
+    private Node unmap(Node oldNode) {
+        var newNode = nodeMap.get(oldNode);
+
+        if (newNode == null) {
+            throw ErrorFactory.internalError("node not mapped");
+        }
+
+        return newNode;
+    }
+
+    private Node map(Node oldNode) {
+        return nodeMap.computeIfAbsent(oldNode, k -> {
+            var newNode = graph.createNode();
+
+            newNode.wildcard = oldNode.wildcard;
+
+            return newNode;
+        });
+    }
+
     private static class RecursiveLinkInfo {
-        public final Set<Node> newSources;
-        public final Set<Node> newTargets;
+        public final Node newSource;
+        public final Node newTarget;
         public final Set<Action> beginActions;
         public final Set<Action> endActions;
-        public RecursiveLinkInfo(Set<Node> newSources, Set<Node> newTargets, Set<Action> beginActions, Set<Action> endActions) {
-            this.newSources = newSources;
-            this.newTargets = newTargets;
+        public RecursiveLinkInfo(Node newSource, Node newTarget, Set<Action> beginActions, Set<Action> endActions) {
+            this.newSource = newSource;
+            this.newTarget = newTarget;
             this.beginActions = beginActions;
             this.endActions = endActions;
         }
     }
 
     private static class RecursiveSegment {
-        public final Set<Node> sources;
-        public final Set<Node> targets;
-        public RecursiveSegment(Set<Node> sources, Set<Node> targets) {
-            this.sources = sources;
-            this.targets = targets;
+        public final Node source;
+        public final Node target;
+        public RecursiveSegment(Node source, Node target) {
+            this.source = source;
+            this.target = target;
         }
     }
 

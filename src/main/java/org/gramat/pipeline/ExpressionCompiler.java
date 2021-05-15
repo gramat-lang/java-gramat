@@ -3,9 +3,9 @@ package org.gramat.pipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.actions.ActionFactory;
 import org.gramat.errors.ErrorFactory;
+import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Literal;
 import org.gramat.expressions.Option;
 import org.gramat.expressions.Reference;
@@ -14,18 +14,19 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.machines.Graph;
-import org.gramat.machines.LinkSymbol;
+import org.gramat.machines.Link;
+import org.gramat.machines.LinkAction;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
-import org.gramat.machines.NodeSet;
+import org.gramat.tools.DataUtils;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 public class ExpressionCompiler {
@@ -34,7 +35,7 @@ public class ExpressionCompiler {
         return new ExpressionCompiler(program.dependencies).run(program.main);
     }
 
-    private final IdentifierProvider graphIds;
+    private final Graph graph;
     private final IdentifierProvider referenceIds;
     private final Map<String, Expression> dependencies;
     private final Deque<ReferenceMap> referenceStack;
@@ -42,7 +43,7 @@ public class ExpressionCompiler {
 
     public ExpressionCompiler(Map<String, Expression> dependencies) {
         this.dependencies = dependencies;
-        this.graphIds = IdentifierProvider.create(1);
+        this.graph = new Graph();
         this.referenceIds = IdentifierProvider.create(1);
         this.referenceStack = new ArrayDeque<>();
         this.newDependencies = new LinkedHashMap<>();
@@ -55,110 +56,93 @@ public class ExpressionCompiler {
     }
 
     public Machine compileMachine(Expression expression) {
-        var graph = new Graph(graphIds);
         var source = graph.createNode();
-        var targets = compileExpression(expression, graph, source, Set.of(graph.createNode()));
-        return new Machine(source, targets, graph.links);
+        var target = graph.createNode();
+
+        compileExpression(expression, source, target);
+
+        return new Machine(source, target, graph.links);
     }
 
-    private Set<Node> compileExpression(Expression expression, Graph graph, Node source, Set<Node> targets) {
-        if (targets.isEmpty()) {
-            throw ErrorFactory.internalError("empty node set");
-        }
+    private List<Link> compileExpression(Expression expression, Node source, Node target) {
+        var initialLinks = DataUtils.copy(graph.links);
 
         if (expression instanceof Wrapping) {
-            return compileWrapping((Wrapping)expression, graph, source, targets);
+            compileWrapping((Wrapping)expression, source, target);
         }
         else if (expression instanceof Alternation) {
-            return compileAlternation((Alternation)expression, graph, source, targets);
+            compileAlternation((Alternation)expression, source, target);
         }
         else if (expression instanceof Option) {
-            return compileOption((Option)expression, graph, source, targets);
+            compileOption((Option)expression, source, target);
         }
         else if (expression instanceof Reference) {
-            return compileReference((Reference)expression, graph, source, targets);
+            compileReference((Reference)expression, source, target);
         }
         else if (expression instanceof Repeat) {
-            return compileRepeat((Repeat)expression, graph, source, targets);
+            compileRepeat((Repeat)expression, source, target);
         }
         else if (expression instanceof Sequence) {
-            return compileSequence((Sequence)expression, graph, source, targets);
+            compileSequence((Sequence)expression, source, target);
         }
         else if (expression instanceof Literal) {
-            return compileLiteral((Literal)expression, graph, source, targets);
+            compileLiteral((Literal)expression, source, target);
         }
         else if (expression instanceof Wildcard) {
-            return compileWildcard((Wildcard)expression, source, targets);
+            compileWildcard((Wildcard)expression, source, target);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
-    }
 
-    private Set<Node> compileExpression(Expression expression, Graph graph, Set<Node> sources, Set<Node> targets) {
-        var result = new NodeSet();
-
-        for (var source : sources) {
-            result.addAll(compileExpression(expression, graph, source, targets));
-        }
-
+        // Compute links created by the compiled expression
+        var result = DataUtils.copy(graph.links);
+        result.removeAll(initialLinks);
         return result;
     }
 
-    private Set<Node> compileWrapping(Wrapping wrapping, Graph graph, Node source, Set<Node> targets) {
-        var result = compileExpression(wrapping.content, graph, source, targets);
+    private void compileWrapping(Wrapping wrapping, Node source, Node target) {
+        var newLinks = compileExpression(wrapping.content, source, target);
         var beginAction = wrapping.createBeginAction();
         var endAction = wrapping.createEndAction();
         var ignoreBeginAction = ActionFactory.ignore(beginAction);
         var cancelEndAction = ActionFactory.cancel(endAction);
 
-        for (var link : graph.links) {
-            if (link instanceof LinkSymbol) {
-                var linkSymbol = (LinkSymbol) link;
-                if (linkSymbol.source == source) {
-                    linkSymbol.beginActions.add(beginAction);
+        for (var link : newLinks) {
+            if (link instanceof LinkAction) {
+                var linkAct = (LinkAction) link;
+                if (linkAct.source == source) {
+                    linkAct.beginActions.add(beginAction);
                 }
 
-                if (linkSymbol.target == source) {
-                    linkSymbol.beginActions.add(ignoreBeginAction);
+                if (linkAct.target == source) {
+                    linkAct.beginActions.add(ignoreBeginAction);
                 }
 
-                if (targets.contains(linkSymbol.target)) {
-                    linkSymbol.endActions.add(endAction);
+                if (linkAct.target == target) {
+                    linkAct.endActions.add(endAction);
                 }
 
-                if (targets.contains(linkSymbol.source)) {
-                    linkSymbol.beginActions.add(cancelEndAction);
+                if (linkAct.source == target) {
+                    linkAct.beginActions.add(cancelEndAction);
                 }
             }
         }
-
-        // TODO consider link S->S, T->T, S->T, etc...
-
-        return result;
     }
 
-    private Set<Node> compileAlternation(Alternation alternation, Graph graph, Node source, Set<Node> targets) {
-        var result = new NodeSet();
-
+    private void compileAlternation(Alternation alternation, Node source, Node target) {
         for (var item : alternation.items) {
-            var itemTargets = compileExpression(item, graph, source, targets);
-
-            result.addAll(itemTargets);
+            compileExpression(item, source, target);
         }
-
-        return result;
     }
 
-    private Set<Node> compileOption(Option option, Graph graph, Node source, Set<Node> targets) {
-        var result = compileExpression(option.content, graph, source, targets);
+    private void compileOption(Option option, Node source, Node target) {
+        compileExpression(option.content, source, target);
 
-        result.add(source);
-
-        return result;
+        graph.createLink(source, target);  // This is the origin of ALL empty links
     }
 
-    private Set<Node> compileReference(Reference reference, Graph graph, Node source, Set<Node> targets) {
+    private void compileReference(Reference reference, Node source, Node target) {
         ReferenceMap refMap = null;
         for (var item : referenceStack) {
             if (item.oldName.equals(reference.name)) {
@@ -185,71 +169,59 @@ public class ExpressionCompiler {
             newDependencies.put(newName, newDependency);
         }
 
-        graph.createLink(source, targets, refMap.newName, null, null, null);
-
-        return targets;
+        graph.createLink(source, target, refMap.newName, null, null, null);
     }
 
-    private Set<Node> compileRepeat(Repeat repeat, Graph graph, Node source, Set<Node> targets) {
-        var result = new NodeSet();
-        var contentTargets = compileExpression(repeat.content, graph, source, targets);
-
-        result.addAll(contentTargets);
+    private void compileRepeat(Repeat repeat, Node source, Node target) {
+        compileExpression(repeat.content, source, target);
 
         if (repeat.separator != null) {
-            var separatorTargets = compileExpression(repeat.separator, graph, contentTargets, Set.of(graph.createNode()));
-            var loopTargets = compileExpression(repeat.content, graph, separatorTargets, contentTargets);
+            var aux = graph.createNode();
 
-            result.addAll(loopTargets);
+            compileExpression(repeat.separator, target, aux);
+            compileExpression(repeat.content, aux, target);
         }
         else {
-            var loopTargets = compileExpression(repeat.content, graph, contentTargets, contentTargets);
-
-            result.addAll(loopTargets);
+            compileExpression(repeat.content, target, target);
         }
-
-        return result;
     }
 
-    private Set<Node> compileSequence(Sequence sequence, Graph graph, Node source, Set<Node> targets) {
-        var lastNodes = Set.of(source);
+    private void compileSequence(Sequence sequence, Node source, Node target) {
+        var length = sequence.items.size();
+        var lastIndex = length - 1;
+        var lastNode = source;
 
-        for (var i = 0 ; i < sequence.items.size(); i++) {
+        for (var i = 0 ; i < length; i++) {
             var item = sequence.items.get(i);
+            if (i == lastIndex) {
+                var aux = graph.createNode();
 
-            if (i < sequence.items.size() - 1) {
-                lastNodes = compileExpression(item, graph, lastNodes, Set.of(graph.createNode()));
+                compileExpression(item, lastNode, aux);
+
+                lastNode = aux;
             }
             else {
                 // only the last item
-                lastNodes = compileExpression(item, graph, lastNodes, targets);
+                compileExpression(item, lastNode, target);
+
+                lastNode = target;
             }
         }
-
-        return lastNodes;
     }
 
-    private Set<Node> compileLiteral(Literal literal, Graph graph, Node source, Set<Node> targets) {
-        for (var target : targets) {
-            graph.createLink(source, target, literal.symbol, null);
-        }
-
-        return targets;
+    private void compileLiteral(Literal literal, Node source, Node target) {
+        graph.createLink(source, target, literal.symbol, null);
     }
 
-    private Set<Node> compileWildcard(Wildcard wildcard, Node source, Set<Node> targets) {
+    private void compileWildcard(Wildcard wildcard, Node source, Node target) {
         if (wildcard.level != 1) {
             throw ErrorFactory.syntaxError(wildcard.location,
                     "No supported wilcard level: " + wildcard.level);
         }
 
+        // TODO improve how to make wildcards 🤔
         source.wildcard = true;
-
-        for (var target : targets) {
-            target.wildcard = true;
-        }
-
-        return targets;
+        target.wildcard = true;
     }
 
     private static class ReferenceMap {
