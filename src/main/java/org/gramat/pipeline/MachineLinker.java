@@ -57,7 +57,7 @@ public class MachineLinker {
                 var linkRef = (LinkReference) link;
                 var recursiveSegment = recursiveSegments.get(linkRef.name);
                 if (recursiveSegment != null) {
-                    log.debug("Connecting recursion {}", linkRef.name);
+                    log.debug("Connecting segment {}", linkRef.name);
                     connectSegment(
                             linkRef.name,
                             mapper.map(linkRef.source), mapper.map(linkRef.target),
@@ -65,7 +65,7 @@ public class MachineLinker {
                             recursiveSegment);
                 }
                 else {
-                    log.debug("Creating recursion {}", linkRef.name);
+                    log.debug("Creating segment {}", linkRef.name);
 
                     var dependency = findDependency(linkRef.name);
                     var newSources = mapper.map(link.source);
@@ -76,7 +76,7 @@ public class MachineLinker {
                     mapper.map(link.target, newTargets);
                     mapper.map(newSources, link.source);
 
-                    resolveRecursion(linkRef.name,
+                    resolveReference(linkRef.name,
                             newSources, newTargets, dependency,
                             linkRef.beginActions, linkRef.endActions);
                 }
@@ -105,7 +105,7 @@ public class MachineLinker {
         }
     }
 
-    private void resolveRecursion(String name, Set<Node> rootSources, Set<Node> rootTargets, Machine machine, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
+    private void resolveReference(String name, Set<Node> rootSources, Set<Node> rootTargets, Machine machine, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
         var nonRecursiveLinks = new ArrayList<Link>();
 
         // Recursive links first
@@ -123,7 +123,7 @@ public class MachineLinker {
                 else {
                     recursiveSegments.put(linkRef.name, new RecursiveSegment(linkInfo.newSources, linkInfo.newTargets));
 
-                    resolveRecursion(
+                    resolveReference(
                             linkRef.name,
                             linkInfo.newSources, linkInfo.newTargets,
                             findDependency(linkRef.name),

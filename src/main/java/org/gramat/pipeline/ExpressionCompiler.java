@@ -19,7 +19,6 @@ import org.gramat.machines.Machine;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
 import org.gramat.machines.NodeSet;
-import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
@@ -36,7 +35,7 @@ public class ExpressionCompiler {
     }
 
     private final IdentifierProvider graphIds;
-    private final IdentifierProvider recursionIds;
+    private final IdentifierProvider referenceIds;
     private final Map<String, Expression> dependencies;
     private final Deque<ReferenceMap> referenceStack;
     private final Map<String, Machine> newDependencies;
@@ -44,7 +43,7 @@ public class ExpressionCompiler {
     public ExpressionCompiler(Map<String, Expression> dependencies) {
         this.dependencies = dependencies;
         this.graphIds = IdentifierProvider.create(1);
-        this.recursionIds = IdentifierProvider.create(1);
+        this.referenceIds = IdentifierProvider.create(1);
         this.referenceStack = new ArrayDeque<>();
         this.newDependencies = new LinkedHashMap<>();
     }
@@ -168,7 +167,7 @@ public class ExpressionCompiler {
             }
         }
         if (refMap == null) {
-            var id = recursionIds.next();
+            var id = referenceIds.next();
             var newName = String.format("%s-%s", reference.name, id);
             var dependency = dependencies.get(reference.name);
             if (dependency == null) {
