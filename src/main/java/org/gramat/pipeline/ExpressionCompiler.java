@@ -50,7 +50,11 @@ public class ExpressionCompiler {
     }
 
     public MachineProgram run(Expression main) {
+        log.debug("Compiling main machine...");
+
         var newMain = compileMachine(main);
+
+        log.debug("Compilation completed: {} machine(s), {} link(s)", 1 + newDependencies.size(), graph.links.size());
 
         return new MachineProgram(newMain, newDependencies);
     }
@@ -160,7 +164,7 @@ public class ExpressionCompiler {
 
             refMap = new ReferenceMap(reference.name, newName);
 
-            log.debug("Compiling {} -> {}", reference.name, newName);
+            log.debug("Compiling {} dependency (from {})...", newName, reference.name);
 
             referenceStack.addFirst(refMap);
             var newDependency = compileMachine(dependency);
