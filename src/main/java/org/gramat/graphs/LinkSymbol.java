@@ -8,13 +8,10 @@ import java.util.Objects;
 public class LinkSymbol extends LinkAction {
 
     public final Symbol symbol;
-    public final String token;
 
-    public LinkSymbol(Node source, Node target, Actions beginActions, Actions endActions, Symbol symbol, String token) {
+    public LinkSymbol(Node source, Node target, Actions beginActions, Actions endActions, Symbol symbol) {
         super(source, target, beginActions, endActions);
         this.symbol = Objects.requireNonNull(symbol);
-        this.token = token;
     }
-
 
 }

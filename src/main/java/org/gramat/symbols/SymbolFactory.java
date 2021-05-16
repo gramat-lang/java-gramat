@@ -9,8 +9,7 @@ public class SymbolFactory {
 
     public static SymbolChar character(char value) {
         for (var symbol : symbols) {
-            if (symbol instanceof SymbolChar) {
-                var sc = (SymbolChar) symbol;
+            if (symbol instanceof SymbolChar sc) {
 
                 if (sc.value == value) {
                     return sc;
@@ -27,8 +26,7 @@ public class SymbolFactory {
 
     public static SymbolRange range(char begin, char end) {
         for (var symbol : symbols) {
-            if (symbol instanceof SymbolRange) {
-                var sr = (SymbolRange) symbol;
+            if (symbol instanceof SymbolRange sr) {
 
                 if (sr.begin == begin && sr.end == end) {
                     return sr;
@@ -41,6 +39,20 @@ public class SymbolFactory {
         symbols.add(symbol);
 
         return symbol;
+    }
+
+    public static SymbolToken token(Symbol symbol, String token) {
+        for (var s : symbols) {
+            if (s instanceof SymbolToken st && st.symbol == symbol && st.token.equals(token)) {
+                return st;
+            }
+        }
+
+        var st = new SymbolToken(symbol, token);
+
+        symbols.add(st);
+
+        return st;
     }
 
     private SymbolFactory() {}

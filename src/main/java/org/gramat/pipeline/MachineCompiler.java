@@ -65,7 +65,7 @@ public class MachineCompiler {
 
                         createActions(oldSources, oldTargets, oldLinks, beginActions, endActions);
 
-                        graph.createLink(newSource, newTarget, symbol, null, beginActions, endActions);
+                        graph.createLink(newSource, newTarget, symbol, beginActions, endActions);
 
                         queue.add(oldTargets);
                     }

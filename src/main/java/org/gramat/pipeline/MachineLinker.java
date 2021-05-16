@@ -1,6 +1,7 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
+import org.gramat.actions.ActionFactory;
 import org.gramat.data.Actions;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Direction;
@@ -14,6 +15,7 @@ import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.Segment;
+import org.gramat.symbols.SymbolFactory;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.HashMap;
@@ -71,7 +73,7 @@ public class MachineLinker {
                 }
             }
             else if (link instanceof LinkSymbol linkSym) {
-                graph.createLink(newSource, newTarget, linkSym.symbol, null, linkSym.beginActions, linkSym.endActions);
+                graph.createLink(newSource, newTarget, linkSym.symbol, linkSym.beginActions, linkSym.endActions);
             }
             else if (link instanceof LinkEmpty) {
                 graph.createLink(newSource, newTarget);
@@ -110,7 +112,7 @@ public class MachineLinker {
             else if (depLink instanceof LinkSymbol linkSym) {
                 graph.createLink(
                         linkInfo.newSource, linkInfo.newTarget,
-                        linkSym.symbol, null,
+                        linkSym.symbol,
                         linkInfo.beginActions, linkInfo.endActions);
             }
             else if (depLink instanceof LinkEmpty) {
@@ -127,20 +129,27 @@ public class MachineLinker {
     private void connectSegment(Node newSource, Node newTarget, String name, Machine dependency, Segment segment, Actions beginActions, Actions endActions) {
         log.debug("Connecting segment {}...", name);
 
+        var pushAction = ActionFactory.push(name);
+        var popAction = ActionFactory.pop(name);
+
+        // TODO resolve empty links
+
         for (var fromLink : Link.findFrom(dependency.source, dependency.links)) {
             var linkTarget = map(fromLink.target);
             if (fromLink instanceof LinkReference linkRef) {
-                graph.createLink(
-                        newSource, linkTarget,
-                        linkRef.name, name,
-                        Actions.join(beginActions, linkRef.beginActions),
-                        linkRef.endActions);
+//                graph.createLink(
+//                        newSource, linkTarget,
+//                        linkRef.name, name,
+//                        Actions.join(beginActions, linkRef.beginActions),
+//                        linkRef.endActions);
+                // TODO this feels wrong, should it be created/connected as well here?
+                throw new UnsupportedOperationException();
             }
             else if (fromLink instanceof LinkSymbol linkSym) {
                 graph.createLink(
                         newSource, linkTarget,
-                        linkSym.symbol, name,
-                        Actions.join(beginActions, linkSym.beginActions),
+                        SymbolFactory.token(linkSym.symbol, name),
+                        Actions.join(pushAction, beginActions, linkSym.beginActions),
                         linkSym.endActions);
             }
             else if (fromLink instanceof LinkEmpty) {
@@ -154,18 +163,20 @@ public class MachineLinker {
         for (var toLink : Link.findTo(dependency.target, dependency.links)) {
             var linkSource = map(toLink.source);
             if (toLink instanceof LinkReference linkRef) {
-                graph.createLink(
-                        linkSource, newTarget,
-                        linkRef.name, name,
-                        linkRef.beginActions,
-                        Actions.join(linkRef.endActions, endActions));
+//                graph.createLink(
+//                        linkSource, newTarget,
+//                        linkRef.name, name,
+//                        linkRef.beginActions,
+//                        Actions.join(linkRef.endActions, endActions));
+                // TODO same here
+                throw new UnsupportedOperationException();
             }
             else if (toLink instanceof LinkSymbol linkSym) {
                 graph.createLink(
                         linkSource, newTarget,
-                        linkSym.symbol, name,
+                        SymbolFactory.token(linkSym.symbol, name),
                         linkSym.beginActions,
-                        Actions.join(linkSym.endActions, endActions));
+                        Actions.join(linkSym.endActions, endActions, popAction));
             }
             else if (toLink instanceof LinkEmpty) {
                 graph.createLink(linkSource, newTarget);

@@ -224,7 +224,7 @@ public class ExpressionCompiler {
     }
 
     private void compileLiteral(Graph graph, Literal literal, Node source, Node target) {
-        graph.createLink(source, target, literal.symbol, null);
+        graph.createLink(source, target, literal.symbol);
     }
 
     private void compileWildcard(Graph graph, Wildcard wildcard, Node source, Node target) {

@@ -51,8 +51,8 @@ public class Graph {
         }
     }
 
-    public void createLink(Node source, Node target, Symbol symbol, String token) {
-        links.add(new LinkSymbol(source, target, null, null, symbol, token));
+    public void createLink(Node source, Node target, Symbol symbol) {
+        links.add(new LinkSymbol(source, target, null, null, symbol));
     }
 
     public void createLink(Node source, Node target, String name, String token) {
@@ -63,27 +63,27 @@ public class Graph {
         links.add(new LinkEmpty(source, target));
     }
 
-    public void createLink(Set<Node> sources, Node target, Symbol symbol, String token, Actions beginActions, Actions endActions) {
-        createLink(sources, Set.of(target), symbol, token, beginActions, endActions);
+    public void createLink(Set<Node> sources, Node target, Symbol symbol, Actions beginActions, Actions endActions) {
+        createLink(sources, Set.of(target), symbol, beginActions, endActions);
     }
 
-    public void createLink(Node source, Set<Node> targets, Symbol symbol, String token, Actions beginActions, Actions endActions) {
-        createLink(Set.of(source), targets, symbol, token, beginActions, endActions);
+    public void createLink(Node source, Set<Node> targets, Symbol symbol, Actions beginActions, Actions endActions) {
+        createLink(Set.of(source), targets, symbol, beginActions, endActions);
     }
 
-    public void createLink(Set<Node> sources, Set<Node> targets, Symbol symbol, String token, Actions beginActions, Actions endActions) {
+    public void createLink(Set<Node> sources, Set<Node> targets, Symbol symbol, Actions beginActions, Actions endActions) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 
         for (var source : sources) {
             for (var target : targets) {
-                links.add(new LinkSymbol(source, target, beginActions, endActions, symbol, token));
+                links.add(new LinkSymbol(source, target, beginActions, endActions, symbol));
             }
         }
     }
 
-    public void createLink(Node source, Node target, Symbol symbol, String token, Actions beginActions, Actions endActions) {
-        links.add(new LinkSymbol(source, target, beginActions, endActions, symbol, token));
+    public void createLink(Node source, Node target, Symbol symbol, Actions beginActions, Actions endActions) {
+        links.add(new LinkSymbol(source, target, beginActions, endActions, symbol));
     }
 
     public void createLink(Node source, Set<Node> targets) {

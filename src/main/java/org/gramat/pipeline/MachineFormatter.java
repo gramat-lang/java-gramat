@@ -108,7 +108,7 @@ public class MachineFormatter {
             writeLabel(label, linkSym.beginActions, linkSym.symbol.toString(), linkSym.endActions);
         }
         else if (link instanceof LinkReference linkRef) {
-            writeLabel(label, linkRef.beginActions, linkRef.name, linkRef.endActions);
+            writeLabel(label, linkRef.beginActions, linkRef.name + " / " + linkRef.token, linkRef.endActions);
         }
         else if (link instanceof LinkEmpty) {
             label.append("empty");

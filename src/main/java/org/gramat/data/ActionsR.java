@@ -16,6 +16,12 @@ public class ActionsR implements Actions {
         data.addAll(last);
     }
 
+    ActionsR(Collection<Action> first, Collection<Action> middle, Collection<Action> last) {
+        data = new LinkedHashSet<>(first);
+        data.addAll(middle);
+        data.addAll(last);
+    }
+
     @Override
     public Iterator<Action> iterator() {
         var iterator = data.iterator();

@@ -13,6 +13,8 @@ public class ActionFactory {
     private static final Map<String, ValueEnd> valueEnds = new HashMap<>();
     private static final List<Ignore> ignores = new ArrayList<>();
     private static final List<Cancel> cancels = new ArrayList<>();
+    private static final Map<String, PushToken> pushes = new HashMap<>();
+    private static final Map<String, PopToken> pops = new HashMap<>();
 
     public static KeyBegin keyBegin() {
         return KeyBegin.INSTANCE;
@@ -80,6 +82,14 @@ public class ActionFactory {
         cancels.add(cancel);
 
         return cancel;
+    }
+
+    public static PushToken push(String token) {
+        return pushes.computeIfAbsent(token, PushToken::new);
+    }
+
+    public static PopToken pop(String token) {
+        return pops.computeIfAbsent(token, PopToken::new);
     }
 
     private ActionFactory() {}
