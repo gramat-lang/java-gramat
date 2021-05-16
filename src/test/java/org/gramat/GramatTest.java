@@ -8,6 +8,7 @@ import org.gramat.pipeline.MachineFormatter;
 import org.gramat.pipeline.MachineLinker;
 import org.gramat.tools.CharInput;
 import org.junit.jupiter.api.Test;
+import tools.AmEditor;
 import tools.Resources;
 
 import java.util.List;
@@ -25,26 +26,12 @@ class GramatTest {
                 "/test.gm");
 
         for (var resource : resources) {
-            log.debug("parsing {}...", resource);
-
             var input = CharInput.of(Resources.loadString(resource), resource);
+            var gramat = new Gramat();
+            var machine = gramat.compile(input);
 
-            var map = ExpressionParser.parseFile(input);
-
-            var program = ExpressionExpander.run(map, "main");
-
-            var machineFormatter = new MachineFormatter();
-            machineFormatter.ignoreActions = true;
-
-            var machineProgram = ExpressionCompiler.run(program);
-
-            machineFormatter.writeProgram(System.out, machineProgram);
-
-            //var machineContract = MachineLinker.run(machineProgram);
-
-            //machineFormatter.writeMachine(System.out, machineContract);
-
-            assertNotNull(machineProgram);
+            log.info("  Actual: {}", AmEditor.url(machine));
+            log.info("Expected: {}", AmEditor.url(machine));
         }
     }
 

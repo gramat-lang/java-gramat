@@ -6,6 +6,7 @@ import org.gramat.tools.CharInput;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.AmEditor;
 import tools.ArgumentsParser;
 
 import java.net.URL;
@@ -30,21 +31,11 @@ class MachineTest {
         var actual = formatter.writeMachine(machine);
 
         if (!actual.equals(expected + "\n")) {
-            var actualUrl = generateAmEditorUrl(actual);
-            var expectedUrl = generateAmEditorUrl(expected);
-
-            log.info("  Actual: {}", actualUrl);
-            log.info("Expected: {}", expectedUrl);
+            log.info("  Actual: {}", AmEditor.url(actual));
+            log.info("Expected: {}", AmEditor.url(expected));
 
             fail("Error: " + title);
         }
-    }
-
-    private String generateAmEditorUrl(String actual) {
-        var data = actual.getBytes(StandardCharsets.UTF_8);
-        var base64 = Base64.getEncoder().encodeToString(data);
-        var param = URLEncoder.encode(base64, StandardCharsets.UTF_8);
-        return "https://sergiouph.github.io/am-editor/?dir=LR&input=" + param;
     }
 
     static List<Arguments> testExpressionVsMachine() {
