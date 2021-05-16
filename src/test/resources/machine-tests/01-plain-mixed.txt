@@ -1,7 +1,3 @@
-title
-expression-input
-machine-code
-==========
 lit opt lit
 
 main = "a" ["b"] "c"

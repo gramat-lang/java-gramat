@@ -10,7 +10,6 @@ import java.util.List;
 @Slf4j
 public class ArgumentsParser {
 
-    private static final String END_HEAD = "==========";
     private static final String END_ITEM = "----------";
     private static final String END_SPECIAL = "----------^";
 
@@ -37,18 +36,6 @@ public class ArgumentsParser {
 
     private static void readResource(String resource, List<Arguments> arguments, List<Arguments> specials) {
         var lines = Arrays.stream(Resources.loadLines(resource)).iterator();
-        var fieldNames = new ArrayList<String>();
-        while (lines.hasNext()) {
-            var line = lines.next();
-
-            if (line.equals(END_HEAD)) {
-                break;
-            }
-            else {
-                fieldNames.add(line);
-            }
-        }
-
         var valueLines = new ArrayList<String>();
         var fieldValues = new ArrayList<String>();
 
@@ -88,21 +75,13 @@ public class ArgumentsParser {
             }
 
             if (flushArgument) {
-                if (fieldValues.size() < fieldNames.size()) {
-                    throw new AssertionError("Missing value for: " + fieldNames.get(fieldValues.size()));
-                }
-                else if (fieldValues.size() > fieldNames.size()) {
-                    throw new AssertionError("Too much values, expected only: " + fieldNames);
-                }
-                else {
-                    var args = Arguments.of(fieldValues.toArray());
+                var args = Arguments.of(fieldValues.toArray());
 
-                    if (special) {
-                        specials.add(args);
-                    }
-
-                    arguments.add(args);
+                if (special) {
+                    specials.add(args);
                 }
+
+                arguments.add(args);
 
                 fieldValues.clear();
             }

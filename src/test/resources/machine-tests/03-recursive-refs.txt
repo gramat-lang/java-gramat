@@ -1,7 +1,3 @@
-title
-expression-input
-machine-code
-==========
 parentheses
 
 main = "(" main ")" | "x"

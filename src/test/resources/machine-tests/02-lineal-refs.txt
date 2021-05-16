@@ -1,7 +1,3 @@
-title
-expression-input
-machine-code
-==========
 lit ref lit
 
 main = "a" ref "c"
