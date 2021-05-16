@@ -33,16 +33,16 @@ public class ExpressionCompiler {
         return new ExpressionCompiler(program.dependencies).run(program.main);
     }
 
-    private final Graph graph;
     private final IdentifierProvider referenceIds;
+    private final IdentifierProvider graphIds;
     private final Map<String, Expression> dependencies;
     private final Deque<ReferenceMap> referenceStack;
     private final Map<String, Machine> newDependencies;
 
     public ExpressionCompiler(Map<String, Expression> dependencies) {
         this.dependencies = dependencies;
-        this.graph = new Graph();
         this.referenceIds = IdentifierProvider.create(1);
+        this.graphIds = IdentifierProvider.create(1);
         this.referenceStack = new ArrayDeque<>();
         this.newDependencies = new LinkedHashMap<>();
     }
@@ -52,56 +52,57 @@ public class ExpressionCompiler {
 
         var newMain = compileMachine(main);
 
-        log.debug("Compilation completed: {} machine(s), {} link(s)", 1 + newDependencies.size(), graph.links.size());
+        log.debug("Compilation completed: {} machine(s)", 1 + newDependencies.size());
 
         return new MachineProgram(newMain, newDependencies);
     }
 
     public Machine compileMachine(Expression expression) {
+        var graph = new Graph(graphIds);
         var source = graph.createNode();
         var target = graph.createNode();
 
-        compileExpression(expression, source, target);
+        compileExpression(graph, expression, source, target);
 
         return new Machine(source, target, graph.links);
     }
 
-    private void compileExpression(Expression expression, Node source, Node target) {
+    private void compileExpression(Graph graph, Expression expression, Node source, Node target) {
         if (expression instanceof Wrapping) {
-            compileWrapping((Wrapping)expression, source, target);
+            compileWrapping(graph, (Wrapping)expression, source, target);
         }
         else if (expression instanceof Alternation) {
-            compileAlternation((Alternation)expression, source, target);
+            compileAlternation(graph, (Alternation)expression, source, target);
         }
         else if (expression instanceof Option) {
-            compileOption((Option)expression, source, target);
+            compileOption(graph, (Option)expression, source, target);
         }
         else if (expression instanceof Reference) {
-            compileReference((Reference)expression, source, target);
+            compileReference(graph, (Reference)expression, source, target);
         }
         else if (expression instanceof Repeat) {
-            compileRepeat((Repeat)expression, source, target);
+            compileRepeat(graph, (Repeat)expression, source, target);
         }
         else if (expression instanceof Sequence) {
-            compileSequence((Sequence)expression, source, target);
+            compileSequence(graph, (Sequence)expression, source, target);
         }
         else if (expression instanceof Literal) {
-            compileLiteral((Literal)expression, source, target);
+            compileLiteral(graph, (Literal)expression, source, target);
         }
         else if (expression instanceof Wildcard) {
-            compileWildcard((Wildcard)expression, source, target);
+            compileWildcard(graph, (Wildcard)expression, source, target);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
     }
 
-    private void compileWrapping(Wrapping wrapping, Node source, Node target) {
+    private void compileWrapping(Graph graph, Wrapping wrapping, Node source, Node target) {
         var initialLinks = DataUtils.copy(graph.links);
 
         // TODO consider empty closures
 
-        compileExpression(wrapping.content, source, target);
+        compileExpression(graph, wrapping.content, source, target);
 
         // Compute links created by the compiled expression
         var newLinks = DataUtils.copy(graph.links);
@@ -133,23 +134,23 @@ public class ExpressionCompiler {
         }
     }
 
-    private void compileAlternation(Alternation alternation, Node source, Node target) {
+    private void compileAlternation(Graph graph, Alternation alternation, Node source, Node target) {
         for (var item : alternation.items) {
             var aux = graph.createNode();
 
-            compileExpression(item, source, aux);
+            compileExpression(graph, item, source, aux);
 
             graph.createLink(aux, target);
         }
     }
 
-    private void compileOption(Option option, Node source, Node target) {
-        compileExpression(option.content, source, target);
+    private void compileOption(Graph graph, Option option, Node source, Node target) {
+        compileExpression(graph, option.content, source, target);
 
-        graph.createLink(source, target);  // This is the origin of ALL empty links
+        graph.createLink(source, target);
     }
 
-    private void compileReference(Reference reference, Node source, Node target) {
+    private void compileReference(Graph graph, Reference reference, Node source, Node target) {
         ReferenceMap refMap = null;
         for (var item : referenceStack) {
             if (item.oldName.equals(reference.name)) {
@@ -179,21 +180,21 @@ public class ExpressionCompiler {
         graph.createLink(source, target, refMap.newName, null, null, null);
     }
 
-    private void compileRepeat(Repeat repeat, Node source, Node target) {
-        compileExpression(repeat.content, source, target);
+    private void compileRepeat(Graph graph, Repeat repeat, Node source, Node target) {
+        compileExpression(graph, repeat.content, source, target);
 
         if (repeat.separator != null) {
             var aux = graph.createNode();
 
-            compileExpression(repeat.separator, target, aux);
-            compileExpression(repeat.content, aux, target);
+            compileExpression(graph, repeat.separator, target, aux);
+            compileExpression(graph, repeat.content, aux, target);
         }
         else {
-            compileExpression(repeat.content, target, target);
+            compileExpression(graph, repeat.content, target, target);
         }
     }
 
-    private void compileSequence(Sequence sequence, Node source, Node target) {
+    private void compileSequence(Graph graph, Sequence sequence, Node source, Node target) {
         var length = sequence.items.size();
         var lastIndex = length - 1;
         var lastNode = source;
@@ -201,25 +202,25 @@ public class ExpressionCompiler {
         for (var i = 0 ; i < length; i++) {
             var item = sequence.items.get(i);
             if (i == lastIndex) {
-                compileExpression(item, lastNode, target);
+                compileExpression(graph, item, lastNode, target);
 
                 lastNode = target;
             }
             else {
                 var aux = graph.createNode();
 
-                compileExpression(item, lastNode, aux);
+                compileExpression(graph, item, lastNode, aux);
 
                 lastNode = aux;
             }
         }
     }
 
-    private void compileLiteral(Literal literal, Node source, Node target) {
+    private void compileLiteral(Graph graph, Literal literal, Node source, Node target) {
         graph.createLink(source, target, literal.symbol, null);
     }
 
-    private void compileWildcard(Wildcard wildcard, Node source, Node target) {
+    private void compileWildcard(Graph graph, Wildcard wildcard, Node source, Node target) {
         if (wildcard.level != 1) {
             throw ErrorFactory.syntaxError(wildcard.location,
                     "No supported wilcard level: " + wildcard.level);

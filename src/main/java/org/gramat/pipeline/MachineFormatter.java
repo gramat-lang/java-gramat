@@ -2,11 +2,14 @@ package org.gramat.pipeline;
 
 import org.gramat.errors.ErrorFactory;
 import org.gramat.machines.Link;
+import org.gramat.machines.LinkEmpty;
+import org.gramat.machines.LinkReference;
 import org.gramat.machines.LinkSymbol;
 import org.gramat.machines.Machine;
 import org.gramat.machines.MachineContract;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
+import org.gramat.tools.PP;
 
 import javax.crypto.Mac;
 import java.io.IOException;
@@ -73,18 +76,8 @@ public class MachineFormatter {
         writeName(output, link.source);
         write(output, "->");
         writeName(output, link.target);
-
-        var label = generateLabel(link);
-
         write(output, " : ");
-
-        if (label.isBlank()) {
-            write(output, "empty");
-        }
-        else {
-            write(output, label);
-        }
-
+        write(output, generateLabel(link));
         writeNewLine(output);
     }
 
@@ -93,6 +86,15 @@ public class MachineFormatter {
 
         if (link instanceof LinkSymbol) {
             generateLabel((LinkSymbol)link, label);
+        }
+        else if (link instanceof LinkReference) {
+            generateLabel((LinkReference)link, label);
+        }
+        else if (link instanceof LinkEmpty) {
+            label.append("empty");
+        }
+        else {
+            throw ErrorFactory.notImplemented();
         }
 
         return label.toString()
@@ -111,11 +113,33 @@ public class MachineFormatter {
 
         label.append(link.symbol);
 
-        if (link.token != null) {
-            label.append("[").append(link.token).append("]");
+        if (!ignoreActions) {
+            if (link.token != null) {
+                label.append(" [").append(link.token).append("]");
+            }
+
+            for (var action : link.endActions) {
+                label.append(" << ");
+                label.append(action.toString());
+            }
+        }
+    }
+
+    private void generateLabel(LinkReference link, StringBuilder label) {
+        if (!ignoreActions) {
+            for (var action : link.beginActions) {
+                label.append(action.toString());
+                label.append(" >> ");
+            }
         }
 
+        label.append(link.name);
+
         if (!ignoreActions) {
+            if (link.token != null) {
+                label.append(" [").append(link.token).append("]");
+            }
+
             for (var action : link.endActions) {
                 label.append(" << ");
                 label.append(action.toString());

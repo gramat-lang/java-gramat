@@ -16,8 +16,9 @@ public class Gramat {
 
     public Machine compile(CharInput input, String mainRule) {
         var map = ExpressionParser.parseFile(input);
-        var program = ExpressionExpander.run(map, mainRule);
-        var machineProgram = ExpressionCompiler.run(program);
+        var expressionProgram = ExpressionExpander.run(map, mainRule);
+        var machineProgram = ExpressionCompiler.run(expressionProgram);
+        new MachineFormatter().writeProgram(System.out, machineProgram);
         return MachineLinker.run(machineProgram);
     }
 

@@ -12,22 +12,30 @@ public class ArgumentsParser {
 
     private static final String END_HEAD = "==========";
     private static final String END_ITEM = "----------";
+    private static final String END_SPECIAL = "----------^";
 
     public static List<Arguments> parse(String... resources) {
         var arguments = new ArrayList<Arguments>();
+        var specials = new ArrayList<Arguments>();
 
         for (var resource : resources) {
             log.debug("Reading arguments from {}...", resource);
 
-            readResource(resource, arguments);
+            readResource(resource, arguments, specials);
         }
 
         log.debug("Reading arguments completed: {} set(s)", arguments.size());
 
-        return arguments;
+        if (specials.isEmpty()) {
+            return arguments;
+        }
+        else {
+            log.debug("Ignoring read arguments but: {} special set(s)", specials.size());
+            return specials;
+        }
     }
 
-    private static void readResource(String resource, List<Arguments> arguments) {
+    private static void readResource(String resource, List<Arguments> arguments, List<Arguments> specials) {
         var lines = Arrays.stream(Resources.loadLines(resource)).iterator();
         var fieldNames = new ArrayList<String>();
         while (lines.hasNext()) {
@@ -46,16 +54,23 @@ public class ArgumentsParser {
 
         boolean flushValue;
         boolean flushArgument;
+        boolean special;
 
         while (lines.hasNext()) {
             var line = lines.next();
 
             flushValue = false;
             flushArgument = false;
+            special = false;
 
             if (line.equals(END_ITEM)) {
                 flushValue = true;
                 flushArgument = true;
+            }
+            else if (line.equals(END_SPECIAL)) {
+                flushValue = true;
+                flushArgument = true;
+                special = true;
             }
             else if (line.isEmpty()) {
                 flushValue = true;
@@ -80,7 +95,13 @@ public class ArgumentsParser {
                     throw new AssertionError("Too much values, expected only: " + fieldNames);
                 }
                 else {
-                    arguments.add(Arguments.of(fieldValues.toArray()));
+                    var args = Arguments.of(fieldValues.toArray());
+
+                    if (special) {
+                        specials.add(args);
+                    }
+
+                    arguments.add(args);
                 }
 
                 fieldValues.clear();

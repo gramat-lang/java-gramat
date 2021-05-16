@@ -36,7 +36,7 @@ class MachineTest {
             log.info("  Actual: {}", actualUrl);
             log.info("Expected: {}", expectedUrl);
 
-            fail("Compilation error!");
+            fail("Error: " + title);
         }
     }
 

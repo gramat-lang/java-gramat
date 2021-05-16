@@ -2,7 +2,6 @@ package org.gramat.machines;
 
 import org.gramat.actions.Action;
 import org.gramat.symbols.Symbol;
-import org.gramat.tools.DataUtils;
 
 import java.util.Objects;
 import java.util.Set;

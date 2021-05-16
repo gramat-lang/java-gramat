@@ -15,8 +15,8 @@ public class Graph {
     public final List<Node> nodes;
     public final List<Link> links;
 
-    public Graph() {
-        this.ids = IdentifierProvider.create(1);
+    public Graph(IdentifierProvider ids) {
+        this.ids = ids;
         this.nodes = new ArrayList<>();
         this.links = new ArrayList<>();
     }
