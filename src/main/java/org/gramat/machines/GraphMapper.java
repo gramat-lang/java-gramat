@@ -2,8 +2,8 @@ package org.gramat.machines;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
-import org.gramat.tools.Validations;
 import org.gramat.tools.DataUtils;
+import org.gramat.tools.Validations;
 
 import java.util.HashMap;
 import java.util.Map;

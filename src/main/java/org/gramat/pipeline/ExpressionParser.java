@@ -3,9 +3,9 @@ package org.gramat.pipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Expression;
+import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.ExpressionMap;
 import org.gramat.expressions.ExpressionRule;
-import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.WrappingType;
 import org.gramat.tools.CharInput;
 
@@ -377,18 +377,17 @@ public class ExpressionParser {
 
         symbol = input.pull();
 
-        switch (symbol) {
-            case 's': return ' ';
-            case 'r': return '\r';
-            case 'n': return '\n';
-            case 't': return '\t';
-            case '\\': return '\\';
-            case '\'': return '\'';
-            case '\"': return '\"';
-            default:
-                throw ErrorFactory.syntaxError(
-                        location, "Invalid escape sequence: %s", symbol);
-        }
+        return switch (symbol) {
+            case 's' -> ' ';
+            case 'r' -> '\r';
+            case 'n' -> '\n';
+            case 't' -> '\t';
+            case '\\' -> '\\';
+            case '\'' -> '\'';
+            case '\"' -> '\"';
+            default -> throw ErrorFactory.syntaxError(
+                    location, "Invalid escape sequence: %s", symbol);
+        };
     }
 
     private Optional<Expression> parseLiteral(char delimiter) {

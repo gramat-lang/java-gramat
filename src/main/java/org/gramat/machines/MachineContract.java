@@ -1,7 +1,7 @@
 package org.gramat.machines;
 
-import org.gramat.tools.Validations;
 import org.gramat.tools.DataUtils;
+import org.gramat.tools.Validations;
 
 import java.util.List;
 import java.util.Set;

@@ -1,9 +1,9 @@
 package org.gramat.pipeline;
 
 import org.gramat.errors.ErrorFactory;
+import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Literal;
 import org.gramat.expressions.Option;
 import org.gramat.expressions.Reference;
@@ -120,19 +120,20 @@ public class ExpressionFormatter {
     }
 
     private void writeLiteral(StringBuilder output, Literal literal) {
-        if (literal.symbol instanceof SymbolChar) {
-            var symbol = (SymbolChar)literal.symbol;
+        if (literal.symbol instanceof SymbolChar symbol) {
             writeToken(output, "\"");
             writeToken(output, String.valueOf(symbol.value));
             writeToken(output, "\"");
         }
-        else if (literal.symbol instanceof SymbolRange) {
-            var symbol = (SymbolRange)literal.symbol;
+        else if (literal.symbol instanceof SymbolRange symbol) {
             writeToken(output, "'");
             writeToken(output, String.valueOf(symbol.begin));
             writeToken(output, "-");
             writeToken(output, String.valueOf(symbol.end));
             writeToken(output, "'");
+        }
+        else {
+            throw ErrorFactory.notImplemented();
         }
     }
 

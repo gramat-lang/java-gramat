@@ -2,10 +2,10 @@ package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
+import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionMap;
 import org.gramat.expressions.ExpressionProgram;
-import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Literal;
 import org.gramat.expressions.Option;
 import org.gramat.expressions.Reference;
@@ -69,22 +69,18 @@ public class ExpressionExpander {
     }
 
     private void computeRecursiveNamesLoop(Expression target, ArrayDeque<String> stack, LinkedHashSet<String> names) {
-        if (target instanceof Reference) {
-            var ref = (Reference) target;
+        if (target instanceof Reference ref && !names.contains(ref.name)) {
+            if (stack.contains(ref.name)) {
+                names.add(stack.getLast());
+            }
+            else {
+                stack.addLast(ref.name);
 
-            if (!names.contains(ref.name)) {
-                if (stack.contains(ref.name)) {
-                    names.add(stack.getLast());
-                }
-                else {
-                    stack.addLast(ref.name);
+                var expr = dependencies.find(ref.name);
 
-                    var expr = dependencies.find(ref.name);
+                computeRecursiveNamesLoop(expr, stack, names);
 
-                    computeRecursiveNamesLoop(expr, stack, names);
-
-                    stack.removeLast();
-                }
+                stack.removeLast();
             }
         }
 

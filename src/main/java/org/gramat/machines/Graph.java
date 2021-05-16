@@ -5,7 +5,6 @@ import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 import org.gramat.tools.Validations;
 
-import javax.naming.LinkRef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

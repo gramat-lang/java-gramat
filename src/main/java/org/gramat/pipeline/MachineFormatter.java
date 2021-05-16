@@ -9,14 +9,12 @@ import org.gramat.machines.Machine;
 import org.gramat.machines.MachineContract;
 import org.gramat.machines.MachineProgram;
 import org.gramat.machines.Node;
-import org.gramat.tools.PP;
 
-import javax.crypto.Mac;
 import java.io.IOException;
 
 public class MachineFormatter {
 
-    public boolean ignoreActions;
+    private boolean ignoreActions;
 
     public void writeProgram(Appendable output, MachineProgram program) {
         writeComment(output, "main");
@@ -170,4 +168,11 @@ public class MachineFormatter {
         }
     }
 
+    public boolean isIgnoreActions() {
+        return ignoreActions;
+    }
+
+    public void setIgnoreActions(boolean ignoreActions) {
+        this.ignoreActions = ignoreActions;
+    }
 }

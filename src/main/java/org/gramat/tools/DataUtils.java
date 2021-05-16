@@ -3,7 +3,6 @@ package org.gramat.tools;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.gramat.machines.Link;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
