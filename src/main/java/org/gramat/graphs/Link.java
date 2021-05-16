@@ -1,9 +1,7 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
-import org.gramat.errors.ErrorFactory;
 import org.gramat.symbols.Symbol;
 
-import java.sql.Array;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;

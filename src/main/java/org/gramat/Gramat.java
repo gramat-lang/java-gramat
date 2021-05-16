@@ -1,7 +1,6 @@
 package org.gramat;
 
-import org.gramat.machines.Automaton;
-import org.gramat.machines.Machine;
+import org.gramat.graphs.Automaton;
 import org.gramat.pipeline.ExpressionCompiler;
 import org.gramat.pipeline.ExpressionExpander;
 import org.gramat.pipeline.ExpressionParser;

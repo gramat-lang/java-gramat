@@ -1,15 +1,15 @@
 package org.gramat.pipeline;
 
 import org.gramat.errors.ErrorFactory;
-import org.gramat.machines.Automaton;
-import org.gramat.machines.Link;
-import org.gramat.machines.LinkEmpty;
-import org.gramat.machines.LinkReference;
-import org.gramat.machines.LinkSymbol;
-import org.gramat.machines.Machine;
-import org.gramat.machines.MachineContract;
-import org.gramat.machines.MachineProgram;
-import org.gramat.machines.Node;
+import org.gramat.graphs.Automaton;
+import org.gramat.graphs.Link;
+import org.gramat.graphs.LinkEmpty;
+import org.gramat.graphs.LinkReference;
+import org.gramat.graphs.LinkSymbol;
+import org.gramat.graphs.Machine;
+import org.gramat.graphs.MachineContract;
+import org.gramat.graphs.MachineProgram;
+import org.gramat.graphs.Node;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
 import java.util.ArrayList;
 import java.util.Comparator;

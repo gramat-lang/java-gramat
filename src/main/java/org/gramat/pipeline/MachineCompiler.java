@@ -2,12 +2,12 @@ package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.actions.Action;
-import org.gramat.machines.Automaton;
-import org.gramat.machines.Graph;
-import org.gramat.machines.Link;
-import org.gramat.machines.Machine;
-import org.gramat.machines.Node;
-import org.gramat.machines.NodeSet;
+import org.gramat.graphs.Automaton;
+import org.gramat.graphs.Graph;
+import org.gramat.graphs.Link;
+import org.gramat.graphs.Machine;
+import org.gramat.graphs.Node;
+import org.gramat.graphs.NodeSet;
 import org.gramat.tools.IdentifierProvider;
 import org.gramat.tools.NodeSetQueue;
 

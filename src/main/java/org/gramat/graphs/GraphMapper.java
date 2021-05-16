@@ -1,4 +1,4 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;

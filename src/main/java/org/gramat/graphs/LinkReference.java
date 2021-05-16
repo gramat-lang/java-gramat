@@ -1,4 +1,4 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
 import org.gramat.actions.Action;
 import org.gramat.tools.Validations;

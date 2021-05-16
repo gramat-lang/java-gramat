@@ -1,4 +1,4 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
 public class Node {
 

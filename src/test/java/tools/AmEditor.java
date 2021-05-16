@@ -1,7 +1,7 @@
 package tools;
 
-import org.gramat.machines.Automaton;
-import org.gramat.machines.Machine;
+import org.gramat.graphs.Automaton;
+import org.gramat.graphs.Machine;
 import org.gramat.pipeline.MachineFormatter;
 
 import java.net.URLEncoder;

@@ -13,11 +13,11 @@ import org.gramat.expressions.Repeat;
 import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
-import org.gramat.machines.Graph;
-import org.gramat.machines.LinkAction;
-import org.gramat.machines.Machine;
-import org.gramat.machines.MachineProgram;
-import org.gramat.machines.Node;
+import org.gramat.graphs.Graph;
+import org.gramat.graphs.LinkAction;
+import org.gramat.graphs.Machine;
+import org.gramat.graphs.MachineProgram;
+import org.gramat.graphs.Node;
 import org.gramat.tools.DataUtils;
 import org.gramat.tools.IdentifierProvider;
 

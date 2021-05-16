@@ -1,6 +1,6 @@
 package org.gramat.tools;
 
-import org.gramat.machines.Node;
+import org.gramat.graphs.Node;
 
 import java.util.ArrayDeque;
 import java.util.Set;

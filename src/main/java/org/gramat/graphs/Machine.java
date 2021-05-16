@@ -1,10 +1,8 @@
-package org.gramat.machines;
+package org.gramat.graphs;
 
 import org.gramat.symbols.Symbol;
-import org.gramat.symbols.SymbolChar;
 import org.gramat.tools.DataUtils;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
