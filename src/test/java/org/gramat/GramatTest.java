@@ -28,10 +28,10 @@ class GramatTest {
         for (var resource : resources) {
             var input = CharInput.of(Resources.loadString(resource), resource);
             var gramat = new Gramat();
-            var machine = gramat.compile(input);
+            var automaton = gramat.compile(input);
 
-            log.info("  Actual: {}", AmEditor.url(machine));
-            log.info("Expected: {}", AmEditor.url(machine));
+            log.info("  Actual: {}", AmEditor.url(automaton));
+            log.info("Expected: {}", AmEditor.url(automaton));
         }
     }
 

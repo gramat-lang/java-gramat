@@ -1,6 +1,7 @@
 package org.gramat.pipeline;
 
 import org.gramat.errors.ErrorFactory;
+import org.gramat.machines.Automaton;
 import org.gramat.machines.Link;
 import org.gramat.machines.LinkEmpty;
 import org.gramat.machines.LinkReference;
@@ -32,6 +33,26 @@ public class MachineFormatter {
         writeMachine(builder, machine);
 
         return builder.toString();
+    }
+
+    public String writeAutomaton(Automaton automaton) {
+        var builder = new StringBuilder();
+
+        writeAutomaton(builder, automaton);
+
+        return builder.toString();
+    }
+
+    public void writeAutomaton(Appendable output, Automaton automaton) {
+        writeInitial(output, automaton.initial);
+
+        for (var link : automaton.links) {
+            writeLink(output, link);
+        }
+
+        for (var target : automaton.accepted) {
+            writeAccepted(output, target);
+        }
     }
 
     public void writeMachine(Appendable output, Machine machine) {

@@ -26,12 +26,13 @@ class MachineTest {
     void testExpressionVsMachine(String title, String expressionInput, String expected) {
         var gramat = new Gramat();
         var input = CharInput.of(expressionInput, title);
-        var machine = gramat.compile(input);
+        var automaton = gramat.compile(input);
         var formatter = new MachineFormatter();
-        var actual = formatter.writeMachine(machine);
+        var actual = formatter.writeAutomaton(automaton);
 
         if (!actual.equals(expected + "\n")) {
-            log.info("  Actual: {}", AmEditor.url(actual));
+            log.info("  Actual: {}", AmEditor.url(
+                    "# " + String.join("\n# ", expressionInput.split("\r?\n")) + "\n\n" + actual));
             log.info("Expected: {}", AmEditor.url(expected));
 
             fail("Error: " + title);
