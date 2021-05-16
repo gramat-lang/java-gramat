@@ -1,18 +1,16 @@
 package org.gramat.graphs;
 
-import org.gramat.actions.Action;
-import org.gramat.tools.DataUtils;
-
-import java.util.Set;
+import org.gramat.data.Actions;
+import org.gramat.data.ActionsW;
 
 public class LinkAction extends Link {
 
-    public final Set<Action> beginActions;
-    public final Set<Action> endActions;
+    public final ActionsW beginActions;
+    public final ActionsW endActions;
 
-    protected LinkAction(Node source, Node target, Set<Action> beginActions, Set<Action> endActions) {
+    protected LinkAction(Node source, Node target, Actions beginActions, Actions endActions) {
         super(source, target);
-        this.beginActions = DataUtils.mutableCopy(beginActions);
-        this.endActions = DataUtils.mutableCopy(endActions);
+        this.beginActions = Actions.copyW(beginActions);
+        this.endActions = Actions.copyW(endActions);
     }
 }

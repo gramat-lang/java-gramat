@@ -1,5 +1,6 @@
 package org.gramat.pipeline;
 
+import org.gramat.data.Actions;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.Link;
@@ -96,18 +97,18 @@ public class MachineFormatter {
         write(output, "->");
         writeName(output, link.target);
         write(output, " : ");
-        write(output, generateLabel(link));
+        write(output, writeLabel(link));
         writeNewLine(output);
     }
 
-    private String generateLabel(Link link) {
+    private String writeLabel(Link link) {
         var label = new StringBuilder();
 
-        if (link instanceof LinkSymbol) {
-            generateLabel((LinkSymbol)link, label);
+        if (link instanceof LinkSymbol linkSym) {
+            writeLabel(label, linkSym.beginActions, linkSym.symbol.toString(), linkSym.endActions);
         }
-        else if (link instanceof LinkReference) {
-            generateLabel((LinkReference)link, label);
+        else if (link instanceof LinkReference linkRef) {
+            writeLabel(label, linkRef.beginActions, linkRef.name, linkRef.endActions);
         }
         else if (link instanceof LinkEmpty) {
             label.append("empty");
@@ -118,50 +119,25 @@ public class MachineFormatter {
 
         return label.toString()
                 .replace("\\", "\\\\")
-                .replace(":", "\\:")
+                .replace("\n", "\\\n")
+                .replace("!", "\\!")
                 .replace(",", "\\,");
     }
 
-    private void generateLabel(LinkSymbol link, StringBuilder label) {
+    private void writeLabel(Appendable output, Actions beginActions, String symbol, Actions endActions) {
         if (!ignoreActions) {
-            for (var action : link.beginActions) {
-                label.append(action.toString());
-                label.append(" >> ");
+            for (var action : beginActions) {
+                write(output, action);
+                write(output, "\n");
             }
         }
 
-        label.append(link.symbol);
+        write(output, symbol);
 
         if (!ignoreActions) {
-            if (link.token != null) {
-                label.append(" [").append(link.token).append("]");
-            }
-
-            for (var action : link.endActions) {
-                label.append(" << ");
-                label.append(action.toString());
-            }
-        }
-    }
-
-    private void generateLabel(LinkReference link, StringBuilder label) {
-        if (!ignoreActions) {
-            for (var action : link.beginActions) {
-                label.append(action.toString());
-                label.append(" >> ");
-            }
-        }
-
-        label.append(link.name);
-
-        if (!ignoreActions) {
-            if (link.token != null) {
-                label.append(" [").append(link.token).append("]");
-            }
-
-            for (var action : link.endActions) {
-                label.append(" << ");
-                label.append(action.toString());
+            for (var action : endActions) {
+                write(output, "\n");
+                write(output, action);
             }
         }
     }
@@ -180,9 +156,9 @@ public class MachineFormatter {
         write(output, "\n");
     }
 
-    private void write(Appendable output, String text) {
+    private void write(Appendable output, Object value) {
         try {
-            output.append(text);
+            output.append(value.toString());
         }
         catch (IOException e) {
             throw ErrorFactory.internalError(e);

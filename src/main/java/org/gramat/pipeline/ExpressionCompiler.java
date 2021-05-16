@@ -14,6 +14,7 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.graphs.Graph;
+import org.gramat.graphs.Link;
 import org.gramat.graphs.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
@@ -100,8 +101,6 @@ public class ExpressionCompiler {
     private void compileWrapping(Graph graph, Wrapping wrapping, Node source, Node target) {
         var initialLinks = DataUtils.copy(graph.links);
 
-        // TODO consider empty closures
-
         compileExpression(graph, wrapping.content, source, target);
 
         // Compute links created by the compiled expression
@@ -113,22 +112,25 @@ public class ExpressionCompiler {
         var ignoreBeginAction = ActionFactory.ignore(beginAction);
         var cancelEndAction = ActionFactory.cancel(endAction);
 
+        var sources = Link.forwardClosure(source, newLinks);
+        var targets = Link.backwardClosure(target, newLinks);
+
         for (var link : newLinks) {
             if (link instanceof LinkAction linkAct) {
-                if (linkAct.source == source) {
-                    linkAct.beginActions.add(beginAction);
+                if (sources.contains(linkAct.source)) {
+                    linkAct.beginActions.append(beginAction);
                 }
 
-                if (linkAct.target == source) {
-                    linkAct.beginActions.add(ignoreBeginAction);
+                if (sources.contains(linkAct.target)) {
+                    linkAct.beginActions.append(ignoreBeginAction);
                 }
 
-                if (linkAct.target == target) {
-                    linkAct.endActions.add(endAction);
+                if (targets.contains(linkAct.target)) {
+                    linkAct.endActions.prepend(endAction);
                 }
 
-                if (linkAct.source == target) {
-                    linkAct.beginActions.add(cancelEndAction);
+                if (targets.contains(linkAct.source)) {
+                    linkAct.beginActions.prepend(cancelEndAction);
                 }
             }
         }

@@ -39,7 +39,8 @@ class AutomatonTest {
                 "/AutomatonTest/00-plain-single.txt",
                 "/AutomatonTest/01-plain-mixed.txt",
                 "/AutomatonTest/02-lineal-refs.txt",
-                "/AutomatonTest/03-recursive-refs.txt"
+                "/AutomatonTest/03-recursive-refs.txt",
+                "/AutomatonTest/04-simple-actions.txt"
         );
     }
 

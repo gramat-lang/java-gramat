@@ -89,8 +89,8 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> forwardClosure(Set<Node> sources, Symbol symbol, List<Link> links) {
-        var result = new ArrayList<Link>();
+    public static List<LinkSymbol> forwardSymbols(Set<Node> sources, Symbol symbol, List<Link> links) {
+        var result = new ArrayList<LinkSymbol>();
         var queue = new ArrayDeque<>(sources);
         var control = new HashSet<Node>();
 
@@ -101,8 +101,13 @@ public abstract class Link {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.target);
                     }
-                    else if (link instanceof LinkSymbol linkSym && linkSym.symbol == symbol) {
-                        result.add(link);
+                    else if (link instanceof LinkSymbol linkSym) {
+                        if (linkSym.symbol == symbol) {
+                            result.add(linkSym);
+                        }
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
                     }
                 }
             }

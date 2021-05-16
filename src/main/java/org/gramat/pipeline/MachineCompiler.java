@@ -1,10 +1,12 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.actions.Action;
+import org.gramat.data.Actions;
+import org.gramat.data.ActionsW;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.Graph;
 import org.gramat.graphs.Link;
+import org.gramat.graphs.LinkSymbol;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.NodeSet;
@@ -13,6 +15,7 @@ import org.gramat.tools.NodeSetQueue;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,13 +55,15 @@ public class MachineCompiler {
                 var newSource = map(oldSources, oldSourcesId);
 
                 for (var symbol : symbols) {
-                    var oldLinks = Link.forwardClosure(oldSources, symbol, machine.links);
+                    var oldLinks = Link.forwardSymbols(oldSources, symbol, machine.links);
                     if (!oldLinks.isEmpty()) {
                         var oldTargets = Link.collectTargets(oldLinks);
                         var oldTargetsId = NodeSet.id(oldTargets);
                         var newTarget = map(oldTargets, oldTargetsId);
-                        var beginActions = new HashSet<Action>();  // TODO implement actions
-                        var endActions = new HashSet<Action>();
+                        var beginActions = Actions.createW();
+                        var endActions = Actions.createW();
+
+                        createActions(oldSources, oldTargets, oldLinks, beginActions, endActions);
 
                         graph.createLink(newSource, newTarget, symbol, null, beginActions, endActions);
 
@@ -71,6 +76,18 @@ public class MachineCompiler {
         log.debug("Compiling machine completed");
 
         return createAutomaton(closure0, machine);
+    }
+
+    private void createActions(Set<Node> sources, Set<Node> targets, List<LinkSymbol> links, ActionsW beginActions, ActionsW endActions) {
+        for (var link : links) {
+            if (sources.contains(link.source)) {
+                beginActions.append(link.beginActions);
+            }
+
+            if (targets.contains(link.target)) {
+                endActions.prepend(link.endActions);
+            }
+        }
     }
 
     private Automaton createAutomaton(Set<Node> sourceClosure, Machine machine) {

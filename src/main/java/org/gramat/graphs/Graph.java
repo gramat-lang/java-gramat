@@ -1,6 +1,6 @@
 package org.gramat.graphs;
 
-import org.gramat.actions.Action;
+import org.gramat.data.Actions;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 import org.gramat.tools.Validations;
@@ -28,19 +28,19 @@ public class Graph {
         return node;
     }
 
-    public void createLink(Set<Node> sources, Node target, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Set<Node> sources, Node target, String name, String token, Actions beginActions, Actions endActions) {
         createLink(sources, Set.of(target), name, token, beginActions, endActions);
     }
 
-    public void createLink(Node source, Set<Node> targets, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Node source, Set<Node> targets, String name, String token, Actions beginActions, Actions endActions) {
         createLink(Set.of(source), targets, name, token, beginActions, endActions);
     }
 
-    public void createLink(Node source, Node target, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Node source, Node target, String name, String token, Actions beginActions, Actions endActions) {
         links.add(new LinkReference(source, target, beginActions, endActions, name, token));
     }
 
-    public void createLink(Set<Node> sources, Set<Node> targets, String name, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Set<Node> sources, Set<Node> targets, String name, String token, Actions beginActions, Actions endActions) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 
@@ -63,15 +63,15 @@ public class Graph {
         links.add(new LinkEmpty(source, target));
     }
 
-    public void createLink(Set<Node> sources, Node target, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Set<Node> sources, Node target, Symbol symbol, String token, Actions beginActions, Actions endActions) {
         createLink(sources, Set.of(target), symbol, token, beginActions, endActions);
     }
 
-    public void createLink(Node source, Set<Node> targets, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Node source, Set<Node> targets, Symbol symbol, String token, Actions beginActions, Actions endActions) {
         createLink(Set.of(source), targets, symbol, token, beginActions, endActions);
     }
 
-    public void createLink(Set<Node> sources, Set<Node> targets, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Set<Node> sources, Set<Node> targets, Symbol symbol, String token, Actions beginActions, Actions endActions) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 
@@ -82,7 +82,7 @@ public class Graph {
         }
     }
 
-    public void createLink(Node source, Node target, Symbol symbol, String token, Set<Action> beginActions, Set<Action> endActions) {
+    public void createLink(Node source, Node target, Symbol symbol, String token, Actions beginActions, Actions endActions) {
         links.add(new LinkSymbol(source, target, beginActions, endActions, symbol, token));
     }
 

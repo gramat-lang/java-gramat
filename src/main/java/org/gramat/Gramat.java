@@ -19,7 +19,7 @@ public class Gramat {
         var map = ExpressionParser.parseFile(input);
         var expressionProgram = ExpressionExpander.run(map, mainRule);
         var machineProgram = ExpressionCompiler.run(expressionProgram);
-//        new MachineFormatter().writeProgram(System.out, machineProgram);
+        new MachineFormatter().writeProgram(System.out, machineProgram);
         var machine = MachineLinker.run(machineProgram);
         new MachineFormatter().writeMachine(System.out, machine);
         return MachineCompiler.compile(machine);

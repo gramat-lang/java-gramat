@@ -1,0 +1,35 @@
+value(lit)
+
+main = <value: "a">
+
+->1
+1->2 : value-begin\
+'a'\
+value-end
+2<=
+----------
+value(alt)
+
+main = <value: "a"|"b">
+
+->1
+1->2 : value-begin\
+'a'\
+value-end
+1->3 : value-begin\
+'b'\
+value-end
+2<=
+3<=
+----------
+value(opt)
+
+main = <value: ["a"]>
+
+->1
+1->2 : value-begin\
+'a'\
+value-end
+2<=
+1<=
+----------^

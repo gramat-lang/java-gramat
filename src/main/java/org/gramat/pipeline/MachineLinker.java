@@ -1,8 +1,9 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.actions.Action;
+import org.gramat.data.Actions;
 import org.gramat.errors.ErrorFactory;
+import org.gramat.graphs.Direction;
 import org.gramat.graphs.Graph;
 import org.gramat.graphs.Link;
 import org.gramat.graphs.LinkAction;
@@ -13,12 +14,10 @@ import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.Segment;
-import org.gramat.tools.DataUtils;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 public class MachineLinker {
@@ -83,7 +82,7 @@ public class MachineLinker {
         }
     }
 
-    private void createSegment(Node rootSource, Node rootTarget, String name, Machine dependency, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
+    private void createSegment(Node rootSource, Node rootTarget, String name, Machine dependency, Actions rootBeginActions, Actions rootEndActions) {
         log.debug("Creating segment {}...", name);
 
         // Define segment of the reference
@@ -125,7 +124,7 @@ public class MachineLinker {
         log.debug("Creating segment completed: {}", name);
     }
 
-    private void connectSegment(Node newSource, Node newTarget, String name, Machine dependency, Segment segment, Set<Action> beginActions, Set<Action> endActions) {
+    private void connectSegment(Node newSource, Node newTarget, String name, Machine dependency, Segment segment, Actions beginActions, Actions endActions) {
         log.debug("Connecting segment {}...", name);
 
         for (var fromLink : Link.findFrom(dependency.source, dependency.links)) {
@@ -134,14 +133,14 @@ public class MachineLinker {
                 graph.createLink(
                         newSource, linkTarget,
                         linkRef.name, name,
-                        DataUtils.join(beginActions, linkRef.beginActions),
+                        Actions.join(beginActions, linkRef.beginActions),
                         linkRef.endActions);
             }
             else if (fromLink instanceof LinkSymbol linkSym) {
                 graph.createLink(
                         newSource, linkTarget,
                         linkSym.symbol, name,
-                        DataUtils.join(beginActions, linkSym.beginActions),
+                        Actions.join(beginActions, linkSym.beginActions),
                         linkSym.endActions);
             }
             else if (fromLink instanceof LinkEmpty) {
@@ -159,14 +158,14 @@ public class MachineLinker {
                         linkSource, newTarget,
                         linkRef.name, name,
                         linkRef.beginActions,
-                        DataUtils.join(linkRef.endActions, endActions));
+                        Actions.join(linkRef.endActions, endActions));
             }
             else if (toLink instanceof LinkSymbol linkSym) {
                 graph.createLink(
                         linkSource, newTarget,
                         linkSym.symbol, name,
                         linkSym.beginActions,
-                        DataUtils.join(linkSym.endActions, endActions));
+                        Actions.join(linkSym.endActions, endActions));
             }
             else if (toLink instanceof LinkEmpty) {
                 graph.createLink(linkSource, newTarget);
@@ -179,40 +178,40 @@ public class MachineLinker {
         log.debug("Connecting segment completed: {}", name);
     }
 
-    private RecursiveLinkInfo computeLinkInfo(Link depLink, Machine dependency, Node rootSource, Node rootTarget, Set<Action> rootBeginActions, Set<Action> rootEndActions) {
+    private RecursiveLinkInfo computeLinkInfo(Link depLink, Machine dependency, Node rootSource, Node rootTarget, Actions rootBeginActions, Actions rootEndActions) {
         Node newSource;
         Node newTarget;
-        Set<Action> beginActions;
-        Set<Action> endActions;
-        Set<Action> linkBeginActions;
-        Set<Action> linkEndActions;
+        Actions beginActions;
+        Actions endActions;
+        Actions linkBeginActions;
+        Actions linkEndActions;
 
         if (depLink instanceof LinkAction linkAct) {
             linkBeginActions = linkAct.beginActions;
             linkEndActions = linkAct.endActions;
         }
         else {
-            linkBeginActions = Set.of();
-            linkEndActions = Set.of();
+            linkBeginActions = Actions.empty();
+            linkEndActions = Actions.empty();
         }
 
-        var dir = computeDirection(depLink, dependency);
+        var dir = Direction.compute(depLink, dependency.source, dependency.target);
         if (dir == Direction.S_S) {
             newSource = rootSource;
             newTarget = rootSource;
-            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
+            beginActions = Actions.join(rootBeginActions, linkBeginActions);
             endActions = linkEndActions;
         }
         else if (dir == Direction.S_T) {
             newSource = rootSource;
             newTarget = rootTarget;
-            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
-            endActions = linkEndActions;
+            beginActions = Actions.join(rootBeginActions, linkBeginActions);
+            endActions = Actions.join(linkEndActions, rootEndActions);
         }
         else if (dir == Direction.S_N) {
             newSource = rootSource;
             newTarget = map(depLink.target);
-            beginActions = DataUtils.join(rootBeginActions, linkBeginActions);
+            beginActions = Actions.join(rootBeginActions, linkBeginActions);
             endActions = linkEndActions;
         }
         else if (dir == Direction.T_S) {
@@ -225,7 +224,7 @@ public class MachineLinker {
             newSource = rootTarget;
             newTarget = rootTarget;
             beginActions = linkBeginActions;
-            endActions = linkEndActions;
+            endActions = Actions.join(linkEndActions, rootEndActions);
         }
         else if (dir == Direction.T_N) {
             newSource = rootTarget;
@@ -243,7 +242,7 @@ public class MachineLinker {
             newSource = map(depLink.source);
             newTarget = rootTarget;
             beginActions = linkBeginActions;
-            endActions = linkEndActions;
+            endActions = Actions.join(linkEndActions, rootEndActions);
         }
         else if (dir == Direction.N_N) {
             newSource = map(depLink.source);
@@ -264,41 +263,6 @@ public class MachineLinker {
             throw ErrorFactory.notFound("missing dependency: " + name);
         }
         return dependency;
-    }
-
-    private Direction computeDirection(Link link, Machine machine) {
-        var fromSource = (machine.source == link.source);
-        var fromTarget = (machine.target == link.source);
-        var toSource = (machine.source == link.target);
-        var toTarget = (machine.target == link.target);
-
-        if (fromSource) {
-            if (toSource) {
-                return Direction.S_S;
-            } else if (toTarget) {
-                return Direction.S_T;
-            } else {
-                return Direction.S_N;
-            }
-        }
-        else if (fromTarget) {
-            if (toSource) {
-                return Direction.T_S;
-            } else if (toTarget) {
-                return Direction.T_T;
-            } else {
-                return Direction.T_N;
-            }
-        }
-        else {
-            if (toSource) {
-                return Direction.N_S;
-            } else if (toTarget) {
-                return Direction.N_T;
-            } else {
-                return Direction.N_N;
-            }
-        }
     }
 
     private Node unmap(Node oldNode) {
@@ -326,20 +290,14 @@ public class MachineLinker {
     private static class RecursiveLinkInfo {
         public final Node newSource;
         public final Node newTarget;
-        public final Set<Action> beginActions;
-        public final Set<Action> endActions;
-        public RecursiveLinkInfo(Node newSource, Node newTarget, Set<Action> beginActions, Set<Action> endActions) {
+        public final Actions beginActions;
+        public final Actions endActions;
+        public RecursiveLinkInfo(Node newSource, Node newTarget, Actions beginActions, Actions endActions) {
             this.newSource = newSource;
             this.newTarget = newTarget;
             this.beginActions = beginActions;
             this.endActions = endActions;
         }
-    }
-
-    private enum Direction {
-        S_S, S_T, S_N,
-        T_S, T_T, T_N,
-        N_S, N_T, N_N,
     }
 
 }
