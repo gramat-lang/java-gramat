@@ -27,9 +27,24 @@ value(opt)
 main = <value: ["a"]>
 
 ->1
-1->2 : value-begin\
+1->2 : cancel:value-end\
+value-begin\
+ignore:value-begin\
 'a'\
 value-end
 2<=
 1<=
-----------^
+----------
+value(rep)
+
+main = <value: {+"a"}>
+
+->1
+1->2 : value-begin\
+'a'\
+value-end
+2->2 : cancel:value-end\
+'a'\
+value-end
+2<=
+----------

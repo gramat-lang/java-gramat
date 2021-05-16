@@ -117,20 +117,25 @@ public class ExpressionCompiler {
 
         for (var link : newLinks) {
             if (link instanceof LinkAction linkAct) {
-                if (sources.contains(linkAct.source)) {
+                var fromSource = sources.contains(linkAct.source);
+                var fromTarget = targets.contains(linkAct.source);
+                var toSource = sources.contains(linkAct.target);
+                var toTarget = targets.contains(linkAct.target);
+
+                if (fromSource) {
                     linkAct.beginActions.append(beginAction);
                 }
 
-                if (sources.contains(linkAct.target)) {
-                    linkAct.beginActions.append(ignoreBeginAction);
-                }
-
-                if (targets.contains(linkAct.target)) {
+                if (toTarget) {
                     linkAct.endActions.prepend(endAction);
                 }
 
-                if (targets.contains(linkAct.source)) {
+                if (fromTarget) {
                     linkAct.beginActions.prepend(cancelEndAction);
+                }
+
+                if (toSource) {
+                    linkAct.beginActions.append(ignoreBeginAction);
                 }
             }
         }
