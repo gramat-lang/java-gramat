@@ -5,7 +5,6 @@ import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.Link;
 import org.gramat.graphs.LinkEmpty;
-import org.gramat.graphs.LinkReference;
 import org.gramat.graphs.LinkSymbol;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineContract;
@@ -106,9 +105,6 @@ public class MachineFormatter {
 
         if (link instanceof LinkSymbol linkSym) {
             writeLabel(label, linkSym.beginActions, linkSym.symbol.toString(), linkSym.endActions);
-        }
-        else if (link instanceof LinkReference linkRef) {
-            writeLabel(label, linkRef.beginActions, linkRef.name + " / " + linkRef.token, linkRef.endActions);
         }
         else if (link instanceof LinkEmpty) {
             label.append("empty");

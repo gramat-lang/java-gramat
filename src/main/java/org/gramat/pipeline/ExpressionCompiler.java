@@ -19,6 +19,7 @@ import org.gramat.graphs.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
+import org.gramat.symbols.SymbolFactory;
 import org.gramat.tools.DataUtils;
 import org.gramat.tools.IdentifierProvider;
 
@@ -184,7 +185,9 @@ public class ExpressionCompiler {
             newDependencies.put(newName, newDependency);
         }
 
-        graph.createLink(source, target, refMap.newName, null, null, null);
+        graph.createLink(source, target,
+                SymbolFactory.reference(refMap.newName),
+                null, null);
     }
 
     private void compileRepeat(Graph graph, Repeat repeat, Node source, Node target) {

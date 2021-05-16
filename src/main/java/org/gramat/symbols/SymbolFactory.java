@@ -55,5 +55,19 @@ public class SymbolFactory {
         return st;
     }
 
+    public static SymbolReference reference(String name) {
+        for (var s : symbols) {
+            if (s instanceof SymbolReference sr && sr.name.equals(name)) {
+                return sr;
+            }
+        }
+
+        var sr = new SymbolReference(name);
+
+        symbols.add(sr);
+
+        return sr;
+    }
+
     private SymbolFactory() {}
 }

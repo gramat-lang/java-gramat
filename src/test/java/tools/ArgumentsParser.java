@@ -29,7 +29,7 @@ public class ArgumentsParser {
             return arguments;
         }
         else {
-            log.debug("Ignoring read arguments but: {} special set(s)", specials.size());
+            log.warn("Ignoring read arguments but: {} special set(s)", specials.size());
             return specials;
         }
     }

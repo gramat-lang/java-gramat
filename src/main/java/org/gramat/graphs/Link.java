@@ -89,6 +89,60 @@ public abstract class Link {
         return result;
     }
 
+    public static List<LinkSymbol> forwardSymbols(Node initial, List<Link> links) {
+        var result = new ArrayList<LinkSymbol>();
+        var queue = new ArrayDeque<Node>();
+        var control = new HashSet<Node>();
+
+        queue.add(initial);
+
+        while (!queue.isEmpty()) {
+            var source = queue.remove();
+            if (control.add(source)) {
+                for (var link : findFrom(source, links)) {
+                    if (link instanceof LinkEmpty) {
+                        queue.add(link.target);
+                    }
+                    else if (link instanceof LinkSymbol linkSym) {
+                        result.add(linkSym);
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static List<LinkSymbol> backwardSymbols(Node initial, List<Link> links) {
+        var result = new ArrayList<LinkSymbol>();
+        var queue = new ArrayDeque<Node>();
+        var control = new HashSet<Node>();
+
+        queue.add(initial);
+
+        while (!queue.isEmpty()) {
+            var target = queue.remove();
+            if (control.add(target)) {
+                for (var link : findTo(target, links)) {
+                    if (link instanceof LinkEmpty) {
+                        queue.add(link.source);
+                    }
+                    else if (link instanceof LinkSymbol linkSym) {
+                        result.add(linkSym);
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
     public static List<LinkSymbol> forwardSymbols(Set<Node> sources, Symbol symbol, List<Link> links) {
         var result = new ArrayList<LinkSymbol>();
         var queue = new ArrayDeque<>(sources);

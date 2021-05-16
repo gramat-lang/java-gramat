@@ -8,10 +8,10 @@ public class SymbolToken implements Symbol {
     public final String token;
 
     SymbolToken(Symbol symbol, String token) {
+        // TODO validate symbol types to avoid deep nesting
         this.symbol = Objects.requireNonNull(symbol);
         this.token = Objects.requireNonNull(token);
     }
-
 
     @Override
     public String toString() {

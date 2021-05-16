@@ -9,13 +9,13 @@ import org.gramat.graphs.Graph;
 import org.gramat.graphs.Link;
 import org.gramat.graphs.LinkAction;
 import org.gramat.graphs.LinkEmpty;
-import org.gramat.graphs.LinkReference;
 import org.gramat.graphs.LinkSymbol;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.Segment;
 import org.gramat.symbols.SymbolFactory;
+import org.gramat.symbols.SymbolReference;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.HashMap;
@@ -56,24 +56,26 @@ public class MachineLinker {
         for (var link : machine.links) {
             var newSource = map(link.source);
             var newTarget = map(link.target);
-            if (link instanceof LinkReference linkRef) {
-                var dependency = findDependency(linkRef.name);
-                var segment = segments.get(linkRef.name);
-                if (segment == null) {
-                    createSegment(
-                            newSource, newTarget,
-                            linkRef.name, dependency,
-                            linkRef.beginActions, linkRef.endActions);
+            if (link instanceof LinkSymbol linkSym) {
+                if (linkSym.symbol instanceof SymbolReference ref) {
+                    var dependency = findDependency(ref.name);
+                    var segment = segments.get(ref.name);
+                    if (segment == null) {
+                        createSegment(
+                                newSource, newTarget,
+                                ref.name, dependency,
+                                linkSym.beginActions, linkSym.endActions);
+                    }
+                    else {
+                        connectSegment(
+                                newSource, newTarget,
+                                ref.name, dependency, segment,
+                                linkSym.beginActions, linkSym.endActions);
+                    }
                 }
                 else {
-                    connectSegment(
-                            newSource, newTarget,
-                            linkRef.name, dependency, segment,
-                            linkRef.beginActions, linkRef.endActions);
+                    graph.createLink(newSource, newTarget, linkSym.symbol, linkSym.beginActions, linkSym.endActions);
                 }
-            }
-            else if (link instanceof LinkSymbol linkSym) {
-                graph.createLink(newSource, newTarget, linkSym.symbol, linkSym.beginActions, linkSym.endActions);
             }
             else if (link instanceof LinkEmpty) {
                 graph.createLink(newSource, newTarget);
@@ -93,27 +95,29 @@ public class MachineLinker {
         // Recursive links first
         for (var depLink : dependency.links) {
             var linkInfo = computeLinkInfo(depLink, dependency, rootSource, rootTarget, rootBeginActions, rootEndActions);
-            if (depLink instanceof LinkReference linkRef) {
-                var nestedDependency = findDependency(linkRef.name);
-                var nestedSegment = segments.get(linkRef.name);
-                if (nestedSegment == null) {
-                    createSegment(
-                            linkInfo.newSource, linkInfo.newTarget,
-                            linkRef.name, nestedDependency,
-                            linkInfo.beginActions, linkInfo.endActions);
+            if (depLink instanceof LinkSymbol linkSym) {
+                if (linkSym.symbol instanceof SymbolReference ref) {
+                    var nestedDependency = findDependency(ref.name);
+                    var nestedSegment = segments.get(ref.name);
+                    if (nestedSegment == null) {
+                        createSegment(
+                                linkInfo.newSource, linkInfo.newTarget,
+                                ref.name, nestedDependency,
+                                linkInfo.beginActions, linkInfo.endActions);
+                    }
+                    else {
+                        connectSegment(
+                                linkInfo.newSource, linkInfo.newTarget,
+                                ref.name, nestedDependency, nestedSegment,
+                                linkInfo.beginActions, linkInfo.endActions);
+                    }
                 }
                 else {
-                    connectSegment(
+                    graph.createLink(
                             linkInfo.newSource, linkInfo.newTarget,
-                            linkRef.name, nestedDependency, nestedSegment,
+                            linkSym.symbol,
                             linkInfo.beginActions, linkInfo.endActions);
                 }
-            }
-            else if (depLink instanceof LinkSymbol linkSym) {
-                graph.createLink(
-                        linkInfo.newSource, linkInfo.newTarget,
-                        linkSym.symbol,
-                        linkInfo.beginActions, linkInfo.endActions);
             }
             else if (depLink instanceof LinkEmpty) {
                 graph.createLink(linkInfo.newSource, linkInfo.newTarget);
@@ -132,58 +136,27 @@ public class MachineLinker {
         var pushAction = ActionFactory.push(name);
         var popAction = ActionFactory.pop(name);
 
-        // TODO resolve empty links
+        // TODO consider closures for adding the actions
 
-        for (var fromLink : Link.findFrom(dependency.source, dependency.links)) {
+        for (var fromLink : Link.forwardSymbols(dependency.source, dependency.links)) {
             var linkTarget = map(fromLink.target);
-            if (fromLink instanceof LinkReference linkRef) {
-//                graph.createLink(
-//                        newSource, linkTarget,
-//                        linkRef.name, name,
-//                        Actions.join(beginActions, linkRef.beginActions),
-//                        linkRef.endActions);
-                // TODO this feels wrong, should it be created/connected as well here?
-                throw new UnsupportedOperationException();
-            }
-            else if (fromLink instanceof LinkSymbol linkSym) {
-                graph.createLink(
-                        newSource, linkTarget,
-                        SymbolFactory.token(linkSym.symbol, name),
-                        Actions.join(pushAction, beginActions, linkSym.beginActions),
-                        linkSym.endActions);
-            }
-            else if (fromLink instanceof LinkEmpty) {
-                graph.createLink(newSource, linkTarget);
-            }
-            else {
-                throw ErrorFactory.notImplemented();
-            }
+
+            // TODO validate if SymbolReference should be created/connected here as well
+            graph.createLink(
+                    newSource, linkTarget,
+                    fromLink.symbol,
+                    Actions.join(beginActions, fromLink.beginActions),
+                    Actions.join(fromLink.endActions, pushAction));
         }
 
-        for (var toLink : Link.findTo(dependency.target, dependency.links)) {
+        for (var toLink : Link.backwardSymbols(dependency.target, dependency.links)) {
             var linkSource = map(toLink.source);
-            if (toLink instanceof LinkReference linkRef) {
-//                graph.createLink(
-//                        linkSource, newTarget,
-//                        linkRef.name, name,
-//                        linkRef.beginActions,
-//                        Actions.join(linkRef.endActions, endActions));
-                // TODO same here
-                throw new UnsupportedOperationException();
-            }
-            else if (toLink instanceof LinkSymbol linkSym) {
-                graph.createLink(
-                        linkSource, newTarget,
-                        SymbolFactory.token(linkSym.symbol, name),
-                        linkSym.beginActions,
-                        Actions.join(linkSym.endActions, endActions, popAction));
-            }
-            else if (toLink instanceof LinkEmpty) {
-                graph.createLink(linkSource, newTarget);
-            }
-            else {
-                throw ErrorFactory.notImplemented();
-            }
+            // TODO validate if SymbolReference should be created/connected here as well
+            graph.createLink(
+                    linkSource, newTarget,
+                    SymbolFactory.token(toLink.symbol, name),
+                    toLink.beginActions,
+                    Actions.join(toLink.endActions, endActions, popAction));
         }
 
         log.debug("Connecting segment completed: {}", name);

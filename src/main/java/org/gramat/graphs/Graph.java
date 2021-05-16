@@ -28,35 +28,8 @@ public class Graph {
         return node;
     }
 
-    public void createLink(Set<Node> sources, Node target, String name, String token, Actions beginActions, Actions endActions) {
-        createLink(sources, Set.of(target), name, token, beginActions, endActions);
-    }
-
-    public void createLink(Node source, Set<Node> targets, String name, String token, Actions beginActions, Actions endActions) {
-        createLink(Set.of(source), targets, name, token, beginActions, endActions);
-    }
-
-    public void createLink(Node source, Node target, String name, String token, Actions beginActions, Actions endActions) {
-        links.add(new LinkReference(source, target, beginActions, endActions, name, token));
-    }
-
-    public void createLink(Set<Node> sources, Set<Node> targets, String name, String token, Actions beginActions, Actions endActions) {
-        Validations.notEmpty(sources);
-        Validations.notEmpty(targets);
-
-        for (var source : sources) {
-            for (var target : targets) {
-                links.add(new LinkReference(source, target, beginActions, endActions, name, token));
-            }
-        }
-    }
-
     public void createLink(Node source, Node target, Symbol symbol) {
         links.add(new LinkSymbol(source, target, null, null, symbol));
-    }
-
-    public void createLink(Node source, Node target, String name, String token) {
-        links.add(new LinkReference(source, target, null, null, name, token));
     }
 
     public void createLink(Node source, Node target) {
