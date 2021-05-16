@@ -9,17 +9,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import tools.AmEditor;
 import tools.ArgumentsParser;
 
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
-class MachineTest {
+class AutomatonTest {
 
     @ParameterizedTest
     @MethodSource
@@ -41,10 +36,10 @@ class MachineTest {
 
     static List<Arguments> testExpressionVsMachine() {
         return ArgumentsParser.parse(
-                "/machine-tests/00-plain-single.txt",
-                "/machine-tests/01-plain-mixed.txt",
-                "/machine-tests/02-lineal-refs.txt",
-                "/machine-tests/03-recursive-refs.txt"
+                "/AutomatonTest/00-plain-single.txt",
+                "/AutomatonTest/01-plain-mixed.txt",
+                "/AutomatonTest/02-lineal-refs.txt",
+                "/AutomatonTest/03-recursive-refs.txt"
         );
     }
 
