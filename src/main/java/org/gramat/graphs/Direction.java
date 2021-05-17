@@ -1,5 +1,7 @@
 package org.gramat.graphs;
 
+import org.gramat.data.Nodes;
+
 import java.util.Set;
 
 /**
@@ -20,10 +22,10 @@ public enum Direction {
     N_S, N_T, N_N;
 
     public static Direction compute(Link link, Node source, Node target) {
-        return compute(link, Set.of(source), Set.of(target));
+        return compute(link, Nodes.of(source), Nodes.of(target));
     }
 
-    public static Direction compute(Link link, Set<Node> sources, Set<Node> targets) {
+    public static Direction compute(Link link, Nodes sources, Nodes targets) {
         var fromSource = sources.contains(link.source);
         var fromTarget = targets.contains(link.source);
         var toSource = sources.contains(link.target);

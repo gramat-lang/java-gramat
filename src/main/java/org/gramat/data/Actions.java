@@ -10,7 +10,7 @@ import java.util.List;
 public interface Actions extends Iterable<Action> {
 
     static Actions empty() {
-        return ActionsEmpty.INSTANCE;
+        return Actions0.INSTANCE;
     }
 
     static ActionsW createW() {
@@ -38,7 +38,7 @@ public interface Actions extends Iterable<Action> {
     }
 
     private static Collection<Action> data(Actions actions) {
-        if (actions == null || actions instanceof ActionsEmpty) {
+        if (actions == null || actions instanceof Actions0) {
             return List.of();
         }
         else if (actions instanceof ActionsW w) {

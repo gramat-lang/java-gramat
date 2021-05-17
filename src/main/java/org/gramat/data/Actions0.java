@@ -5,11 +5,11 @@ import org.gramat.actions.Action;
 import java.util.Collections;
 import java.util.Iterator;
 
-class ActionsEmpty implements Actions {
+class Actions0 implements Actions {
 
-    public static final ActionsEmpty INSTANCE = new ActionsEmpty();
+    public static final Actions0 INSTANCE = new Actions0();
 
-    private ActionsEmpty() {}
+    private Actions0() {}
 
     @Override
     public Iterator<Action> iterator() {

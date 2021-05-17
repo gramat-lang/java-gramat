@@ -1,6 +1,7 @@
 package org.gramat.graphs;
 
 import org.gramat.data.Actions;
+import org.gramat.data.Nodes;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 import org.gramat.tools.Validations;
@@ -36,15 +37,15 @@ public class Graph {
         links.add(new LinkEmpty(source, target));
     }
 
-    public void createLink(Set<Node> sources, Node target, Symbol symbol, Actions beginActions, Actions endActions) {
-        createLink(sources, Set.of(target), symbol, beginActions, endActions);
+    public void createLink(Nodes sources, Node target, Symbol symbol, Actions beginActions, Actions endActions) {
+        createLink(sources, Nodes.of(target), symbol, beginActions, endActions);
     }
 
-    public void createLink(Node source, Set<Node> targets, Symbol symbol, Actions beginActions, Actions endActions) {
-        createLink(Set.of(source), targets, symbol, beginActions, endActions);
+    public void createLink(Node source, Nodes targets, Symbol symbol, Actions beginActions, Actions endActions) {
+        createLink(Nodes.of(source), targets, symbol, beginActions, endActions);
     }
 
-    public void createLink(Set<Node> sources, Set<Node> targets, Symbol symbol, Actions beginActions, Actions endActions) {
+    public void createLink(Nodes sources, Nodes targets, Symbol symbol, Actions beginActions, Actions endActions) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 
@@ -59,15 +60,15 @@ public class Graph {
         links.add(new LinkSymbol(source, target, beginActions, endActions, symbol));
     }
 
-    public void createLink(Node source, Set<Node> targets) {
-        createLink(Set.of(source), targets);
+    public void createLink(Node source, Nodes targets) {
+        createLink(Nodes.of(source), targets);
     }
 
-    public void createLink(Set<Node> sources, Node target) {
-        createLink(sources, Set.of(target));
+    public void createLink(Nodes sources, Node target) {
+        createLink(sources, Nodes.of(target));
     }
 
-    public void createLink(Set<Node> sources, Set<Node> targets) {
+    public void createLink(Nodes sources, Nodes targets) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 

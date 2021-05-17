@@ -1,9 +1,13 @@
 package org.gramat.graphs;
 
+import org.gramat.data.Nodes;
+import org.gramat.data.NodesW;
 import org.gramat.symbols.Symbol;
+import org.gramat.tools.DataUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +35,7 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> findFrom(Set<Node> sources, List<Link> links) {
+    public static List<Link> findFrom(Nodes sources, List<Link> links) {
         var result = new ArrayList<Link>();
 
         for (var link : links) {
@@ -43,7 +47,7 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> findTo(Set<Node> targets, List<Link> links) {
+    public static List<Link> findTo(Nodes targets, List<Link> links) {
         var result = new ArrayList<Link>();
 
         for (var link : links) {
@@ -67,13 +71,15 @@ public abstract class Link {
         return result;
     }
 
-    public static Set<Node> forwardClosure(Node source, List<Link> links) {
-        return forwardClosure(Set.of(source), links);
+    public static Nodes forwardClosure(Node source, List<Link> links) {
+        return forwardClosure(Nodes.of(source), links);
     }
 
-    public static Set<Node> forwardClosure(Set<Node> sources, List<Link> links) {
-        var result = new NodeSet();
-        var queue = new ArrayDeque<>(sources);
+    public static Nodes forwardClosure(Nodes sources, List<Link> links) {
+        var result = Nodes.createW();
+        var queue = new ArrayDeque<Node>();
+
+        DataUtils.addAll(queue, sources);
 
         while (!queue.isEmpty()) {
             var source = queue.remove();
@@ -143,10 +149,12 @@ public abstract class Link {
         return result;
     }
 
-    public static List<LinkSymbol> forwardSymbols(Set<Node> sources, Symbol symbol, List<Link> links) {
+    public static List<LinkSymbol> forwardSymbols(Nodes sources, Symbol symbol, List<Link> links) {
         var result = new ArrayList<LinkSymbol>();
-        var queue = new ArrayDeque<>(sources);
+        var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
+
+        DataUtils.addAll(queue, sources);
 
         while (!queue.isEmpty()) {
             var source = queue.remove();
@@ -170,13 +178,15 @@ public abstract class Link {
         return result;
     }
 
-    public static Set<Node> backwardClosure(Node source, List<Link> links) {
-        return backwardClosure(Set.of(source), links);
+    public static Nodes backwardClosure(Node source, List<Link> links) {
+        return backwardClosure(Nodes.of(source), links);
     }
 
-    public static Set<Node> backwardClosure(Set<Node> targets, List<Link> links) {
-        var result = new NodeSet();
-        var queue = new ArrayDeque<>(targets);
+    public static Nodes backwardClosure(Nodes targets, List<Link> links) {
+        var result = Nodes.createW();
+        var queue = new ArrayDeque<Node>();
+
+        DataUtils.addAll(queue, targets);
 
         while (!queue.isEmpty()) {
             var target = queue.remove();
@@ -192,8 +202,8 @@ public abstract class Link {
         return result;
     }
 
-    public static Set<Node> collectTargets(List<? extends Link> links) {
-        var result = new NodeSet();
+    public static Nodes collectTargets(List<? extends Link> links) {
+        var result = Nodes.createW();
 
         for (var link : links) {
             result.add(link.target);

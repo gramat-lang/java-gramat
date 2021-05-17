@@ -1,6 +1,7 @@
 package org.gramat.data;
 
 import org.gramat.actions.Action;
+import org.gramat.tools.DataUtils;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -24,17 +25,6 @@ public class ActionsR implements Actions {
 
     @Override
     public Iterator<Action> iterator() {
-        var iterator = data.iterator();
-        return new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            @Override
-            public Action next() {
-                return iterator.next();
-            }
-        };
+        return DataUtils.immutableIterator(data);
     }
 }

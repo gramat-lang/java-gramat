@@ -6,6 +6,12 @@ import java.util.Collection;
 
 public class Validations {
 
+    public static void notEmpty(Iterable<?> value) {
+        if (value == null || !value.iterator().hasNext()) {
+            throw ErrorFactory.invalidEmptyValue();
+        }
+    }
+
     public static void notEmpty(Collection<?> value) {
         if (value == null || value.isEmpty()) {
             throw ErrorFactory.invalidEmptyValue();

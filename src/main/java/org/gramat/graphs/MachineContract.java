@@ -1,23 +1,23 @@
 package org.gramat.graphs;
 
+import org.gramat.data.Nodes;
 import org.gramat.tools.DataUtils;
 import org.gramat.tools.Validations;
 
 import java.util.List;
-import java.util.Set;
 
 public class MachineContract {
 
-    public final Set<Node> sources;
-    public final Set<Node> targets;
+    public final Nodes sources;
+    public final Nodes targets;
     public final List<Link> links;
 
-    public MachineContract(Set<Node> sources, Set<Node> targets, List<Link> links) {
+    public MachineContract(Nodes sources, Nodes targets, List<Link> links) {
         Validations.notEmpty(sources);
         Validations.notEmpty(targets);
 
-        this.sources = DataUtils.immutableCopy(sources);
-        this.targets = DataUtils.immutableCopy(targets);
+        this.sources = sources.copyR();
+        this.targets = targets.copyR();
         this.links = DataUtils.immutableCopy(links);
     }
 }
