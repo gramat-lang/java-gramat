@@ -5,6 +5,8 @@ import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkEnter;
+import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
@@ -95,6 +97,12 @@ public class MachineFormatter {
         }
         else if (link instanceof LinkEmpty linkEmp) {
             writeLabel(label, linkEmp.beginActions, "empty", linkEmp.endActions);
+        }
+        else if (link instanceof LinkEnter linkEnt) {
+            writeLabel(label, linkEnt.beginActions, "enter(" + linkEnt.token + ")", linkEnt.endActions);
+        }
+        else if (link instanceof LinkExit linkExi) {
+            writeLabel(label, linkExi.beginActions, "exit(" + linkExi.token + ")", linkExi.endActions);
         }
         else {
             throw ErrorFactory.notImplemented();

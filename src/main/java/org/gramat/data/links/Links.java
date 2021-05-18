@@ -94,7 +94,7 @@ public interface Links extends Iterable<Link> {
             var source = queue.remove();
             if (result.add(source)) {
                 for (var link : findFrom(source)) {
-                    if (link instanceof LinkEmpty) {
+                    if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
                         queue.add(link.target);
                     }
                 }

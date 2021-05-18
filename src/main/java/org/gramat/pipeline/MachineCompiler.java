@@ -16,6 +16,8 @@ import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkEnter;
+import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.tools.IdentifierProvider;
 
@@ -198,22 +200,39 @@ public class MachineCompiler {
 
     private void createActions(Links beginLinks, Links links, Links endLinks, ActionsW beginActions, ActionsW endActions) {
         for (var link : beginLinks) {
-            if (link instanceof LinkAction linkAct) {
+            if (link instanceof LinkEnter linkEnt) {
+                beginActions.prepend(ActionFactory.push(linkEnt.token));
+            }
+            else if (link instanceof LinkExit linkExt) {
+                beginActions.prepend(ActionFactory.pop(linkExt.token));
+            }
+            else if (link instanceof LinkAction linkAct) {
                 beginActions.append(linkAct.beginActions);
                 endActions.prepend(linkAct.endActions);
-
             }
         }
 
         for (var link : links) {
-            if (link instanceof LinkAction linkAct) {
+            if (link instanceof LinkEnter linkEnt) {
+                beginActions.prepend(ActionFactory.push(linkEnt.token));
+            }
+            else if (link instanceof LinkExit linkExt) {
+                endActions.prepend(ActionFactory.pop(linkExt.token));
+            }
+            else if (link instanceof LinkAction linkAct) {
                 beginActions.append(linkAct.beginActions);
                 endActions.prepend(linkAct.endActions);
             }
         }
 
         for (var link : endLinks) {
-            if (link instanceof LinkAction linkAct) {
+            if (link instanceof LinkEnter linkEnt) {
+                endActions.prepend(ActionFactory.push(linkEnt.token));
+            }
+            else if (link instanceof LinkExit linkExt) {
+                endActions.prepend(ActionFactory.pop(linkExt.token));
+            }
+            else if (link instanceof LinkAction linkAct) {
                 beginActions.append(linkAct.beginActions);
                 endActions.append(linkAct.endActions);
             }
