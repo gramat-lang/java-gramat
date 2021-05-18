@@ -31,30 +31,4 @@ public class Wrapping extends Expression {
         }
         return new Wrapping(location, type, argument, newContent);
     }
-
-    public Action createBeginAction() {
-        switch (type) {
-            case KEY: return ActionFactory.keyBegin();
-            case LIST: return ActionFactory.listBegin();
-            case MAP: return ActionFactory.mapBegin();
-            case PUT: return ActionFactory.putBegin();
-            case VALUE: return ActionFactory.valueBegin();
-            default: throw ErrorFactory.internalError("not implemented type: " + type);
-        }
-    }
-
-    public Action createEndAction() {
-        switch (type) {
-            case KEY:
-                if (argument != null) {
-                    throw ErrorFactory.syntaxError(location, "key does not accept arguments");
-                }
-                return ActionFactory.keyEnd();
-            case LIST: return ActionFactory.listEnd(argument);
-            case MAP: return ActionFactory.mapEnd(argument);
-            case PUT: return ActionFactory.putEnd(argument);
-            case VALUE: return ActionFactory.valueEnd(argument);
-            default: throw ErrorFactory.internalError("not implemented type: " + type);
-        }
-    }
 }

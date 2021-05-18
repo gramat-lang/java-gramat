@@ -3,10 +3,13 @@ package org.gramat.pipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.data.actions.Actions;
 import org.gramat.data.actions.ActionsW;
+import org.gramat.data.links.Links;
+import org.gramat.data.links.LinksW;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Direction;
 import org.gramat.graphs.Graph;
+import org.gramat.graphs.MachineAction;
 import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.links.LinkEmpty;
@@ -15,7 +18,6 @@ import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.Segment;
-import org.gramat.symbols.SymbolFactory;
 import org.gramat.symbols.SymbolReference;
 import org.gramat.tools.IdentifierProvider;
 
@@ -50,11 +52,13 @@ public class MachineLinker {
 
         var source = unmap(main.source);
         var targets = unmap(main.targets);
-        return new Machine(source, targets, graph.links);
+        return new Machine(source, targets, graph.links, graph.actions);
     }
 
     private void resolveMachine(Machine machine, String name) {
         log.debug("Resolving {} machine...", name != null ? name : "main");
+
+        var initialLinks = graph.links.copyW();
 
         for (var link : machine.links) {
             var newSource = map(link.source);
@@ -79,6 +83,66 @@ public class MachineLinker {
                 throw ErrorFactory.notImplemented();
             }
         }
+
+        // Compute links created by the compiled expression
+        var newLinks = graph.links.copyW();
+        newLinks.removeAll(initialLinks);
+
+        resolveActions(machine, newLinks, name);
+    }
+
+    private void resolveActions(Machine oldMachine, Links newLinks, String name) {
+        log.debug("Resolving {} actions...", name);
+
+        var count = 0;
+
+        for (var oldAction : oldMachine.actions) {
+            var newAction = new MachineAction(
+                    oldAction.type, oldAction.argument,
+                    unmap(oldAction.sources),
+                    unmap(oldAction.targets),
+                    unmapLinks(oldAction.links, newLinks)
+            );
+
+            graph.actions.add(newAction);
+            count++;
+        }
+
+        log.debug("Resolving actions completed: {} action(s)", count);
+    }
+
+    private Links unmapLinks(Links oldLinks, Links newLinks) {
+        var results = Links.createW();
+
+        for (var oldLink : oldLinks) {
+            var newSource = unmap(oldLink.source);
+            var newTarget = unmap(oldLink.target);
+            Link result = null;
+
+            for (var newLink : newLinks) {
+                if (newLink.source == newSource && newLink.target == newTarget) {
+                    if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
+                        if (oldSym.symbol == newSym.symbol) {
+                            result = newLink;
+                        }
+                    }
+                    else if (oldLink instanceof LinkEmpty && newLink instanceof LinkEmpty) {
+                        result = newLink;
+                    }
+                    else {
+                        throw new UnsupportedOperationException();
+                    }
+                }
+            }
+
+            if (result == null) {
+                throw ErrorFactory.internalError("missing link mapping: " + oldLink);
+            }
+
+            results.add(result);
+        }
+
+        return results;
     }
 
     private void linkMachine(Node newSource, Node newTarget, String name, Machine dependency, ActionsW beginActions, ActionsW endActions) {

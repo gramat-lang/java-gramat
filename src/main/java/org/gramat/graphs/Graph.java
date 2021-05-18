@@ -20,6 +20,7 @@ public class Graph {
     public final IdentifierProvider ids;
     public final List<Node> nodes;
     public final LinksW links;
+    public final List<MachineAction> actions = new ArrayList<>();
 
     public Graph(IdentifierProvider ids) {
         this.ids = ids;

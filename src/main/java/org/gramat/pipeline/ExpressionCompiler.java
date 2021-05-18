@@ -1,7 +1,6 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.actions.ActionFactory;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
@@ -15,13 +14,11 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.graphs.Graph;
-import org.gramat.graphs.links.Link;
-import org.gramat.graphs.links.LinkAction;
+import org.gramat.graphs.MachineAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 import org.gramat.symbols.SymbolFactory;
-import org.gramat.tools.DataUtils;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
@@ -64,7 +61,7 @@ public class ExpressionCompiler {
         var graph = new Graph(graphIds);
         var source = graph.createNode();
         var targets = compileExpression(graph, expression, source);
-        return new Machine(source, targets, graph.links);
+        return new Machine(source, targets, graph.links, graph.actions);
     }
 
     private Nodes compileExpression(Graph graph, Expression expression, Nodes sources) {
@@ -115,35 +112,10 @@ public class ExpressionCompiler {
         var newLinks = graph.links.copyW();
         newLinks.removeAll(initialLinks);
 
-        var beginAction = wrapping.createBeginAction();
-        var endAction = wrapping.createEndAction();
-        var ignoreBeginAction = ActionFactory.ignore(beginAction);
-        var cancelEndAction = ActionFactory.cancel(endAction);
-
-        for (var link : newLinks) {
-            if (link instanceof LinkAction linkAct) {
-                var fromSource = (source == linkAct.source);
-                var fromTarget = targets.contains(linkAct.source);
-                var toSource = (source == linkAct.target);
-                var toTarget = targets.contains(linkAct.target);
-
-                if (fromSource) {
-                    linkAct.beginActions.append(beginAction);
-                }
-
-                if (toTarget) {
-                    linkAct.endActions.prepend(endAction);
-                }
-
-                if (fromTarget) {
-                    linkAct.beginActions.prepend(cancelEndAction);
-                }
-
-                if (toSource) {
-                    linkAct.beginActions.append(ignoreBeginAction);
-                }
-            }
-        }
+        graph.actions.add(new MachineAction(
+                wrapping.type, wrapping.argument,
+                Nodes.of(source), targets,
+                newLinks));
 
         return targets;
     }

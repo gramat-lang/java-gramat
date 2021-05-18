@@ -1,15 +1,22 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
+import org.gramat.actions.Action;
+import org.gramat.actions.ActionFactory;
 import org.gramat.data.actions.Actions;
 import org.gramat.data.actions.ActionsW;
 import org.gramat.data.links.Links;
 import org.gramat.data.nodes.Nodes;
+import org.gramat.errors.ErrorFactory;
+import org.gramat.expressions.WrappingType;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.Graph;
+import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
+import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
@@ -79,9 +86,114 @@ public class MachineCompiler {
             }
         }
 
+        applyActions(machine);
+
         log.debug("Compiling machine completed");
 
         return createAutomaton(closure0, machine);
+    }
+
+    private void applyActions(Machine machine) {
+        log.debug("Applying actions...");
+
+        for (var action : machine.actions) {
+            var newSources = unmap(action.sources);
+            var newTarget = unmap(action.targets);
+            var newLinks = unmapLinks(action.links, graph.links);
+
+            applyActions(action.type, action.argument, newSources, newTarget, newLinks);
+        }
+    }
+
+    private void applyActions(WrappingType type, String argument, Nodes newSources, Nodes newTarget, Links newLinks) {
+        var beginAction = createBeginAction(type);
+        var endAction = createEndAction(type, argument);
+        var ignoreBeginAction = ActionFactory.ignore(beginAction);
+        var cancelEndAction = ActionFactory.cancel(endAction);
+
+        for (var link : newLinks) {
+            if (link instanceof LinkAction linkAct) {
+                var fromSource = newSources.contains(linkAct.source);
+                var fromTarget = newTarget.contains(linkAct.source);
+                var toSource = newSources.contains(linkAct.target);
+                var toTarget = newTarget.contains(linkAct.target);
+
+                if (fromSource && (linkAct.source != linkAct.target || !fromTarget)) {
+                    linkAct.beginActions.append(beginAction);
+                }
+
+                if (toTarget) {
+                    linkAct.endActions.prepend(endAction);
+                }
+
+                if (fromTarget && (linkAct.source == link.target)) {
+                    linkAct.beginActions.prepend(cancelEndAction);
+                }
+
+                if (toSource && !fromSource) {
+                    linkAct.beginActions.append(ignoreBeginAction);
+                }
+            }
+        }
+    }
+
+    private Links unmapLinks(Links oldLinks, Links newLinks) {
+        var results = Links.createW();
+
+        for (var oldLink : oldLinks) {
+            var newSources = unmap(Nodes.of(oldLink.source));
+            var newTargets = unmap(Nodes.of(oldLink.target));
+            var missing = true;
+
+            for (var newLink : newLinks) {
+                if (newSources.contains(newLink.source) && newTargets.contains(newLink.target)) {
+                    if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
+                        if (oldSym.symbol == newSym.symbol) {
+                            results.add(newLink);
+                            missing = false;
+                        }
+                    }
+                    else if (oldLink instanceof LinkEmpty) {
+                        results.add(newLink);
+                        missing = false;
+                    }
+                }
+            }
+
+            if (missing) {
+                throw ErrorFactory.internalError("missing link mapping: " + oldLink);
+            }
+        }
+
+        return results;
+    }
+
+
+
+    public Action createBeginAction(WrappingType type) {
+        switch (type) {
+            case KEY: return ActionFactory.keyBegin();
+            case LIST: return ActionFactory.listBegin();
+            case MAP: return ActionFactory.mapBegin();
+            case PUT: return ActionFactory.putBegin();
+            case VALUE: return ActionFactory.valueBegin();
+            default: throw ErrorFactory.internalError("not implemented type: " + type);
+        }
+    }
+
+    public Action createEndAction(WrappingType type, String argument) {
+        switch (type) {
+            case KEY:
+                if (argument != null) {
+                    throw ErrorFactory.internalError("key does not accept arguments");
+                }
+                return ActionFactory.keyEnd();
+            case LIST: return ActionFactory.listEnd(argument);
+            case MAP: return ActionFactory.mapEnd(argument);
+            case PUT: return ActionFactory.putEnd(argument);
+            case VALUE: return ActionFactory.valueEnd(argument);
+            default: throw ErrorFactory.internalError("not implemented type: " + type);
+        }
     }
 
     private void createActions(Links beginLinks, Links links, Links endLinks, ActionsW beginActions, ActionsW endActions) {
@@ -133,6 +245,22 @@ public class MachineCompiler {
             idClosures.put(id, nodes);
             return newNode;
         });
+    }
+
+    private Nodes unmap(Nodes oldNodes) {
+        var newNodes = Nodes.createW();
+
+        for (var entry : idClosures.entrySet()) {
+            for (var oldNode : oldNodes) {
+                if (entry.getValue().contains(oldNode)) {
+                    var newNode = idNewNodes.get(entry.getKey());
+
+                    newNodes.add(newNode);
+                }
+            }
+        }
+
+        return newNodes;
     }
 
 }
