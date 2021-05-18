@@ -1,23 +1,29 @@
 package org.gramat.graphs;
 
+import org.gramat.data.links.Links;
+import org.gramat.data.nodes.Nodes;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.DataUtils;
+import org.gramat.tools.Validations;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public class Machine {
 
     public final Node source;
-    public final Node target;
-    public final List<Link> links;
+    public final Nodes targets;
+    public final Links links;
 
-    public Machine(Node source, Node target, List<Link> links) {
+    public Machine(Node source, Nodes targets, Links links) {
+        Validations.notEmpty(targets);
+
         this.source = Objects.requireNonNull(source);
-        this.target = Objects.requireNonNull(target);
-        this.links = DataUtils.immutableCopy(links);
+        this.targets = Objects.requireNonNull(targets);
+        this.links = links.copyR();
     }
 
     public Set<Symbol> getSymbols() {

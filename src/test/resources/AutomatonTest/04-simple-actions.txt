@@ -27,13 +27,11 @@ value(opt)
 main = <value: ["a"]>
 
 ->1
-1->2 : cancel:value-end\
-value-begin\
-ignore:value-begin\
+1->2 : value-begin\
 'a'\
 value-end
-2<=
 1<=
+2<=
 ----------
 value(rep)
 
@@ -47,4 +45,4 @@ value-end
 'a'\
 value-end
 2<=
-----------
+----------^

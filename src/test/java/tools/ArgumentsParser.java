@@ -12,18 +12,26 @@ public class ArgumentsParser {
 
     private static final String END_ITEM = "----------";
     private static final String END_SPECIAL = "----------^";
+    private static final String END_IGNORED = "----------#";
 
     public static List<Arguments> parse(String... resources) {
         var arguments = new ArrayList<Arguments>();
         var specials = new ArrayList<Arguments>();
+        var ignoreds = new ArrayList<Arguments>();
 
         for (var resource : resources) {
             log.debug("Reading arguments from {}...", resource);
 
-            readResource(resource, arguments, specials);
+            readResource(resource, arguments, specials, ignoreds);
         }
 
         log.debug("Reading arguments completed: {} set(s)", arguments.size());
+
+        if (!ignoreds.isEmpty()) {
+            log.warn("Ignoring {}", ignoreds.size());
+
+            arguments.removeAll(ignoreds);
+        }
 
         if (specials.isEmpty()) {
             return arguments;
@@ -34,7 +42,7 @@ public class ArgumentsParser {
         }
     }
 
-    private static void readResource(String resource, List<Arguments> arguments, List<Arguments> specials) {
+    private static void readResource(String resource, List<Arguments> arguments, List<Arguments> specials, List<Arguments> ignoreds) {
         var lines = Arrays.stream(Resources.loadLines(resource)).iterator();
         var valueLines = new ArrayList<String>();
         var fieldValues = new ArrayList<String>();
@@ -42,6 +50,7 @@ public class ArgumentsParser {
         boolean flushValue;
         boolean flushArgument;
         boolean special;
+        boolean ignored;
 
         while (lines.hasNext()) {
             var line = lines.next();
@@ -49,6 +58,7 @@ public class ArgumentsParser {
             flushValue = false;
             flushArgument = false;
             special = false;
+            ignored = false;
 
             if (line.equals(END_ITEM)) {
                 flushValue = true;
@@ -58,6 +68,11 @@ public class ArgumentsParser {
                 flushValue = true;
                 flushArgument = true;
                 special = true;
+            }
+            else if (line.equals(END_IGNORED)) {
+                flushValue = true;
+                flushArgument = true;
+                ignored = true;
             }
             else if (line.isEmpty()) {
                 flushValue = true;
@@ -79,6 +94,10 @@ public class ArgumentsParser {
 
                 if (special) {
                     specials.add(args);
+                }
+
+                if (ignored) {
+                    ignoreds.add(args);
                 }
 
                 arguments.add(args);

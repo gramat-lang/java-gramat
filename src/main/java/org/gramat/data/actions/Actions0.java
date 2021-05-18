@@ -1,4 +1,4 @@
-package org.gramat.data;
+package org.gramat.data.actions;
 
 import org.gramat.actions.Action;
 

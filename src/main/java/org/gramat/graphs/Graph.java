@@ -1,24 +1,30 @@
 package org.gramat.graphs;
 
-import org.gramat.data.Actions;
-import org.gramat.data.Nodes;
+import org.gramat.data.actions.Actions;
+import org.gramat.data.links.Links;
+import org.gramat.data.links.LinksW;
+import org.gramat.data.nodes.Nodes;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkEnter;
+import org.gramat.graphs.links.LinkExit;
+import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
 import org.gramat.tools.Validations;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class Graph {
     public final IdentifierProvider ids;
     public final List<Node> nodes;
-    public final List<Link> links;
+    public final LinksW links;
 
     public Graph(IdentifierProvider ids) {
         this.ids = ids;
         this.nodes = new ArrayList<>();
-        this.links = new ArrayList<>();
+        this.links = Links.createW();
     }
 
     public Node createNode() {
@@ -29,12 +35,42 @@ public class Graph {
         return node;
     }
 
+    public void createEnter(Node source, Node target, String token, Actions beginActions, Actions endActions) {
+        links.add(new LinkEnter(source, target, beginActions, endActions, token));
+    }
+
+    public void createExit(Nodes sources, Node target, String token, Actions beginActions, Actions endActions) {
+        for (var source : sources) {
+            links.add(new LinkExit(source, target, beginActions, endActions, token));
+        }
+    }
+
+    public void createLink(Node source, Nodes targets, Symbol symbol) {
+        for (var target : targets) {
+            links.add(new LinkSymbol(source, target, null, null, symbol));
+        }
+    }
+
     public void createLink(Node source, Node target, Symbol symbol) {
         links.add(new LinkSymbol(source, target, null, null, symbol));
     }
 
-    public void createLink(Node source, Node target) {
-        links.add(new LinkEmpty(source, target));
+    public void createLink(Node source, Node target, Actions beginActions, Actions endActions) {
+        links.add(new LinkEmpty(source, target, beginActions, endActions));
+    }
+
+    public void createLink(Nodes sources, Nodes targets, Actions beginActions, Actions endActions) {
+        for (var source : sources) {
+            for (var target : targets) {
+                links.add(new LinkEmpty(source, target, beginActions, endActions));
+            }
+        }
+    }
+
+    public void createLink(Nodes sources, Node target, Actions beginActions, Actions endActions) {
+        for (var source : sources) {
+            links.add(new LinkEmpty(source, target, beginActions, endActions));
+        }
     }
 
     public void createLink(Nodes sources, Node target, Symbol symbol, Actions beginActions, Actions endActions) {
@@ -60,22 +96,4 @@ public class Graph {
         links.add(new LinkSymbol(source, target, beginActions, endActions, symbol));
     }
 
-    public void createLink(Node source, Nodes targets) {
-        createLink(Nodes.of(source), targets);
-    }
-
-    public void createLink(Nodes sources, Node target) {
-        createLink(sources, Nodes.of(target));
-    }
-
-    public void createLink(Nodes sources, Nodes targets) {
-        Validations.notEmpty(sources);
-        Validations.notEmpty(targets);
-
-        for (var source : sources) {
-            for (var target : targets) {
-                links.add(new LinkEmpty(source, target));
-            }
-        }
-    }
 }

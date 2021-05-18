@@ -1,9 +1,10 @@
-package org.gramat.graphs;
+package org.gramat.graphs.links;
 
-import org.gramat.data.Actions;
-import org.gramat.data.ActionsW;
+import org.gramat.data.actions.Actions;
+import org.gramat.data.actions.ActionsW;
+import org.gramat.graphs.Node;
 
-public class LinkAction extends Link {
+public abstract class LinkAction extends Link {
 
     public final ActionsW beginActions;
     public final ActionsW endActions;

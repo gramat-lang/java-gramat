@@ -2,6 +2,7 @@ package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.actions.ActionFactory;
+import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -14,8 +15,8 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.graphs.Graph;
-import org.gramat.graphs.Link;
-import org.gramat.graphs.LinkAction;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
@@ -62,50 +63,56 @@ public class ExpressionCompiler {
     public Machine compileMachine(Expression expression) {
         var graph = new Graph(graphIds);
         var source = graph.createNode();
-        var target = graph.createNode();
-
-        compileExpression(graph, expression, source, target);
-
-        return new Machine(source, target, graph.links);
+        var targets = compileExpression(graph, expression, source);
+        return new Machine(source, targets, graph.links);
     }
 
-    private void compileExpression(Graph graph, Expression expression, Node source, Node target) {
+    private Nodes compileExpression(Graph graph, Expression expression, Nodes sources) {
+        var result = Nodes.createW();
+
+        for (var source : sources) {
+            result.addAll(compileExpression(graph, expression, source));
+        }
+
+        return result;
+    }
+
+    private Nodes compileExpression(Graph graph, Expression expression, Node source) {
         if (expression instanceof Wrapping) {
-            compileWrapping(graph, (Wrapping)expression, source, target);
+            return compileWrapping(graph, (Wrapping)expression, source);
         }
         else if (expression instanceof Alternation) {
-            compileAlternation(graph, (Alternation)expression, source, target);
+            return compileAlternation(graph, (Alternation)expression, source);
         }
         else if (expression instanceof Option) {
-            compileOption(graph, (Option)expression, source, target);
+            return compileOption(graph, (Option)expression, source);
         }
         else if (expression instanceof Reference) {
-            compileReference(graph, (Reference)expression, source, target);
+            return compileReference(graph, (Reference)expression, source);
         }
         else if (expression instanceof Repeat) {
-            compileRepeat(graph, (Repeat)expression, source, target);
+            return compileRepeat(graph, (Repeat)expression, source);
         }
         else if (expression instanceof Sequence) {
-            compileSequence(graph, (Sequence)expression, source, target);
+            return compileSequence(graph, (Sequence)expression, source);
         }
         else if (expression instanceof Literal) {
-            compileLiteral(graph, (Literal)expression, source, target);
+            return compileLiteral(graph, (Literal)expression, source);
         }
         else if (expression instanceof Wildcard) {
-            compileWildcard(graph, (Wildcard)expression, source, target);
+            return compileWildcard(graph, (Wildcard)expression, source);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
     }
 
-    private void compileWrapping(Graph graph, Wrapping wrapping, Node source, Node target) {
-        var initialLinks = DataUtils.copy(graph.links);
-
-        compileExpression(graph, wrapping.content, source, target);
+    private Nodes compileWrapping(Graph graph, Wrapping wrapping, Node source) {
+        var initialLinks = graph.links.copyW();
+        var targets = compileExpression(graph, wrapping.content, source);
 
         // Compute links created by the compiled expression
-        var newLinks = DataUtils.copy(graph.links);
+        var newLinks = graph.links.copyW();
         newLinks.removeAll(initialLinks);
 
         var beginAction = wrapping.createBeginAction();
@@ -113,14 +120,11 @@ public class ExpressionCompiler {
         var ignoreBeginAction = ActionFactory.ignore(beginAction);
         var cancelEndAction = ActionFactory.cancel(endAction);
 
-        var sources = Link.forwardClosure(source, newLinks);
-        var targets = Link.backwardClosure(target, newLinks);
-
         for (var link : newLinks) {
             if (link instanceof LinkAction linkAct) {
-                var fromSource = sources.contains(linkAct.source);
+                var fromSource = (source == linkAct.source);
                 var fromTarget = targets.contains(linkAct.source);
-                var toSource = sources.contains(linkAct.target);
+                var toSource = (source == linkAct.target);
                 var toTarget = targets.contains(linkAct.target);
 
                 if (fromSource) {
@@ -140,25 +144,29 @@ public class ExpressionCompiler {
                 }
             }
         }
+
+        return targets;
     }
 
-    private void compileAlternation(Graph graph, Alternation alternation, Node source, Node target) {
+    private Nodes compileAlternation(Graph graph, Alternation alternation, Node source) {
+        var result = Nodes.createW();
+
         for (var item : alternation.items) {
-            var aux = graph.createNode();
+            var itemTargets = compileExpression(graph, item, source);
 
-            compileExpression(graph, item, source, aux);
-
-            graph.createLink(aux, target);
+            result.addAll(itemTargets);
         }
+
+        return result;
     }
 
-    private void compileOption(Graph graph, Option option, Node source, Node target) {
-        compileExpression(graph, option.content, source, target);
+    private Nodes compileOption(Graph graph, Option option, Node source) {
+        var targets = compileExpression(graph, option.content, source);
 
-        graph.createLink(source, target);
+        return Nodes.join(targets, source);
     }
 
-    private void compileReference(Graph graph, Reference reference, Node source, Node target) {
+    private Nodes compileReference(Graph graph, Reference reference, Node source) {
         ReferenceMap refMap = null;
         for (var item : referenceStack) {
             if (item.oldName.equals(reference.name)) {
@@ -185,60 +193,56 @@ public class ExpressionCompiler {
             newDependencies.put(newName, newDependency);
         }
 
+        var target = graph.createNode();
+
         graph.createLink(source, target,
                 SymbolFactory.reference(refMap.newName),
                 null, null);
+
+        return Nodes.of(target);
     }
 
-    private void compileRepeat(Graph graph, Repeat repeat, Node source, Node target) {
-        compileExpression(graph, repeat.content, source, target);
+    private Nodes compileRepeat(Graph graph, Repeat repeat, Node source) {
+        var targets = compileExpression(graph, repeat.content, source);
 
         if (repeat.separator != null) {
-            var aux = graph.createNode();
+            var separatorTargets = compileExpression(graph, repeat.separator, targets);
 
-            compileExpression(graph, repeat.separator, target, aux);
-            compileExpression(graph, repeat.content, aux, target);
+            graph.createLink(separatorTargets, source, null, null);
         }
         else {
-            compileExpression(graph, repeat.content, target, target);
+            graph.createLink(targets, source, null, null);
         }
+
+        return targets;
     }
 
-    private void compileSequence(Graph graph, Sequence sequence, Node source, Node target) {
-        var length = sequence.items.size();
-        var lastIndex = length - 1;
-        var lastNode = source;
+    private Nodes compileSequence(Graph graph, Sequence sequence, Node source) {
+        var targets = Nodes.of(source);
 
-        for (var i = 0 ; i < length; i++) {
-            var item = sequence.items.get(i);
-            if (i == lastIndex) {
-                compileExpression(graph, item, lastNode, target);
-
-                lastNode = target;
-            }
-            else {
-                var aux = graph.createNode();
-
-                compileExpression(graph, item, lastNode, aux);
-
-                lastNode = aux;
-            }
+        for (var item : sequence.items) {
+            targets = compileExpression(graph, item, targets);
         }
+
+        return targets;
     }
 
-    private void compileLiteral(Graph graph, Literal literal, Node source, Node target) {
+    private Nodes compileLiteral(Graph graph, Literal literal, Node source) {
+        var target = graph.createNode();
+
         graph.createLink(source, target, literal.symbol);
+
+        return Nodes.of(target);
     }
 
-    private void compileWildcard(Graph graph, Wildcard wildcard, Node source, Node target) {
+    private Nodes compileWildcard(Graph graph, Wildcard wildcard, Node source) {
         if (wildcard.level != 1) {
             throw ErrorFactory.syntaxError(wildcard.location,
                     "No supported wilcard level: " + wildcard.level);
         }
 
         // TODO improve how to make wildcards 🤔
-        source.wildcard = true;
-        target.wildcard = true;
+        throw new UnsupportedOperationException();
     }
 
     private static class ReferenceMap {

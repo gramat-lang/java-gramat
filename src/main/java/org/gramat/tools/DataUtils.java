@@ -3,11 +3,7 @@ package org.gramat.tools;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.gramat.actions.Action;
-import org.gramat.data.Nodes;
-import org.gramat.graphs.Node;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -81,6 +77,29 @@ public class DataUtils {
             @Override
             public T next() {
                 return iterator.next();
+            }
+        };
+    }
+
+    public static <T> Iterator<T> iteratorOf(T[] items) {
+        return new Iterator<>() {
+            int i = 0;
+
+            @Override
+            public boolean hasNext() {
+                return i < items.length;
+            }
+
+            @Override
+            public T next() {
+                if (i < items.length) {
+                    var item = items[i];
+                    i++;
+                    return item;
+                }
+                else {
+                    throw new NoSuchElementException();
+                }
             }
         };
     }

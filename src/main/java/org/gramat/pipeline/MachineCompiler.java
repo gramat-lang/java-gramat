@@ -1,13 +1,13 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.data.Actions;
-import org.gramat.data.ActionsW;
-import org.gramat.data.Nodes;
+import org.gramat.data.actions.Actions;
+import org.gramat.data.actions.ActionsW;
+import org.gramat.data.links.Links;
+import org.gramat.data.nodes.Nodes;
 import org.gramat.graphs.Automaton;
 import org.gramat.graphs.Graph;
-import org.gramat.graphs.Link;
-import org.gramat.graphs.LinkSymbol;
+import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.tools.IdentifierProvider;
@@ -15,7 +15,6 @@ import org.gramat.tools.IdentifierProvider;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -42,7 +41,7 @@ public class MachineCompiler {
         var control = new HashSet<String>();
         var queue = new ArrayDeque<Nodes>();
 
-        var closure0 = Link.forwardClosure(machine.source, machine.links);
+        var closure0 = machine.links.forwardClosure(machine.source);
 
         queue.add(closure0);
 
@@ -50,19 +49,27 @@ public class MachineCompiler {
             var oldSources = queue.remove();
             var oldSourcesId = oldSources.getId();
             if (control.add(oldSourcesId)) {
-                log.debug("PROCESSING CLOSURE {}", oldSourcesId);
                 var newSource = map(oldSources, oldSourcesId);
 
                 for (var symbol : symbols) {
-                    var oldLinks = Link.forwardSymbols(oldSources, symbol, machine.links);
-                    if (!oldLinks.isEmpty()) {
-                        var oldTargets = Link.collectTargets(oldLinks);
+                    var oldLinks = machine.links.findFrom(oldSources, symbol);
+                    if (oldLinks.isPresent()) {
+                        var oldLinksSources = oldLinks.collectTargets();
+                        var oldLinksTargets = oldLinks.collectTargets();
+                        var oldTargets = machine.links.forwardClosure(oldLinksTargets);
                         var oldTargetsId = oldTargets.getId();
                         var newTarget = map(oldTargets, oldTargetsId);
                         var beginActions = Actions.createW();
                         var endActions = Actions.createW();
 
-                        createActions(oldSources, oldTargets, oldLinks, beginActions, endActions);
+                        log.debug("NEW LINK {} -> {}: {}", oldSources, oldTargets, symbol);
+
+                        createActions(
+                                machine.links.backwardLinksClosure(oldLinksSources),
+                                oldLinks,
+                                machine.links.forwardLinksClosure(oldLinksTargets),
+                                beginActions,
+                                endActions);
 
                         graph.createLink(newSource, newTarget, symbol, beginActions, endActions);
 
@@ -77,14 +84,26 @@ public class MachineCompiler {
         return createAutomaton(closure0, machine);
     }
 
-    private void createActions(Nodes sources, Nodes targets, List<LinkSymbol> links, ActionsW beginActions, ActionsW endActions) {
-        for (var link : links) {
-            if (sources.contains(link.source)) {
-                beginActions.append(link.beginActions);
-            }
+    private void createActions(Links beginLinks, Links links, Links endLinks, ActionsW beginActions, ActionsW endActions) {
+        for (var link : beginLinks) {
+            if (link instanceof LinkAction linkAct) {
+                beginActions.append(linkAct.beginActions);
+                endActions.prepend(linkAct.endActions);
 
-            if (targets.contains(link.target)) {
-                endActions.prepend(link.endActions);
+            }
+        }
+
+        for (var link : links) {
+            if (link instanceof LinkAction linkAct) {
+                beginActions.append(linkAct.beginActions);
+                endActions.prepend(linkAct.endActions);
+            }
+        }
+
+        for (var link : endLinks) {
+            if (link instanceof LinkAction linkAct) {
+                beginActions.append(linkAct.beginActions);
+                endActions.append(linkAct.endActions);
             }
         }
     }
@@ -93,7 +112,7 @@ public class MachineCompiler {
         var initial = idNewNodes.get(sourceClosure.getId());
         var accepted = Nodes.createW();
 
-        var targetClosure = Link.backwardClosure(machine.target, machine.links);
+        var targetClosure = machine.links.backwardClosure(machine.targets);
 
         for (var entry : idClosures.entrySet()) {
             for (var target : targetClosure) {

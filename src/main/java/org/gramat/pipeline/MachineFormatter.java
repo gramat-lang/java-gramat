@@ -1,13 +1,12 @@
 package org.gramat.pipeline;
 
-import org.gramat.data.Actions;
+import org.gramat.data.actions.Actions;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
-import org.gramat.graphs.Link;
-import org.gramat.graphs.LinkEmpty;
-import org.gramat.graphs.LinkSymbol;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.graphs.Machine;
-import org.gramat.graphs.MachineContract;
 import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 
@@ -62,18 +61,6 @@ public class MachineFormatter {
             writeLink(output, link);
         }
 
-        writeAccepted(output, machine.target);
-    }
-
-    public void writeMachine(Appendable output, MachineContract machine) {
-        for (var source : machine.sources) {
-            writeInitial(output, source);
-        }
-
-        for (var link : machine.links) {
-            writeLink(output, link);
-        }
-
         for (var target : machine.targets) {
             writeAccepted(output, target);
         }
@@ -106,8 +93,8 @@ public class MachineFormatter {
         if (link instanceof LinkSymbol linkSym) {
             writeLabel(label, linkSym.beginActions, linkSym.symbol.toString(), linkSym.endActions);
         }
-        else if (link instanceof LinkEmpty) {
-            label.append("empty");
+        else if (link instanceof LinkEmpty linkEmp) {
+            writeLabel(label, linkEmp.beginActions, "empty", linkEmp.endActions);
         }
         else {
             throw ErrorFactory.notImplemented();

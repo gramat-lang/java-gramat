@@ -1,4 +1,4 @@
-package org.gramat.data;
+package org.gramat.data.nodes;
 
 import org.gramat.graphs.Node;
 
@@ -14,6 +14,12 @@ public interface Nodes extends Iterable<Node> {
     static NodesW createW() {
         return new NodesW();
     }
+
+    static Nodes join(Nodes first, Node last) {
+        return new NodesR(first, last);
+    }
+
+    boolean isEmpty();
 
     static String computeId(Iterable<Node> nodes) {
         var ids = new ArrayList<String>();
@@ -33,4 +39,5 @@ public interface Nodes extends Iterable<Node> {
 
     Nodes copyR();
 
+    NodesW copyW();
 }

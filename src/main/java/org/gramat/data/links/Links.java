@@ -1,32 +1,41 @@
-package org.gramat.graphs;
+package org.gramat.data.links;
 
-import org.gramat.data.Nodes;
-import org.gramat.data.NodesW;
+import org.gramat.data.nodes.NodeNavigator;
+import org.gramat.data.nodes.Nodes;
+import org.gramat.graphs.Node;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkEnter;
+import org.gramat.graphs.links.LinkExit;
+import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.DataUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
-public abstract class Link {
+public interface Links extends Iterable<Link> {
 
-    public final Node source;
-    public final Node target;
+    Links copyR();
 
-    protected Link(Node source, Node target) {
-        this.source = Objects.requireNonNull(source);
-        this.target = Objects.requireNonNull(target);
+    LinksW copyW();
+
+    int getCount();
+
+    boolean isEmpty();
+
+    boolean isPresent();
+
+    static LinksW createW() {
+        return new LinksW();
     }
 
-    public static List<Link> findFrom(Node source, List<Link> links) {
-        var result = new ArrayList<Link>();
+    default Links findFrom(Node source) {
+        var result = Links.createW();
 
-        for (var link : links) {
+        for (var link : this) {
             if (link.source == source) {
                 result.add(link);
             }
@@ -35,10 +44,10 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> findFrom(Nodes sources, List<Link> links) {
-        var result = new ArrayList<Link>();
+    default Links findFrom(Nodes sources) {
+        var result = Links.createW();
 
-        for (var link : links) {
+        for (var link : this) {
             if (sources.contains(link.source)) {
                 result.add(link);
             }
@@ -47,10 +56,10 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> findTo(Nodes targets, List<Link> links) {
-        var result = new ArrayList<Link>();
+    default Links findTo(Nodes targets) {
+        var result = Links.createW();
 
-        for (var link : links) {
+        for (var link : this) {
             if (targets.contains(link.target)) {
                 result.add(link);
             }
@@ -59,10 +68,10 @@ public abstract class Link {
         return result;
     }
 
-    public static List<Link> findTo(Node target, List<Link> links) {
-        var result = new ArrayList<Link>();
+    default Links findTo(Node target) {
+        var result = Links.createW();
 
-        for (var link : links) {
+        for (var link : this) {
             if (link.target == target) {
                 result.add(link);
             }
@@ -71,11 +80,11 @@ public abstract class Link {
         return result;
     }
 
-    public static Nodes forwardClosure(Node source, List<Link> links) {
-        return forwardClosure(Nodes.of(source), links);
+    default Nodes forwardClosure(Node source) {
+        return forwardClosure(Nodes.of(source));
     }
 
-    public static Nodes forwardClosure(Nodes sources, List<Link> links) {
+    default Nodes forwardClosure(Nodes sources) {
         var result = Nodes.createW();
         var queue = new ArrayDeque<Node>();
 
@@ -84,7 +93,7 @@ public abstract class Link {
         while (!queue.isEmpty()) {
             var source = queue.remove();
             if (result.add(source)) {
-                for (var link : findFrom(source, links)) {
+                for (var link : findFrom(source)) {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.target);
                     }
@@ -95,7 +104,7 @@ public abstract class Link {
         return result;
     }
 
-    public static List<LinkSymbol> forwardSymbols(Node initial, List<Link> links) {
+    default List<LinkSymbol> forwardSymbols(Node initial) {
         var result = new ArrayList<LinkSymbol>();
         var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
@@ -105,7 +114,7 @@ public abstract class Link {
         while (!queue.isEmpty()) {
             var source = queue.remove();
             if (control.add(source)) {
-                for (var link : findFrom(source, links)) {
+                for (var link : findFrom(source)) {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.target);
                     }
@@ -122,17 +131,21 @@ public abstract class Link {
         return result;
     }
 
-    public static List<LinkSymbol> backwardSymbols(Node initial, List<Link> links) {
+    default List<LinkSymbol> backwardSymbols(Node initial) {
+        return backwardSymbols(Nodes.of(initial));
+    }
+
+    default List<LinkSymbol> backwardSymbols(Nodes initial) {
         var result = new ArrayList<LinkSymbol>();
         var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
 
-        queue.add(initial);
+        DataUtils.addAll(queue, initial);
 
         while (!queue.isEmpty()) {
             var target = queue.remove();
             if (control.add(target)) {
-                for (var link : findTo(target, links)) {
+                for (var link : findTo(target)) {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.source);
                     }
@@ -149,8 +162,20 @@ public abstract class Link {
         return result;
     }
 
-    public static List<LinkSymbol> forwardSymbols(Nodes sources, Symbol symbol, List<Link> links) {
-        var result = new ArrayList<LinkSymbol>();
+    default Links findFrom(Nodes sources, Symbol symbol) {
+        var result = Links.createW();
+
+        for (var link : this) {
+            if (sources.contains(link.source) && link instanceof LinkSymbol linkSym && linkSym.symbol == symbol) {
+                result.add(link);
+            }
+        }
+
+        return result;
+    }
+
+    default Links forwardSymbols(Nodes sources, Symbol symbol) {
+        var result = Links.createW();
         var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
 
@@ -159,13 +184,15 @@ public abstract class Link {
         while (!queue.isEmpty()) {
             var source = queue.remove();
             if (control.add(source)) {
-                for (var link : findFrom(source, links)) {
+                for (var link : findFrom(source)) {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.target);
                     }
                     else if (link instanceof LinkSymbol linkSym) {
                         if (linkSym.symbol == symbol) {
                             result.add(linkSym);
+
+                            queue.add(linkSym.target);
                         }
                     }
                     else {
@@ -178,11 +205,11 @@ public abstract class Link {
         return result;
     }
 
-    public static Nodes backwardClosure(Node source, List<Link> links) {
-        return backwardClosure(Nodes.of(source), links);
+    default Nodes backwardClosure(Node source) {
+        return backwardClosure(Nodes.of(source));
     }
 
-    public static Nodes backwardClosure(Nodes targets, List<Link> links) {
+    default Nodes backwardClosure(Nodes targets) {
         var result = Nodes.createW();
         var queue = new ArrayDeque<Node>();
 
@@ -191,7 +218,7 @@ public abstract class Link {
         while (!queue.isEmpty()) {
             var target = queue.remove();
             if (result.add(target)) {
-                for (var link : findTo(target, links)) {
+                for (var link : findTo(target)) {
                     if (link instanceof LinkEmpty) {
                         queue.add(link.source);
                     }
@@ -202,11 +229,63 @@ public abstract class Link {
         return result;
     }
 
-    public static Nodes collectTargets(List<? extends Link> links) {
+    default Nodes collectSources() {
         var result = Nodes.createW();
 
-        for (var link : links) {
+        for (var link : this) {
+            result.add(link.source);
+        }
+
+        return result;
+    }
+
+    default Nodes collectTargets() {
+        var result = Nodes.createW();
+
+        for (var link : this) {
             result.add(link.target);
+        }
+
+        return result;
+    }
+
+    default Links backwardLinksClosure(Nodes nodes) {
+        var result = Links.createW();
+        var nav = new NodeNavigator();
+
+        nav.push(nodes);
+
+        while (nav.hasNodes()) {
+            var target = nav.pop();
+
+            for (var link : findTo(target)) {
+                if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
+                    result.add(link);
+
+                    nav.push(link.source);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    default Links forwardLinksClosure(Nodes nodes) {
+        var result = Links.createW();
+        var nav = new NodeNavigator();
+
+        nav.push(nodes);
+
+        while (nav.hasNodes()) {
+            var source = nav.pop();
+
+            for (var link : findFrom(source)) {
+                if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
+                    result.add(link);
+
+                    nav.push(link.target);
+                }
+            }
         }
 
         return result;
