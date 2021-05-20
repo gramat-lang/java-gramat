@@ -46,4 +46,9 @@ public class ActionsW implements Actions {
     public Iterator<Action> iterator() {
         return data.iterator();
     }
+
+    @Override
+    public boolean isPresent() {
+        return !data.isEmpty();
+    }
 }

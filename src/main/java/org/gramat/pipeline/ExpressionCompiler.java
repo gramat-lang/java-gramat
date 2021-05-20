@@ -1,6 +1,7 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
+import org.gramat.actions.ActionFactory;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -88,7 +89,25 @@ public class ExpressionCompiler {
     }
 
     private void compileWrapping(Wrapping wrapping, Node source, Node target) {
+        var links0 = graph.links.copyR();
+
         compileExpression(wrapping.content, source, target);
+
+        var links = graph.links.copyW();
+        links.removeAll(links0);
+
+        var begin = ActionFactory.createBeginAction(wrapping.type);
+        var end = ActionFactory.createEndAction(wrapping.type, wrapping.argument);
+
+        for (var link : links) {
+            if (link.source == source) {
+                link.beforeActions.prepend(begin);
+            }
+
+            if (link.target == target) {
+                link.afterActions.append(end);
+            }
+        }
     }
 
     private void compileAlternation(Alternation alternation, Node source, Node target) {

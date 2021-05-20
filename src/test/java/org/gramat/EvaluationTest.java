@@ -23,8 +23,7 @@ class EvaluationTest {
             var gramat = new Gramat();
             var automaton = gramat.compile(input);
 
-            log.info("  Actual: {}", AmEditor.url(automaton));
-            log.info("Expected: {}", AmEditor.url(automaton));
+            log.info("Automaton: {}", AmEditor.url(automaton));
         }
     }
 

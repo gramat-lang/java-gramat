@@ -15,6 +15,11 @@ public class NodeNavigator {
         control = new HashSet<>();
     }
 
+    public void reset() {
+        queue.clear();
+        control.clear();
+    }
+
     public void push(Node node) {
         if (control.add(node)) {
             queue.add(node);

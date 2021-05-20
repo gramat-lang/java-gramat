@@ -27,4 +27,9 @@ public class ActionsR implements Actions {
     public Iterator<Action> iterator() {
         return DataUtils.immutableIterator(data);
     }
+
+    @Override
+    public boolean isPresent() {
+        return !data.isEmpty();
+    }
 }

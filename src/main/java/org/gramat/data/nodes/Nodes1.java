@@ -40,6 +40,11 @@ public class Nodes1 implements Nodes {
     }
 
     @Override
+    public boolean isPresent() {
+        return true;
+    }
+
+    @Override
     public Iterator<Node> iterator() {
         return DataUtils.iteratorOf(node);
     }

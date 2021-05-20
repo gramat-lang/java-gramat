@@ -1,5 +1,7 @@
 package org.gramat.pipeline;
 
+import org.gramat.data.actions.Actions;
+import org.gramat.data.actions.ActionsW;
 import org.gramat.data.links.Links;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
@@ -76,6 +78,8 @@ public class MachineFormatter {
     private String writeLabel(Link link) {
         var label = new StringBuilder();
 
+        writeActions(label, link.beforeActions, "", "\n");
+
         if (link instanceof LinkSymbol linkSym) {
             writeLabel(label, linkSym.symbol.toString());
         }
@@ -86,11 +90,28 @@ public class MachineFormatter {
             throw ErrorFactory.notImplemented();
         }
 
+        writeActions(label, link.afterActions, "\n", "");
+
         return label.toString()
                 .replace("\\", "\\\\")
                 .replace("\n", "\\\n")
                 .replace("!", "\\!")
                 .replace(",", "\\,");
+    }
+
+    private void writeActions(Appendable output, Actions actions, String prepend, String append) {
+        if (actions.isPresent()) {
+            write(output, prepend);
+            var index = 0;
+            for (var action : actions) {
+                if (index > 0) {
+                    write(output, "\n");
+                }
+                write(output, action.toString());
+                index++;
+            }
+            write(output, append);
+        }
     }
 
     private void writeLabel(Appendable output, String symbol) {

@@ -23,10 +23,10 @@ public class ClosureMapper {
         this.idNewNodes = new HashMap<>();
     }
 
-    public Node map(Nodes nodes, String id) {
-        return idNewNodes.computeIfAbsent(id, k -> {
+    public Node map(Nodes nodes) {
+        return idNewNodes.computeIfAbsent(nodes.getId(), k -> {
             var newNode = graph.createNode();
-            idClosures.put(id, nodes);
+            idClosures.put(nodes.getId(), nodes);
             return newNode;
         });
     }

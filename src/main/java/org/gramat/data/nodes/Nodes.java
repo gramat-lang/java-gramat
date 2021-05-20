@@ -40,4 +40,6 @@ public interface Nodes extends Iterable<Node> {
     Nodes copyR();
 
     NodesW copyW();
+
+    boolean isPresent();
 }

@@ -5,6 +5,7 @@ import org.gramat.graphs.links.Link;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class LinksW implements Links {
 
@@ -22,8 +23,10 @@ public class LinksW implements Links {
         links.add(link);
     }
 
-    public void removeAll(LinksW links) {
-        this.links.removeAll(links.links);
+    public void removeAll(Links links) {
+        for (var link : links) {
+            this.links.remove(link);
+        }
     }
 
     @Override

@@ -4,13 +4,14 @@ import org.gramat.graphs.Node;
 import org.gramat.symbols.Symbol;
 
 import java.util.Objects;
+import java.util.Set;
 
 public class LinkSymbol extends Link {
 
     public final Symbol symbol;
 
-    public LinkSymbol(Node source, Node target, Symbol symbol) {
-        super(source, target);
+    public LinkSymbol(String ids, Node source, Node target, Symbol symbol) {
+        super(ids, source, target);
         this.symbol = Objects.requireNonNull(symbol);
     }
 

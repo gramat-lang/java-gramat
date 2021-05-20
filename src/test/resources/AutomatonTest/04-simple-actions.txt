@@ -30,8 +30,8 @@ main = <value: ["a"]>
 1->2 : value-begin\
 'a'\
 value-end
-1<=
 2<=
+1<=
 ----------
 value(rep)
 
@@ -41,8 +41,7 @@ main = <value: {+"a"}>
 1->2 : value-begin\
 'a'\
 value-end
-2->2 : cancel:value-end\
-'a'\
+2->2 : 'a'\
 value-end
 2<=
 ----------

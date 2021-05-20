@@ -55,6 +55,11 @@ public class NodesR implements Nodes {
     }
 
     @Override
+    public boolean isPresent() {
+        return !nodes.isEmpty();
+    }
+
+    @Override
     public boolean isEmpty() {
         return nodes.isEmpty();
     }

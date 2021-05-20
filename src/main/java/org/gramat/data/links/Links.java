@@ -172,6 +172,21 @@ public interface Links extends Iterable<Link> {
         return result;
     }
 
+    /**
+     * From a set of sources and a symbol, what nodes can it reach? (considering empty links)
+     */
+    default Nodes findTargetClosure(Nodes sources, Symbol symbol) {
+        var result = Nodes.createW();
+
+        for (var link : this) {
+            if (sources.contains(link.source) && link instanceof LinkSymbol linkSym && linkSym.symbol == symbol) {
+                result.add(link.target);
+            }
+        }
+
+        return forwardClosure(result);
+    }
+
     default Links forwardSymbols(Nodes sources, Symbol symbol) {
         var result = Links.createW();
         var queue = new ArrayDeque<Node>();

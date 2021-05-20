@@ -15,4 +15,9 @@ class Actions0 implements Actions {
     public Iterator<Action> iterator() {
         return Collections.emptyIterator();
     }
+
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

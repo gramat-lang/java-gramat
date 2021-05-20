@@ -8,7 +8,7 @@ import java.util.List;
 
 public class LinksR implements Links {
 
-    private final Link[] links;
+    final Link[] links;
 
     LinksR(Link[] links) {
         this.links = links;

@@ -59,6 +59,11 @@ public class NodesW implements Nodes {
         return null;
     }
 
+    @Override
+    public boolean isPresent() {
+        return !nodes.isEmpty();
+    }
+
     public boolean add(Node node) {
         cacheId = null;
         return nodes.add(node);

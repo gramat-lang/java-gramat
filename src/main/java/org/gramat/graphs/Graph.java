@@ -2,52 +2,53 @@ package org.gramat.graphs;
 
 import org.gramat.data.links.Links;
 import org.gramat.data.links.LinksW;
-import org.gramat.data.nodes.Nodes;
+import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkEmpty;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.IdentifierProvider;
-import org.gramat.tools.Validations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class Graph {
-    public final IdentifierProvider ids;
+
+    private final IdentifierProvider linkIds;
+
+    public final IdentifierProvider nodeIds;
     public final List<Node> nodes;
     public final LinksW links;
 
-    public Graph(IdentifierProvider ids) {
-        this.ids = ids;
+    public Graph(IdentifierProvider nodeIds) {
+        this.nodeIds = nodeIds;
+        this.linkIds = IdentifierProvider.create(1);
         this.nodes = new ArrayList<>();
         this.links = Links.createW();
     }
 
     public Node createNode() {
-        var node = new Node(ids.next());
+        var node = new Node(nodeIds.next());
 
         nodes.add(node);
 
         return node;
     }
 
-    public void createLink(Node source, Node target, Symbol symbol) {
-        links.add(new LinkSymbol(source, target, symbol));
+    public Link createLink(Node source, Node target, Symbol symbol) {
+        var link = new LinkSymbol(String.valueOf(linkIds.next()), source, target, symbol);
+
+        links.add(link);
+
+        return link;
+    }
+
+    public void createLink(Node source, Node target, Symbol symbol, String ids) {
+        links.add(new LinkSymbol(ids, source, target, symbol));
     }
 
     public void createLink(Node source, Node target) {
-        links.add(new LinkEmpty(source, target));
-    }
-
-    public void createLink(Nodes sources, Nodes targets, Symbol symbol) {
-        Validations.notEmpty(sources);
-        Validations.notEmpty(targets);
-
-        for (var source : sources) {
-            for (var target : targets) {
-                links.add(new LinkSymbol(source, target, symbol));
-            }
-        }
+        links.add(new LinkEmpty(String.valueOf(linkIds.next()), source, target));
     }
 
 }

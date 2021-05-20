@@ -37,6 +37,8 @@ public interface Actions extends Iterable<Action> {
         return new ActionsR(data(first), data(middle), List.of(last));
     }
 
+    boolean isPresent();
+
     private static Collection<Action> data(Actions actions) {
         if (actions == null || actions instanceof Actions0) {
             return List.of();
