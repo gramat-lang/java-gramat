@@ -7,24 +7,18 @@ import org.gramat.data.actions.Actions;
 import org.gramat.data.actions.ActionsW;
 import org.gramat.data.links.Links;
 import org.gramat.data.nodes.Nodes;
-import org.gramat.errors.ErrorFactory;
-import org.gramat.expressions.WrappingType;
+import org.gramat.expressions.ActionType;
 import org.gramat.graphs.Automaton;
+import org.gramat.graphs.ClosureMapper;
 import org.gramat.graphs.Graph;
-import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkAction;
 import org.gramat.graphs.Machine;
-import org.gramat.graphs.Node;
-import org.gramat.graphs.links.LinkEmpty;
 import org.gramat.graphs.links.LinkEnter;
 import org.gramat.graphs.links.LinkExit;
-import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 @Slf4j
 public class MachineCompiler {
@@ -34,13 +28,11 @@ public class MachineCompiler {
     }
 
     private final Graph graph;
-    private final Map<String, Nodes> idClosures;
-    private final Map<String, Node> idNewNodes;
+    private final ClosureMapper mapper;
 
     private MachineCompiler() {
         graph = new Graph(IdentifierProvider.create(1));
-        idClosures = new HashMap<>();
-        idNewNodes = new HashMap<>();
+        mapper = new ClosureMapper(graph);
     }
 
     private Automaton run(Machine machine) {
@@ -58,7 +50,7 @@ public class MachineCompiler {
             var oldSources = queue.remove();
             var oldSourcesId = oldSources.getId();
             if (control.add(oldSourcesId)) {
-                var newSource = map(oldSources, oldSourcesId);
+                var newSource = mapper.map(oldSources, oldSourcesId);
 
                 for (var symbol : symbols) {
                     var oldLinks = machine.links.findFrom(oldSources, symbol);
@@ -67,7 +59,7 @@ public class MachineCompiler {
                         var oldLinksTargets = oldLinks.collectTargets();
                         var oldTargets = machine.links.forwardClosure(oldLinksTargets);
                         var oldTargetsId = oldTargets.getId();
-                        var newTarget = map(oldTargets, oldTargetsId);
+                        var newTarget = mapper.map(oldTargets, oldTargetsId);
                         var beginActions = Actions.createW();
                         var endActions = Actions.createW();
 
@@ -99,15 +91,15 @@ public class MachineCompiler {
         log.debug("Applying actions...");
 
         for (var action : machine.actions) {
-            var newSources = unmap(action.sources);
-            var newTarget = unmap(action.targets);
-            var newLinks = unmapLinks(action.links, graph.links);
+            var newSources = mapper.searchNodes(action.sources);
+            var newTarget = mapper.searchNodes(action.targets);
+            var newLinks = mapper.searchLinks(action.links, graph.links);
 
             applyActions(action.type, action.argument, newSources, newTarget, newLinks);
         }
     }
 
-    private void applyActions(WrappingType type, String argument, Nodes newSources, Nodes newTarget, Links newLinks) {
+    private void applyActions(ActionType type, String argument, Nodes newSources, Nodes newTarget, Links newLinks) {
         var beginAction = createBeginAction(type);
         var endAction = createEndAction(type, argument);
         var ignoreBeginAction = ActionFactory.ignore(beginAction);
@@ -139,63 +131,24 @@ public class MachineCompiler {
         }
     }
 
-    private Links unmapLinks(Links oldLinks, Links newLinks) {
-        var results = Links.createW();
-
-        for (var oldLink : oldLinks) {
-            var newSources = unmap(Nodes.of(oldLink.source));
-            var newTargets = unmap(Nodes.of(oldLink.target));
-            var missing = true;
-
-            for (var newLink : newLinks) {
-                if (newSources.contains(newLink.source) && newTargets.contains(newLink.target)) {
-                    if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
-                        if (oldSym.symbol == newSym.symbol) {
-                            results.add(newLink);
-                            missing = false;
-                        }
-                    }
-                    else if (oldLink instanceof LinkEmpty) {
-                        results.add(newLink);
-                        missing = false;
-                    }
-                }
-            }
-
-            if (missing) {
-                throw ErrorFactory.internalError("missing link mapping: " + oldLink);
-            }
-        }
-
-        return results;
+    public Action createBeginAction(ActionType type) {
+        return switch (type) {
+            case KEY -> ActionFactory.keyBegin();
+            case LIST -> ActionFactory.listBegin();
+            case MAP -> ActionFactory.mapBegin();
+            case PUT -> ActionFactory.putBegin();
+            case VALUE -> ActionFactory.valueBegin();
+        };
     }
 
-
-
-    public Action createBeginAction(WrappingType type) {
-        switch (type) {
-            case KEY: return ActionFactory.keyBegin();
-            case LIST: return ActionFactory.listBegin();
-            case MAP: return ActionFactory.mapBegin();
-            case PUT: return ActionFactory.putBegin();
-            case VALUE: return ActionFactory.valueBegin();
-            default: throw ErrorFactory.internalError("not implemented type: " + type);
-        }
-    }
-
-    public Action createEndAction(WrappingType type, String argument) {
-        switch (type) {
-            case KEY:
-                if (argument != null) {
-                    throw ErrorFactory.internalError("key does not accept arguments");
-                }
-                return ActionFactory.keyEnd();
-            case LIST: return ActionFactory.listEnd(argument);
-            case MAP: return ActionFactory.mapEnd(argument);
-            case PUT: return ActionFactory.putEnd(argument);
-            case VALUE: return ActionFactory.valueEnd(argument);
-            default: throw ErrorFactory.internalError("not implemented type: " + type);
-        }
+    public Action createEndAction(ActionType type, String argument) {
+        return switch (type) {
+            case KEY -> ActionFactory.keyEnd(argument);
+            case LIST -> ActionFactory.listEnd(argument);
+            case MAP -> ActionFactory.mapEnd(argument);
+            case PUT -> ActionFactory.putEnd(argument);
+            case VALUE -> ActionFactory.valueEnd(argument);
+        };
     }
 
     private void createActions(Links beginLinks, Links links, Links endLinks, ActionsW beginActions, ActionsW endActions) {
@@ -240,46 +193,10 @@ public class MachineCompiler {
     }
 
     private Automaton createAutomaton(Nodes sourceClosure, Machine machine) {
-        var initial = idNewNodes.get(sourceClosure.getId());
-        var accepted = Nodes.createW();
-
+        var initial = mapper.unmap(sourceClosure);
         var targetClosure = machine.links.backwardClosure(machine.targets);
-
-        for (var entry : idClosures.entrySet()) {
-            for (var target : targetClosure) {
-                if (entry.getValue().contains(target)) {
-                    var newAccepted = idNewNodes.get(entry.getKey());
-
-                    accepted.add(newAccepted);
-                }
-            }
-        }
-
+        var accepted = mapper.searchNodes(targetClosure);
         return new Automaton(initial, accepted, graph.links);
-    }
-
-    private Node map(Nodes nodes, String id) {
-        return idNewNodes.computeIfAbsent(id, k -> {
-            var newNode = graph.createNode();
-            idClosures.put(id, nodes);
-            return newNode;
-        });
-    }
-
-    private Nodes unmap(Nodes oldNodes) {
-        var newNodes = Nodes.createW();
-
-        for (var entry : idClosures.entrySet()) {
-            for (var oldNode : oldNodes) {
-                if (entry.getValue().contains(oldNode)) {
-                    var newNode = idNewNodes.get(entry.getKey());
-
-                    newNodes.add(newNode);
-                }
-            }
-        }
-
-        return newNodes;
     }
 
 }

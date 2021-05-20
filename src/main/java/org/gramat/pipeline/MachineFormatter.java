@@ -3,6 +3,7 @@ package org.gramat.pipeline;
 import org.gramat.data.actions.Actions;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
+import org.gramat.graphs.MachineAction;
 import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkEmpty;
 import org.gramat.graphs.links.LinkEnter;
@@ -58,6 +59,26 @@ public class MachineFormatter {
 
     public void writeMachine(Appendable output, Machine machine) {
         writeInitial(output, machine.source);
+
+        for (var link : machine.links) {
+            writeLink(output, link);
+        }
+
+        for (var target : machine.targets) {
+            writeAccepted(output, target);
+        }
+
+        for (var action : machine.actions) {
+            writeMachine(output, action);
+        }
+    }
+
+    public void writeMachine(Appendable output, MachineAction machine) {
+        writeComment(output, "ACTION " + machine.type + " " + machine.argument);
+
+        for (var source : machine.sources) {
+            writeInitial(output, source);
+        }
 
         for (var link : machine.links) {
             writeLink(output, link);

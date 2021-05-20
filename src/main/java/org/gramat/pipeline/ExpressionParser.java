@@ -6,7 +6,7 @@ import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.ExpressionMap;
 import org.gramat.expressions.ExpressionRule;
-import org.gramat.expressions.WrappingType;
+import org.gramat.expressions.ActionType;
 import org.gramat.tools.CharInput;
 
 import java.util.ArrayList;
@@ -506,7 +506,7 @@ public class ExpressionParser {
                     "Wrapping type expected");
         }
 
-        var typeOp = WrappingType.parse(rawTypeOp.get());
+        var typeOp = ActionType.parse(rawTypeOp.get());
         if (typeOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Invalid wrapping type: %s", rawTypeOp.get());

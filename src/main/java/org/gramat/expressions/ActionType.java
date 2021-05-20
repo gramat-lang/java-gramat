@@ -2,7 +2,7 @@ package org.gramat.expressions;
 
 import java.util.Optional;
 
-public enum WrappingType {
+public enum ActionType {
     MAP,
     LIST,
     VALUE,
@@ -10,7 +10,7 @@ public enum WrappingType {
     PUT,
     ;
 
-    public static Optional<WrappingType> parse(String value) {
+    public static Optional<ActionType> parse(String value) {
         if ("map".equals(value)) {
             return Optional.of(MAP);
         }

@@ -1,5 +1,7 @@
 package org.gramat.actions;
 
+import org.gramat.errors.ErrorFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +22,10 @@ public class ActionFactory {
         return KeyBegin.INSTANCE;
     }
 
-    public static KeyEnd keyEnd() {
+    public static KeyEnd keyEnd(String argument) {
+        if (argument != null) {
+            throw ErrorFactory.internalError("key does not accept arguments");
+        }
         return KeyEnd.INSTANCE;
     }
 
