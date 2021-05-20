@@ -1,22 +1,18 @@
 package org.gramat.pipeline;
 
-import org.gramat.data.actions.Actions;
+import org.gramat.data.links.Links;
+import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
-import org.gramat.graphs.MachineAction;
-import org.gramat.graphs.links.Link;
-import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkEnter;
-import org.gramat.graphs.links.LinkExit;
-import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
+import org.gramat.graphs.links.Link;
+import org.gramat.graphs.links.LinkEmpty;
+import org.gramat.graphs.links.LinkSymbol;
 
 import java.io.IOException;
 
 public class MachineFormatter {
-
-    private boolean ignoreActions;
 
     public String writeMachine(Machine machine) {
         var builder = new StringBuilder();
@@ -35,43 +31,23 @@ public class MachineFormatter {
     }
 
     public void writeAutomaton(Appendable output, Automaton automaton) {
-        writeInitial(output, automaton.initial);
-
-        for (var link : automaton.links) {
-            writeLink(output, link);
-        }
-
-        for (var target : automaton.accepted) {
-            writeAccepted(output, target);
-        }
+        write(output, Nodes.of(automaton.initial), automaton.accepted, automaton.links);
     }
 
     public void writeMachine(Appendable output, Machine machine) {
-        writeInitial(output, machine.source);
-
-        for (var link : machine.links) {
-            writeLink(output, link);
-        }
-
-        writeAccepted(output, machine.target);
-
-        for (var action : machine.actions) {
-            writeMachine(output, action);
-        }
+        write(output, Nodes.of(machine.source), Nodes.of(machine.target), machine.links);
     }
 
-    public void writeMachine(Appendable output, MachineAction machine) {
-        writeComment(output, "ACTION " + machine.type + " " + machine.argument);
-
-        for (var source : machine.sources) {
+    public void write(Appendable output, Nodes sources, Nodes targets, Links links) {
+        for (var source : sources) {
             writeInitial(output, source);
         }
 
-        for (var link : machine.links) {
+        for (var link : links) {
             writeLink(output, link);
         }
 
-        for (var target : machine.targets) {
+        for (var target : targets) {
             writeAccepted(output, target);
         }
     }
@@ -101,16 +77,10 @@ public class MachineFormatter {
         var label = new StringBuilder();
 
         if (link instanceof LinkSymbol linkSym) {
-            writeLabel(label, linkSym.beginActions, linkSym.symbol.toString(), linkSym.endActions);
+            writeLabel(label, linkSym.symbol.toString());
         }
         else if (link instanceof LinkEmpty linkEmp) {
-            writeLabel(label, linkEmp.beginActions, "empty", linkEmp.endActions);
-        }
-        else if (link instanceof LinkEnter linkEnt) {
-            writeLabel(label, linkEnt.beginActions, "enter(" + linkEnt.token + ")", linkEnt.endActions);
-        }
-        else if (link instanceof LinkExit linkExi) {
-            writeLabel(label, linkExi.beginActions, "exit(" + linkExi.token + ")", linkExi.endActions);
+            writeLabel(label, "empty");
         }
         else {
             throw ErrorFactory.notImplemented();
@@ -123,22 +93,8 @@ public class MachineFormatter {
                 .replace(",", "\\,");
     }
 
-    private void writeLabel(Appendable output, Actions beginActions, String symbol, Actions endActions) {
-        if (!ignoreActions) {
-            for (var action : beginActions) {
-                write(output, action);
-                write(output, "\n");
-            }
-        }
-
+    private void writeLabel(Appendable output, String symbol) {
         write(output, symbol);
-
-        if (!ignoreActions) {
-            for (var action : endActions) {
-                write(output, "\n");
-                write(output, action);
-            }
-        }
     }
 
     private void writeName(Appendable output, Node node) {
@@ -162,13 +118,5 @@ public class MachineFormatter {
         catch (IOException e) {
             throw ErrorFactory.internalError(e);
         }
-    }
-
-    public boolean isIgnoreActions() {
-        return ignoreActions;
-    }
-
-    public void setIgnoreActions(boolean ignoreActions) {
-        this.ignoreActions = ignoreActions;
     }
 }

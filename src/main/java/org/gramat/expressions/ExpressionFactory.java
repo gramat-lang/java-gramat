@@ -1,5 +1,6 @@
 package org.gramat.expressions;
 
+import org.gramat.actions.ActionType;
 import org.gramat.location.Location;
 import org.gramat.symbols.SymbolFactory;
 import org.gramat.tools.DataUtils;

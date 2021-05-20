@@ -1,12 +1,11 @@
 package org.gramat.graphs.links;
 
-import org.gramat.data.actions.Actions;
 import org.gramat.graphs.Node;
 
-public class LinkEmpty extends LinkAction {
+public class LinkEmpty extends Link {
 
-    public LinkEmpty(Node source, Node target, Actions beginActions, Actions endActions) {
-        super(source, target, beginActions, endActions);
+    public LinkEmpty(Node source, Node target) {
+        super(source, target);
     }
 
     @Override

@@ -1,10 +1,10 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
+import org.gramat.data.expressions.ExpressionMap;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
-import org.gramat.data.expressions.ExpressionMap;
 import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.Literal;

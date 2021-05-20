@@ -18,6 +18,26 @@ public class ActionFactory {
     private static final Map<String, PushToken> pushes = new HashMap<>();
     private static final Map<String, PopToken> pops = new HashMap<>();
 
+    public Action createBeginAction(ActionType type) {
+        return switch (type) {
+            case KEY -> ActionFactory.keyBegin();
+            case LIST -> ActionFactory.listBegin();
+            case MAP -> ActionFactory.mapBegin();
+            case PUT -> ActionFactory.putBegin();
+            case VALUE -> ActionFactory.valueBegin();
+        };
+    }
+
+    public Action createEndAction(ActionType type, String argument) {
+        return switch (type) {
+            case KEY -> ActionFactory.keyEnd(argument);
+            case LIST -> ActionFactory.listEnd(argument);
+            case MAP -> ActionFactory.mapEnd(argument);
+            case PUT -> ActionFactory.putEnd(argument);
+            case VALUE -> ActionFactory.valueEnd(argument);
+        };
+    }
+
     public static KeyBegin keyBegin() {
         return KeyBegin.INSTANCE;
     }

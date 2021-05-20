@@ -1,7 +1,6 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -55,7 +54,7 @@ public class ExpressionCompiler {
 
         compileExpression(expression, source, target);
 
-        return new Machine(source, target, graph.links, graph.actions);
+        return new Machine(source, target, graph.links);
     }
 
     private void compileExpression(Expression expression, Node source, Node target) {
@@ -89,15 +88,7 @@ public class ExpressionCompiler {
     }
 
     private void compileWrapping(Wrapping wrapping, Node source, Node target) {
-        var initialLinks = graph.links.copyW();
-
         compileExpression(wrapping.content, source, target);
-
-        // Compute links created by the compiled expression
-        var newLinks = graph.links.copyW();
-        newLinks.removeAll(initialLinks);
-
-        // TODO
     }
 
     private void compileAlternation(Alternation alternation, Node source, Node target) {
@@ -121,8 +112,8 @@ public class ExpressionCompiler {
 
         log.debug("Connecting segment {}...", reference.name);
 
-        graph.createEnter(source, segment.source, reference.name, null, null);
-        graph.createExit(segment.target, target, reference.name, null, null);
+        graph.createLink(source, segment.source);
+        graph.createLink(segment.target, target);
     }
 
     private Segment getOrCreateSegment(String name) {

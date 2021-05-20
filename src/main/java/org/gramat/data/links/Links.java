@@ -5,8 +5,6 @@ import org.gramat.data.nodes.Nodes;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkEnter;
-import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.DataUtils;
@@ -94,7 +92,7 @@ public interface Links extends Iterable<Link> {
             var source = queue.remove();
             if (result.add(source)) {
                 for (var link : findFrom(source)) {
-                    if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
+                    if (link instanceof LinkEmpty) {
                         queue.add(link.target);
                     }
                 }
@@ -259,7 +257,7 @@ public interface Links extends Iterable<Link> {
             var target = nav.pop();
 
             for (var link : findTo(target)) {
-                if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
+                if (link instanceof LinkEmpty) {
                     result.add(link);
 
                     nav.push(link.source);
@@ -280,7 +278,7 @@ public interface Links extends Iterable<Link> {
             var source = nav.pop();
 
             for (var link : findFrom(source)) {
-                if (link instanceof LinkEmpty || link instanceof LinkEnter || link instanceof LinkExit) {
+                if (link instanceof LinkEmpty) {
                     result.add(link);
 
                     nav.push(link.target);

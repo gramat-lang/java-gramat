@@ -1,13 +1,10 @@
 package org.gramat.graphs;
 
 import org.gramat.data.links.Links;
-import org.gramat.data.nodes.Nodes;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
-import org.gramat.tools.Validations;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -16,10 +13,8 @@ public class Machine {
     public final Node source;
     public final Node target;
     public final Links links;
-    public final List<MachineAction> actions;
 
-    public Machine(Node source, Node target, Links links, List<MachineAction> actions) {
-        this.actions = actions;
+    public Machine(Node source, Node target, Links links) {
         this.source = Objects.requireNonNull(source);
         this.target = Objects.requireNonNull(target);
         this.links = links.copyR();

@@ -1,4 +1,4 @@
-package org.gramat.expressions;
+package org.gramat.actions;
 
 import java.util.Optional;
 

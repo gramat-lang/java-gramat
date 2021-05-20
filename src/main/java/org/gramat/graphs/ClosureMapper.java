@@ -6,8 +6,6 @@ import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.links.Link;
 import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkEnter;
-import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
 
 import java.util.HashMap;
@@ -59,6 +57,10 @@ public class ClosureMapper {
             }
         }
 
+        if (newNodes.isEmpty()) {
+            throw new RuntimeException();
+        }
+
         return newNodes;
     }
 
@@ -66,15 +68,15 @@ public class ClosureMapper {
         var results = Links.createW();
 
         for (var oldLink : oldLinks) {
-            searchLink(oldLink, newLinks, results);
+            searchLink(oldLinks, oldLink, newLinks, results);
         }
 
         return results;
     }
 
-    private void searchLink(Link oldLink, Links newLinks, LinksW results) {
-        var newSources = searchNode(oldLink.source);
-        var newTargets = searchNode(oldLink.target);
+    private void searchLink(Links oldLinks, Link oldLink, Links newLinks, LinksW results) {
+        var newSources = searchNodes(oldLinks.forwardClosure(oldLink.source));
+        var newTargets = searchNodes(oldLinks.forwardClosure(oldLink.target));
         var missing = true;
 
         for (var newLink : newLinks) {
@@ -94,7 +96,7 @@ public class ClosureMapper {
             if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
                 return oldSym.symbol == newSym.symbol;
             }
-            else if (oldLink instanceof LinkEmpty || oldLink instanceof LinkEnter || oldLink instanceof LinkExit) {
+            else if (oldLink instanceof LinkEmpty) {
                 return true;
             }
             else {

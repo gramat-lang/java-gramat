@@ -2,7 +2,6 @@ package org.gramat.data.expressions;
 
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Expression;
-import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.ExpressionRule;
 
 import java.util.ArrayList;

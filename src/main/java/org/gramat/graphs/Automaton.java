@@ -2,9 +2,6 @@ package org.gramat.graphs;
 
 import org.gramat.data.links.Links;
 import org.gramat.data.nodes.Nodes;
-import org.gramat.graphs.links.Link;
-
-import java.util.List;
 
 public class Automaton {
 
