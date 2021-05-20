@@ -14,18 +14,12 @@ import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
 import org.gramat.graphs.Graph;
-import org.gramat.graphs.MachineAction;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.Segment;
-import org.gramat.symbols.SymbolFactory;
 import org.gramat.tools.IdentifierProvider;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -62,12 +56,6 @@ public class ExpressionCompiler {
         compileExpression(expression, source, target);
 
         return new Machine(source, target, graph.links, graph.actions);
-    }
-
-    private void compileExpression(Expression expression, Nodes sources, Node target) {
-        for (var source : sources) {
-            compileExpression(expression, source, target);
-        }
     }
 
     private void compileExpression(Expression expression, Node source, Node target) {

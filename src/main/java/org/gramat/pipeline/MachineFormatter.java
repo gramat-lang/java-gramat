@@ -10,7 +10,6 @@ import org.gramat.graphs.links.LinkEnter;
 import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.graphs.Machine;
-import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
 
 import java.io.IOException;
@@ -18,16 +17,6 @@ import java.io.IOException;
 public class MachineFormatter {
 
     private boolean ignoreActions;
-
-    public void writeProgram(Appendable output, MachineProgram program) {
-        writeComment(output, "main");
-        writeMachine(output, program.main);
-        for (var entry : program.dependencies.entrySet()) {
-            writeNewLine(output);
-            writeComment(output, entry.getKey());
-            writeMachine(output, entry.getValue());
-        }
-    }
 
     public String writeMachine(Machine machine) {
         var builder = new StringBuilder();
