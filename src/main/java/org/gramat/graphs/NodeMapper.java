@@ -10,7 +10,6 @@ import org.gramat.graphs.links.LinkEmpty;
 import org.gramat.graphs.links.LinkEnter;
 import org.gramat.graphs.links.LinkExit;
 import org.gramat.graphs.links.LinkSymbol;
-import org.gramat.symbols.SymbolReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,21 +95,7 @@ public class NodeMapper {
     }
 
     private boolean matches(Node newSource, Node newTarget, Link oldLink, Link newLink) {
-        if (newLink.source == newSource
-                && oldLink instanceof LinkSymbol oldLinkSym
-                && oldLinkSym.symbol instanceof SymbolReference oldRef
-                && newLink instanceof LinkEnter newEnt
-                && newEnt.token.equals(oldRef.name)) {
-            return true;
-        }
-        else if (newLink.target == newTarget
-                && oldLink instanceof LinkSymbol oldLinkSym
-                && oldLinkSym.symbol instanceof SymbolReference oldRef
-                && newLink instanceof LinkExit newExt
-                && newExt.token.equals(oldRef.name)) {
-            return true;
-        }
-        else if (newLink.source == newSource && newLink.target == newTarget) {
+        if (newLink.source == newSource && newLink.target == newTarget) {
             if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
                 return oldSym.symbol == newSym.symbol;
             }

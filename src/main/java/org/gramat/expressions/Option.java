@@ -18,7 +18,7 @@ public class Option extends Expression {
         return List.of(content);
     }
 
-    public Option derive(Expression newContent) {
+    public Option derive(Expression newContent) { // TODO move all derive methods to the factory?
         if (content == newContent) {
             return this;
         }

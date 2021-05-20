@@ -40,10 +40,8 @@ public class Graph {
         links.add(new LinkEnter(source, target, beginActions, endActions, token));
     }
 
-    public void createExit(Nodes sources, Node target, String token, Actions beginActions, Actions endActions) {
-        for (var source : sources) {
-            links.add(new LinkExit(source, target, beginActions, endActions, token));
-        }
+    public void createExit(Node source, Node target, String token, Actions beginActions, Actions endActions) {
+        links.add(new LinkExit(source, target, beginActions, endActions, token));
     }
 
     public void createLink(Node source, Nodes targets, Symbol symbol) {
@@ -54,6 +52,10 @@ public class Graph {
 
     public void createLink(Node source, Node target, Symbol symbol) {
         links.add(new LinkSymbol(source, target, null, null, symbol));
+    }
+
+    public void createLink(Node source, Node target) {
+        links.add(new LinkEmpty(source, target, null, null));
     }
 
     public void createLink(Node source, Node target, Actions beginActions, Actions endActions) {

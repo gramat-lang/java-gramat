@@ -64,9 +64,7 @@ public class MachineFormatter {
             writeLink(output, link);
         }
 
-        for (var target : machine.targets) {
-            writeAccepted(output, target);
-        }
+        writeAccepted(output, machine.target);
 
         for (var action : machine.actions) {
             writeMachine(output, action);

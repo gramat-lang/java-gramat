@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionFactory;
-import org.gramat.expressions.ExpressionMap;
+import org.gramat.data.expressions.ExpressionMap;
 import org.gramat.expressions.ExpressionRule;
 import org.gramat.expressions.ActionType;
 import org.gramat.tools.CharInput;

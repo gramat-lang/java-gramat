@@ -4,9 +4,9 @@ import org.gramat.data.nodes.Nodes;
 
 public class Segment {
     public final Node source;
-    public final Nodes targets;
-    public Segment(Node source, Nodes targets) {
+    public final Node target;
+    public Segment(Node source, Node target) {
         this.source = source;
-        this.targets = targets.copyR();
+        this.target = target;
     }
 }

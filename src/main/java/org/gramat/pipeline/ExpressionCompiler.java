@@ -16,198 +16,194 @@ import org.gramat.expressions.Wrapping;
 import org.gramat.graphs.Graph;
 import org.gramat.graphs.MachineAction;
 import org.gramat.graphs.Machine;
-import org.gramat.graphs.MachineProgram;
 import org.gramat.graphs.Node;
+import org.gramat.graphs.Segment;
 import org.gramat.symbols.SymbolFactory;
 import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class ExpressionCompiler {
 
-    public static MachineProgram run(ExpressionProgram program) {
+    public static Machine run(ExpressionProgram program) {
         return new ExpressionCompiler(program.dependencies).run(program.main);
     }
 
-    private final IdentifierProvider referenceIds;
-    private final IdentifierProvider graphIds;
+    private final Graph graph;
     private final Map<String, Expression> dependencies;
-    private final Deque<ReferenceMap> referenceStack;
-    private final Map<String, Machine> newDependencies;
+    private final Map<String, Segment> referenceSegments;
 
     public ExpressionCompiler(Map<String, Expression> dependencies) {
         this.dependencies = dependencies;
-        this.referenceIds = IdentifierProvider.create(1);
-        this.graphIds = IdentifierProvider.create(1);
-        this.referenceStack = new ArrayDeque<>();
-        this.newDependencies = new LinkedHashMap<>();
+        this.graph = new Graph(IdentifierProvider.create(1));
+        this.referenceSegments = new LinkedHashMap<>();
     }
 
-    public MachineProgram run(Expression main) {
+    public Machine run(Expression main) {
         log.debug("Compiling main machine...");
 
-        var newMain = compileMachine(main);
+        var mainMachine = compileMachine(main);
 
-        log.debug("Compilation completed: {} machine(s)", 1 + newDependencies.size());
+        log.debug("Compilation completed");  // TODO add more debug info
 
-        return new MachineProgram(newMain, newDependencies);
+        return mainMachine;
     }
 
     public Machine compileMachine(Expression expression) {
-        var graph = new Graph(graphIds);
         var source = graph.createNode();
-        var targets = compileExpression(graph, expression, source);
-        return new Machine(source, targets, graph.links, graph.actions);
+        var target = graph.createNode();
+
+        compileExpression(expression, source, target);
+
+        return new Machine(source, target, graph.links, graph.actions);
     }
 
-    private Nodes compileExpression(Graph graph, Expression expression, Nodes sources) {
-        var result = Nodes.createW();
-
+    private void compileExpression(Expression expression, Nodes sources, Node target) {
         for (var source : sources) {
-            result.addAll(compileExpression(graph, expression, source));
+            compileExpression(expression, source, target);
         }
-
-        return result;
     }
 
-    private Nodes compileExpression(Graph graph, Expression expression, Node source) {
+    private void compileExpression(Expression expression, Node source, Node target) {
         if (expression instanceof Wrapping) {
-            return compileWrapping(graph, (Wrapping)expression, source);
+            compileWrapping((Wrapping)expression, source, target);
         }
         else if (expression instanceof Alternation) {
-            return compileAlternation(graph, (Alternation)expression, source);
+            compileAlternation((Alternation)expression, source, target);
         }
         else if (expression instanceof Option) {
-            return compileOption(graph, (Option)expression, source);
+            compileOption((Option)expression, source, target);
         }
         else if (expression instanceof Reference) {
-            return compileReference(graph, (Reference)expression, source);
+            compileReference((Reference)expression, source, target);
         }
         else if (expression instanceof Repeat) {
-            return compileRepeat(graph, (Repeat)expression, source);
+            compileRepeat((Repeat)expression, source, target);
         }
         else if (expression instanceof Sequence) {
-            return compileSequence(graph, (Sequence)expression, source);
+            compileSequence((Sequence)expression, source, target);
         }
         else if (expression instanceof Literal) {
-            return compileLiteral(graph, (Literal)expression, source);
+            compileLiteral((Literal)expression, source, target);
         }
         else if (expression instanceof Wildcard) {
-            return compileWildcard(graph, (Wildcard)expression, source);
+            compileWildcard((Wildcard)expression, source, target);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
     }
 
-    private Nodes compileWrapping(Graph graph, Wrapping wrapping, Node source) {
+    private void compileWrapping(Wrapping wrapping, Node source, Node target) {
         var initialLinks = graph.links.copyW();
-        var targets = compileExpression(graph, wrapping.content, source);
+
+        compileExpression(wrapping.content, source, target);
 
         // Compute links created by the compiled expression
         var newLinks = graph.links.copyW();
         newLinks.removeAll(initialLinks);
 
-        graph.actions.add(new MachineAction(
-                wrapping.type, wrapping.argument,
-                Nodes.of(source), targets,
-                newLinks));
-
-        return targets;
+        // TODO
     }
 
-    private Nodes compileAlternation(Graph graph, Alternation alternation, Node source) {
-        var result = Nodes.createW();
-
+    private void compileAlternation(Alternation alternation, Node source, Node target) {
         for (var item : alternation.items) {
-            var itemTargets = compileExpression(graph, item, source);
+            var itemTarget = graph.createNode();
 
-            result.addAll(itemTargets);
+            compileExpression(item, source, itemTarget);
+
+            graph.createLink(itemTarget, target);
         }
-
-        return result;
     }
 
-    private Nodes compileOption(Graph graph, Option option, Node source) {
-        var targets = compileExpression(graph, option.content, source);
+    private void compileOption(Option option, Node source, Node target) {
+        compileExpression(option.content, source, target);
 
-        return Nodes.join(targets, source);
+        graph.createLink(source, target);
     }
 
-    private Nodes compileReference(Graph graph, Reference reference, Node source) {
-        ReferenceMap refMap = null;
-        for (var item : referenceStack) {
-            if (item.oldName.equals(reference.name)) {
-                refMap = item;
-                break;
-            }
-        }
-        if (refMap == null) {
-            var id = referenceIds.next();
-            var newName = String.format("%s-%s", reference.name, id);
-            var dependency = dependencies.get(reference.name);
-            if (dependency == null) {
-                throw ErrorFactory.notFound(reference.name);
-            }
+    private void compileReference(Reference reference, Node source, Node target) {
+        var segment = getOrCreateSegment(reference.name);
 
-            refMap = new ReferenceMap(reference.name, newName);
+        log.debug("Connecting segment {}...", reference.name);
 
-            log.debug("Compiling {} dependency (from {})...", newName, reference.name);
-
-            referenceStack.addFirst(refMap);
-            var newDependency = compileMachine(dependency);
-            referenceStack.removeFirst();
-
-            newDependencies.put(newName, newDependency);
-        }
-
-        var target = graph.createNode();
-
-        graph.createLink(source, target,
-                SymbolFactory.reference(refMap.newName),
-                null, null);
-
-        return Nodes.of(target);
+        graph.createEnter(source, segment.source, reference.name, null, null);
+        graph.createExit(segment.target, target, reference.name, null, null);
     }
 
-    private Nodes compileRepeat(Graph graph, Repeat repeat, Node source) {
-        var targets = compileExpression(graph, repeat.content, source);
+    private Segment getOrCreateSegment(String name) {
+        var segment = referenceSegments.get(name);
+        if (segment != null) {
+            return segment;
+        }
+
+        log.debug("Creating segment {}...", name);
+
+        var dependency = dependencies.get(name);
+        if (dependency == null) {
+            throw ErrorFactory.notFound(name);
+        }
+
+        var refSource = graph.createNode();
+        var refTarget = graph.createNode();
+
+        segment = new Segment(refSource, refTarget);
+
+        referenceSegments.put(name, segment);
+
+        compileExpression(dependency, refSource, refTarget);
+
+        return segment;
+    }
+
+    private void compileRepeat(Repeat repeat, Node source, Node target) {
+        var contentSource = graph.createNode();
+        var contentTarget = graph.createNode();
+
+        compileExpression(repeat.content, contentSource, contentTarget);
 
         if (repeat.separator != null) {
-            var separatorTargets = compileExpression(graph, repeat.separator, targets);
-
-            graph.createLink(separatorTargets, source, null, null);
+            compileExpression(repeat.separator, contentTarget, contentSource);
         }
         else {
-            graph.createLink(targets, source, null, null);
+            graph.createLink(contentTarget, contentSource);
         }
 
-        return targets;
+        graph.createLink(source, contentSource);
+        graph.createLink(contentTarget, target);
     }
 
-    private Nodes compileSequence(Graph graph, Sequence sequence, Node source) {
-        var targets = Nodes.of(source);
+    private void compileSequence(Sequence sequence, Node source, Node target) {
+        var lastNode = source;
 
-        for (var item : sequence.items) {
-            targets = compileExpression(graph, item, targets);
+        for (var i = 0; i < sequence.items.size(); i++) {
+            var item = sequence.items.get(i);
+
+            Node itemTarget;
+            if (i == sequence.items.size() - 1) {
+                itemTarget = target;
+            }
+            else {
+                itemTarget = graph.createNode();
+            }
+
+            compileExpression(item, lastNode, itemTarget);
+
+            lastNode = itemTarget;
         }
-
-        return targets;
     }
 
-    private Nodes compileLiteral(Graph graph, Literal literal, Node source) {
-        var target = graph.createNode();
-
+    private void compileLiteral(Literal literal, Node source, Node target) {
         graph.createLink(source, target, literal.symbol);
-
-        return Nodes.of(target);
     }
 
-    private Nodes compileWildcard(Graph graph, Wildcard wildcard, Node source) {
+    private void compileWildcard(Wildcard wildcard, Node source, Node target) {
         if (wildcard.level != 1) {
             throw ErrorFactory.syntaxError(wildcard.location,
                     "No supported wilcard level: " + wildcard.level);
@@ -215,16 +211,6 @@ public class ExpressionCompiler {
 
         // TODO improve how to make wildcards 🤔
         throw new UnsupportedOperationException();
-    }
-
-    private static class ReferenceMap {
-        public final String oldName;
-        public final String newName;
-
-        public ReferenceMap(String oldName, String newName) {
-            this.oldName = oldName;
-            this.newName = newName;
-        }
     }
 
 }

@@ -14,20 +14,27 @@ import org.gramat.expressions.Wrapping;
 import org.gramat.symbols.SymbolChar;
 import org.gramat.symbols.SymbolRange;
 
-public class ExpressionFormatter {
-    public String toString(ExpressionProgram program, String mainName) {
-        var output = new StringBuilder();
+import java.io.IOException;
 
-        writeRule(output, mainName, program.main);
+public class ExpressionFormatter {
+
+    public void writeProgram(Appendable output, ExpressionProgram program, String mainRule) {
+        writeRule(output, mainRule, program.main);
 
         for (var entry : program.dependencies.entrySet()) {
             writeRule(output, entry.getKey(), entry.getValue());
         }
+    }
+
+    public String writeProgram(ExpressionProgram program, String mainRule) {
+        var output = new StringBuilder();
+
+        writeProgram(output, program, mainRule);
 
         return output.toString();
     }
 
-    private void writeRule(StringBuilder output, String name, Expression expression) {
+    private void writeRule(Appendable output, String name, Expression expression) {
         writeName(output, name);
         writeSpace(output);
         writeToken(output, "=");
@@ -36,7 +43,7 @@ public class ExpressionFormatter {
         writeLineBreak(output);
     }
 
-    private void writeExpression(StringBuilder output, Expression expression) {
+    private void writeExpression(Appendable output, Expression expression) {
         if (expression instanceof Wrapping) {
             writeWrapping(output, (Wrapping)expression);
         }
@@ -66,7 +73,7 @@ public class ExpressionFormatter {
         }
     }
 
-    private void writeWrapping(StringBuilder output, Wrapping wrapping) {
+    private void writeWrapping(Appendable output, Wrapping wrapping) {
         writeToken(output, "<");
         writeName(output, wrapping.type.name().toLowerCase());
 
@@ -81,7 +88,7 @@ public class ExpressionFormatter {
         writeToken(output, ">");
     }
 
-    private void writeAlternation(StringBuilder output, Alternation alternation) {
+    private void writeAlternation(Appendable output, Alternation alternation) {
         for (var i = 0; i < alternation.items.size(); i++) {
             if (i > 0) {
                 writeSpace(output);
@@ -93,23 +100,23 @@ public class ExpressionFormatter {
         }
     }
 
-    private void writeOption(StringBuilder output, Option option) {
+    private void writeOption(Appendable output, Option option) {
         writeToken(output, "[");
         writeExpression(output, option.content);
         writeToken(output, "]");
     }
 
-    private void writeReference(StringBuilder output, Reference reference) {
+    private void writeReference(Appendable output, Reference reference) {
         writeName(output, reference.name);
     }
 
-    private void writeRepeat(StringBuilder output, Repeat repeat) {
+    private void writeRepeat(Appendable output, Repeat repeat) {
         writeToken(output, "{+");
         writeExpression(output, repeat.content);
         writeToken(output, "}");
     }
 
-    private void writeSequence(StringBuilder output, Sequence sequence) {
+    private void writeSequence(Appendable output, Sequence sequence) {
         for (var i = 0; i < sequence.items.size(); i++) {
             if (i > 0) {
                 writeToken(output, " ");
@@ -119,7 +126,7 @@ public class ExpressionFormatter {
         }
     }
 
-    private void writeLiteral(StringBuilder output, Literal literal) {
+    private void writeLiteral(Appendable output, Literal literal) {
         if (literal.symbol instanceof SymbolChar symbol) {
             writeToken(output, "\"");
             writeToken(output, String.valueOf(symbol.value));
@@ -137,24 +144,44 @@ public class ExpressionFormatter {
         }
     }
 
-    private void writeWildcard(StringBuilder output, Wildcard wildcard) {
+    private void writeWildcard(Appendable output, Wildcard wildcard) {
         writeToken(output, "*".repeat(wildcard.level));
     }
 
-    private void writeLineBreak(StringBuilder output) {
-        output.append('\n');
+    private void writeLineBreak(Appendable output) {
+        try {
+            output.append('\n');
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void writeToken(StringBuilder output, String token) {
-        output.append(token);
+    private void writeToken(Appendable output, String token) {
+        try {
+            output.append(token);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void writeSpace(StringBuilder output) {
-        output.append(' ');
+    private void writeSpace(Appendable output) {
+        try {
+            output.append(' ');
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void writeName(StringBuilder output, String name) {
-        output.append(name);
+    private void writeName(Appendable output, String name) {
+        try {
+            output.append(name);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

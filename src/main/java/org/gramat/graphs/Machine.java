@@ -14,16 +14,14 @@ import java.util.Set;
 public class Machine {
 
     public final Node source;
-    public final Nodes targets;
+    public final Node target;
     public final Links links;
     public final List<MachineAction> actions;
 
-    public Machine(Node source, Nodes targets, Links links, List<MachineAction> actions) {
-        Validations.notEmpty(targets);
-
+    public Machine(Node source, Node target, Links links, List<MachineAction> actions) {
         this.actions = actions;
         this.source = Objects.requireNonNull(source);
-        this.targets = Objects.requireNonNull(targets);
+        this.target = Objects.requireNonNull(target);
         this.links = links.copyR();
     }
 

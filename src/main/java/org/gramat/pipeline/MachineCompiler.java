@@ -194,7 +194,7 @@ public class MachineCompiler {
 
     private Automaton createAutomaton(Nodes sourceClosure, Machine machine) {
         var initial = mapper.unmap(sourceClosure);
-        var targetClosure = machine.links.backwardClosure(machine.targets);
+        var targetClosure = machine.links.backwardClosure(machine.target);
         var accepted = mapper.searchNodes(targetClosure);
         return new Automaton(initial, accepted, graph.links);
     }

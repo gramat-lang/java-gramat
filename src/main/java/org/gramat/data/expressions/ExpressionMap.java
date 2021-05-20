@@ -1,6 +1,9 @@
-package org.gramat.expressions;
+package org.gramat.data.expressions;
 
 import org.gramat.errors.ErrorFactory;
+import org.gramat.expressions.Expression;
+import org.gramat.expressions.ExpressionProgram;
+import org.gramat.expressions.ExpressionRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +31,11 @@ public class ExpressionMap {
         return new ExpressionMap(Collections.unmodifiableMap(new LinkedHashMap<>(data)));
     }
 
-    private final Map<String, Expression> data;
+    public final Map<String, Expression> data; // TODO refactor this class
+
+    public ExpressionMap() {
+        this.data = new LinkedHashMap<>();
+    }
 
     private ExpressionMap(Map<String, Expression> data) {
         this.data = data;
@@ -54,5 +61,9 @@ public class ExpressionMap {
 
     public int size() {
         return data.size();
+    }
+
+    public void set(String name, Expression expression) {
+        data.put(name, expression);
     }
 }

@@ -4,7 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
-import org.gramat.expressions.ExpressionMap;
+import org.gramat.data.expressions.ExpressionMap;
+import org.gramat.expressions.ExpressionFactory;
 import org.gramat.expressions.ExpressionProgram;
 import org.gramat.expressions.Literal;
 import org.gramat.expressions.Option;
@@ -13,10 +14,11 @@ import org.gramat.expressions.Repeat;
 import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
+import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,9 +35,17 @@ public class ExpressionExpander {
     }
 
     private final ExpressionMap dependencies;
+    private final ExpressionMap newDependencies;
+    private final IdentifierProvider referenceIds;
+    private final Deque<ReferenceMap> referenceStack;
+    private final ExpressionFactory factory;
 
     private ExpressionExpander(ExpressionMap dependencies) {
         this.dependencies = dependencies;
+        this.newDependencies = new ExpressionMap();
+        this.referenceIds = IdentifierProvider.create(1);
+        this.referenceStack = new ArrayDeque<>();
+        this.factory = new ExpressionFactory();
     }
 
     private ExpressionProgram expand(Expression main) {
@@ -44,19 +54,9 @@ public class ExpressionExpander {
         var recursiveNames = computeRecursiveNames(main);
         var newMain = expand(main, recursiveNames);
 
-        var newDependencies = new LinkedHashMap<String, Expression>();
-        for (var name : recursiveNames) {
-            log.debug("Expanding {} dependency...", name);
-
-            var expr = dependencies.find(name);
-            var newExpr = expand(expr, recursiveNames);
-
-            newDependencies.put(name, newExpr);
-        }
-
         log.debug("Expanding completed: {} rule(s)", 1 + newDependencies.size());
 
-        return new ExpressionProgram(newMain, newDependencies);
+        return new ExpressionProgram(newMain, newDependencies.data);
     }
 
     private Set<String> computeRecursiveNames(Expression main) {
@@ -91,22 +91,22 @@ public class ExpressionExpander {
 
     private Expression expand(Expression target, Set<String> recursiveNames) {
         if (target instanceof Wrapping) {
-            return expandWrapping((Wrapping)target, recursiveNames);
+            return expandWrapping((Wrapping) target, recursiveNames);
         }
         else if (target instanceof Alternation) {
-            return expandAlternation((Alternation)target, recursiveNames);
+            return expandAlternation((Alternation) target, recursiveNames);
         }
         else if (target instanceof Option) {
-            return expandOption((Option)target, recursiveNames);
+            return expandOption((Option) target, recursiveNames);
         }
         else if (target instanceof Reference) {
-            return expandReference((Reference)target, recursiveNames);
+            return expandReference((Reference) target, recursiveNames);
         }
         else if (target instanceof Repeat) {
-            return expandRepeat((Repeat)target, recursiveNames);
+            return expandRepeat((Repeat) target, recursiveNames);
         }
         else if (target instanceof Sequence) {
-            return expandSequence((Sequence)target, recursiveNames);
+            return expandSequence((Sequence) target, recursiveNames);
         }
         else if (target instanceof Literal || target instanceof Wildcard) {
             return target;
@@ -148,14 +148,42 @@ public class ExpressionExpander {
         return target.derive(expand(target.content, recursiveNames));
     }
 
-    private Expression expandReference(Reference target, Set<String> recursiveNames) {
-        if (recursiveNames.contains(target.name)) {
-            return target;
+    private Expression expandReference(Reference reference, Set<String> recursiveNames) {
+        if (recursiveNames.contains(reference.name)) {
+            ReferenceMap refMap = null;
+            for (var item : referenceStack) {
+                if (item.oldName.equals(reference.name)) {
+                    refMap = item;
+                    break;
+                }
+            }
+
+            if (refMap == null) {
+                var id = referenceIds.next();
+                var newName = String.format("%s-%s", reference.name, id);
+                var dependency = dependencies.find(reference.name);
+                if (dependency == null) {
+                    throw ErrorFactory.notFound(reference.name);
+                }
+
+                refMap = new ReferenceMap(reference.name, newName);
+
+                log.debug("Expanding {} from {}...", newName, reference.name);
+
+                referenceStack.addFirst(refMap);
+                var newDependency = expand(dependency, recursiveNames);
+                referenceStack.removeFirst();
+
+                newDependencies.set(newName, newDependency);
+            }
+
+            return factory.reference(reference.location, refMap.newName);
         }
+        else {
+            var content = dependencies.find(reference.name);
 
-        var content = dependencies.find(target.name);
-
-        return expand(content, recursiveNames);
+            return expand(content, recursiveNames);
+        }
     }
 
     private Expression expandRepeat(Repeat target, Set<String> recursiveNames) {
@@ -168,5 +196,14 @@ public class ExpressionExpander {
         return target.derive(expandAll(target.items, recursiveNames));
     }
 
+    private static class ReferenceMap {
+        public final String oldName;
+        public final String newName;
+
+        public ReferenceMap(String oldName, String newName) {
+            this.oldName = oldName;
+            this.newName = newName;
+        }
+    }
 
 }
