@@ -59,7 +59,7 @@ public class DataUtils {
         return new ArrayList<>(items);
     }
 
-    public static <T> void addAll(Collection<T> target, Iterable<T> items) {
+    public static <T> void addAll(Collection<T> target, Iterable<? extends T> items) {
         for (var item : items) {
             target.add(item);
         }

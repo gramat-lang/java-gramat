@@ -29,6 +29,10 @@ public interface Actions extends Iterable<Action> {
         return new ActionsR(data(first), List.of(last));
     }
 
+    static Actions join(Action first, Actions last) {
+        return new ActionsR(List.of(first), data(last));
+    }
+
     static Actions join(Action first, Actions middle, Actions last) {
         return new ActionsR(List.of(first), data(middle), data(last));
     }

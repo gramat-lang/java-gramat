@@ -10,15 +10,5 @@ import java.util.Set;
 
 public record DirtyMachine(Nodes sources, Nodes targets, List<Link> links) {
 
-    public Set<Symbol> symbols() {
-        var symbols = new LinkedHashSet<Symbol>();
 
-        for (var link : links) {
-            if (!link.isEmpty()) {
-                symbols.add(link.getSymbol());
-            }
-        }
-
-        return symbols;
-    }
 }

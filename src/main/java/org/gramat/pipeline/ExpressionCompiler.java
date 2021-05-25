@@ -42,9 +42,10 @@ public class ExpressionCompiler {
         var linkProvider = new LinkProvider();
         var dirtySegment = compileExpression(nodeProvider, linkProvider, expression);
 
-        return MachineCompiler.compile(
+        return MachineCleaner.run(
                 nodeProvider,
-                new DirtyMachine(dirtySegment.sources(), dirtySegment.targets(), linkProvider.toList()));
+                dirtySegment.sources(), dirtySegment.targets(),
+                linkProvider.toList());
     }
 
     private static DirtySegment compileExpression(NodeProvider nodeProvider, LinkProvider linkProvider, Expression expression) {
@@ -84,7 +85,7 @@ public class ExpressionCompiler {
         for (var item : alternation.items) {
             var itemMachine = compileExpression(nodeProvider, linkProvider, item);
 
-            sources.addAll(itemMachine.targets());
+            sources.addAll(itemMachine.sources());
             targets.addAll(itemMachine.targets());
         }
 
@@ -92,7 +93,7 @@ public class ExpressionCompiler {
     }
 
     private static DirtySegment compileOption(NodeProvider nodeProvider, LinkProvider linkProvider, Option option) {
-        var machine = compileExpression(nodeProvider, linkProvider, option);
+        var machine = compileExpression(nodeProvider, linkProvider, option.content);
         return new DirtySegment(
                 machine.sources(),
                 Nodes.join(machine.sources(), machine.targets()));
@@ -161,7 +162,7 @@ public class ExpressionCompiler {
     }
 
     private static DirtySegment compileWrapping(NodeProvider nodeProvider, LinkProvider linkProvider, Wrapping wrapping) {
-        var machine = compileExpressionClean(nodeProvider, wrapping);
+        var machine = compileExpressionClean(nodeProvider, wrapping.content);
         var begin = ActionFactory.createBeginAction(wrapping.type);
         var end = ActionFactory.createEndAction(wrapping.type, wrapping.argument);
 

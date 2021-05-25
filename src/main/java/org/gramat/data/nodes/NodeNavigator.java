@@ -4,6 +4,7 @@ import org.gramat.graphs.Node;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.Set;
 
 public class NodeNavigator {
 
@@ -26,7 +27,7 @@ public class NodeNavigator {
         }
     }
 
-    public void push(Nodes nodes) {
+    public void push(Iterable<Node> nodes) {
         for (var node : nodes) {
             push(node);
         }
@@ -38,5 +39,9 @@ public class NodeNavigator {
 
     public boolean hasNodes() {
         return !queue.isEmpty();
+    }
+
+    public Nodes getVisited() {
+        return Nodes.of(control);
     }
 }

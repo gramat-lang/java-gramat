@@ -5,12 +5,18 @@ import org.gramat.graphs.Node;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public interface Nodes extends Iterable<Node> {
 
     static Nodes of(Node node) {
         return new Nodes1(node);
+    }
+
+    static Nodes of(Set<Node> nodes) {
+        return new NodesR(nodes);
     }
 
     static NodesW createW() {

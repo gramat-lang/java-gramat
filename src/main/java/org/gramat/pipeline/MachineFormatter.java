@@ -1,6 +1,7 @@
 package org.gramat.pipeline;
 
 import org.gramat.data.actions.Actions;
+import org.gramat.data.nodes.NodeNavigator;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
@@ -8,10 +9,77 @@ import org.gramat.graphs.CleanMachine;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.links.Link;
+import org.gramat.tools.DataUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class MachineFormatter {
+
+    private final Map<Node, String> nodeKeys;
+
+    public MachineFormatter() {
+        nodeKeys = new HashMap<>();
+    }
+
+    public String getKey(Node node) {
+        return nodeKeys.computeIfAbsent(node, k -> String.valueOf(nodeKeys.size() + 1));
+    }
+
+    public List<Node> sortNodes(Iterable<Node> nodes) {
+        var result = new ArrayList<Node>();
+
+        DataUtils.addAll(result, nodes);
+
+        result.sort(Comparator.comparing(this::getKey));
+
+        return result;
+    }
+
+    public List<Link> sortLinks(Iterable<? extends Link> links) {
+        var result = new ArrayList<Link>();
+
+        DataUtils.addAll(result, links);
+
+        result.sort(this::compareLinks);
+
+        return result;
+    }
+
+    private int compareLinks(Link left, Link right) {
+        var leftSymbol = left.hasSymbol() ? left.getSymbol().toString() : "";
+        var rightSymbol = right.hasSymbol() ? right.getSymbol().toString() : "";
+        var symbolResult = leftSymbol.compareTo(rightSymbol);
+
+        if (symbolResult != 0) {
+            return symbolResult;
+        }
+
+        var leftSourceKey = getKey(left.getSource());
+        var rightSourceKey = getKey(right.getSource());
+        var sourceResult = leftSourceKey.compareTo(rightSourceKey);
+
+        if (sourceResult != 0) {
+            return sourceResult;
+        }
+
+        var leftTargetKey = getKey(left.getTarget());
+        var rightTargetKey = getKey(right.getTarget());
+        var targetResult = leftTargetKey.compareTo(rightTargetKey);
+
+        if (targetResult != 0) {
+            return targetResult;
+        }
+
+        // TODO compare actions
+        return 0;
+    }
 
     public String writeMachine(Machine machine) {
         var builder = new StringBuilder();
@@ -42,17 +110,49 @@ public class MachineFormatter {
     }
 
     public void write(Appendable output, Nodes sources, Nodes targets, Iterable<? extends Link> links) {
-        for (var source : sources) {
+        var printedLinks = new HashSet<Link>();
+        var nav = new NodeNavigator();
+
+        for (var source : sortNodes(sources)) {
+            nav.push(source);
+
             writeInitial(output, source);
         }
 
-        for (var link : links) {
-            writeLink(output, link);
+        while (nav.hasNodes()) {
+            var node = nav.pop();
+
+            for (var link : findLinksFrom(node, links)) {
+                writeLink(output, link);
+
+                nav.push(link.getTarget());
+                printedLinks.add(link);
+            }
         }
 
-        for (var target : targets) {
+        for (var target : sortNodes(targets)) {
             writeAccepted(output, target);
         }
+
+        // Unrelated links
+
+        for (var link : links) {
+            if (printedLinks.add(link)) {
+                writeLink(output, link);
+            }
+        }
+    }
+
+    private List<Link> findLinksFrom(Node source, Iterable<? extends Link> links) {
+        var result = new ArrayList<Link>();
+
+        for (var link : links) {
+            if (link.getSource() == source) {
+                result.add(link);
+            }
+        }
+
+        return sortLinks(result);
     }
 
     private void writeAccepted(Appendable output, Node node) {
@@ -120,7 +220,7 @@ public class MachineFormatter {
     }
 
     private void writeName(Appendable output, Node node) {
-        write(output, String.valueOf(node.id));
+        write(output, getKey(node));
     }
 
     private void writeComment(Appendable output, String message) {
@@ -133,7 +233,7 @@ public class MachineFormatter {
         write(output, "\n");
     }
 
-    private void write(Appendable output, Object value) {
+    public void write(Appendable output, Object value) {
         try {
             output.append(value.toString());
         }

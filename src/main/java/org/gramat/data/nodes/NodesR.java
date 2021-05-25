@@ -16,7 +16,7 @@ public class NodesR implements Nodes {
 
     NodesR(Collection<Node> nodes) {
         this.nodes = new LinkedHashSet<>(nodes);
-        this.id = Nodes.computeId(nodes);
+        this.id = Nodes.computeId(nodes); // TODO make it lazy
     }
 
     public NodesR(Nodes first, Node last) {

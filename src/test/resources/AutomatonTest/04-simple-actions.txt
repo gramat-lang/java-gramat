@@ -30,8 +30,8 @@ main = <value: ["a"]>
 1->2 : value-begin\
 'a'\
 value-end
-2<=
 1<=
+2<=
 ----------
 value(rep)
 
