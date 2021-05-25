@@ -5,27 +5,25 @@ import org.gramat.data.links.LinksW;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.links.Link;
-import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkSymbol;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClosureMapper {
 
-    private final Graph graph;
+    private final NodeProvider nodeProvider;
     private final Map<String, Nodes> idClosures;
     private final Map<String, Node> idNewNodes;
 
-    public ClosureMapper(Graph graph) {
-        this.graph = graph;
+    public ClosureMapper(NodeProvider nodeProvider) {
+        this.nodeProvider = nodeProvider;
         this.idClosures = new HashMap<>();
         this.idNewNodes = new HashMap<>();
     }
 
     public Node map(Nodes nodes) {
         return idNewNodes.computeIfAbsent(nodes.getId(), k -> {
-            var newNode = graph.createNode();
+            var newNode = nodeProvider.createNode();
             idClosures.put(nodes.getId(), nodes);
             return newNode;
         });
@@ -75,8 +73,8 @@ public class ClosureMapper {
     }
 
     private void searchLink(Links oldLinks, Link oldLink, Links newLinks, LinksW results) {
-        var newSources = searchNodes(oldLinks.forwardClosure(oldLink.source));
-        var newTargets = searchNodes(oldLinks.forwardClosure(oldLink.target));
+        var newSources = searchNodes(oldLinks.forwardClosure(oldLink.getSource()));
+        var newTargets = searchNodes(oldLinks.forwardClosure(oldLink.getTarget()));
         var missing = true;
 
         for (var newLink : newLinks) {
@@ -92,11 +90,11 @@ public class ClosureMapper {
     }
 
     private boolean matches(Nodes newSources, Nodes newTargets, Link oldLink, Link newLink) {
-        if (newSources.contains(newLink.source) && newTargets.contains(newLink.target)) {
-            if (oldLink instanceof LinkSymbol oldSym && newLink instanceof LinkSymbol newSym) {
-                return oldSym.symbol == newSym.symbol;
+        if (newSources.contains(newLink.getSource()) && newTargets.contains(newLink.getTarget())) {
+            if (oldLink.hasSymbol() && newLink.hasSymbol()) {
+                return oldLink.getSymbol() == newLink.getSymbol();
             }
-            else if (oldLink instanceof LinkEmpty) {
+            else if (oldLink.isEmpty()) {
                 return true;
             }
             else {

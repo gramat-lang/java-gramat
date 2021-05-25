@@ -5,7 +5,6 @@ import org.gramat.graphs.links.Link;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 public class LinksW implements Links {
 

@@ -30,8 +30,8 @@ public class ActionsW implements Actions {
         }
     }
 
-    public void append(ActionsW actions) {
-        for (var action : actions.data) {
+    public void append(Actions actions) {
+        for (var action : actions) {
             append(action);
         }
     }

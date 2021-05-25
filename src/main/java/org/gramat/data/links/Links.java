@@ -4,8 +4,6 @@ import org.gramat.data.nodes.NodeNavigator;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.links.Link;
-import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 import org.gramat.tools.DataUtils;
 
@@ -34,7 +32,7 @@ public interface Links extends Iterable<Link> {
         var result = Links.createW();
 
         for (var link : this) {
-            if (link.source == source) {
+            if (link.getSource() == source) {
                 result.add(link);
             }
         }
@@ -46,7 +44,7 @@ public interface Links extends Iterable<Link> {
         var result = Links.createW();
 
         for (var link : this) {
-            if (sources.contains(link.source)) {
+            if (sources.contains(link.getSource())) {
                 result.add(link);
             }
         }
@@ -58,7 +56,7 @@ public interface Links extends Iterable<Link> {
         var result = Links.createW();
 
         for (var link : this) {
-            if (targets.contains(link.target)) {
+            if (targets.contains(link.getTarget())) {
                 result.add(link);
             }
         }
@@ -70,7 +68,7 @@ public interface Links extends Iterable<Link> {
         var result = Links.createW();
 
         for (var link : this) {
-            if (link.target == target) {
+            if (link.getTarget() == target) {
                 result.add(link);
             }
         }
@@ -92,8 +90,8 @@ public interface Links extends Iterable<Link> {
             var source = queue.remove();
             if (result.add(source)) {
                 for (var link : findFrom(source)) {
-                    if (link instanceof LinkEmpty) {
-                        queue.add(link.target);
+                    if (link.isEmpty()) {
+                        queue.add(link.getTarget());
                     }
                 }
             }
@@ -102,8 +100,8 @@ public interface Links extends Iterable<Link> {
         return result;
     }
 
-    default List<LinkSymbol> forwardSymbols(Node initial) {
-        var result = new ArrayList<LinkSymbol>();
+    default List<Link> forwardSymbols(Node initial) {
+        var result = new ArrayList<Link>();
         var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
 
@@ -113,14 +111,11 @@ public interface Links extends Iterable<Link> {
             var source = queue.remove();
             if (control.add(source)) {
                 for (var link : findFrom(source)) {
-                    if (link instanceof LinkEmpty) {
-                        queue.add(link.target);
-                    }
-                    else if (link instanceof LinkSymbol linkSym) {
-                        result.add(linkSym);
+                    if (link.isEmpty()) {
+                        queue.add(link.getTarget());
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        result.add(link);
                     }
                 }
             }
@@ -129,12 +124,12 @@ public interface Links extends Iterable<Link> {
         return result;
     }
 
-    default List<LinkSymbol> backwardSymbols(Node initial) {
+    default List<Link> backwardSymbols(Node initial) {
         return backwardSymbols(Nodes.of(initial));
     }
 
-    default List<LinkSymbol> backwardSymbols(Nodes initial) {
-        var result = new ArrayList<LinkSymbol>();
+    default List<Link> backwardSymbols(Nodes initial) {
+        var result = new ArrayList<Link>();
         var queue = new ArrayDeque<Node>();
         var control = new HashSet<Node>();
 
@@ -144,14 +139,11 @@ public interface Links extends Iterable<Link> {
             var target = queue.remove();
             if (control.add(target)) {
                 for (var link : findTo(target)) {
-                    if (link instanceof LinkEmpty) {
-                        queue.add(link.source);
-                    }
-                    else if (link instanceof LinkSymbol linkSym) {
-                        result.add(linkSym);
+                    if (link.isEmpty()) {
+                        queue.add(link.getSource());
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        result.add(link);
                     }
                 }
             }
@@ -164,7 +156,7 @@ public interface Links extends Iterable<Link> {
         var result = Links.createW();
 
         for (var link : this) {
-            if (sources.contains(link.source) && link instanceof LinkSymbol linkSym && linkSym.symbol == symbol) {
+            if (sources.contains(link.getSource()) && link.hasSymbol() && link.getSymbol() == symbol) {
                 result.add(link);
             }
         }
@@ -179,8 +171,8 @@ public interface Links extends Iterable<Link> {
         var result = Nodes.createW();
 
         for (var link : this) {
-            if (sources.contains(link.source) && link instanceof LinkSymbol linkSym && linkSym.symbol == symbol) {
-                result.add(link.target);
+            if (sources.contains(link.getSource()) && link.hasSymbol() && link.getSymbol() == symbol) {
+                result.add(link.getTarget());
             }
         }
 
@@ -198,18 +190,15 @@ public interface Links extends Iterable<Link> {
             var source = queue.remove();
             if (control.add(source)) {
                 for (var link : findFrom(source)) {
-                    if (link instanceof LinkEmpty) {
-                        queue.add(link.target);
-                    }
-                    else if (link instanceof LinkSymbol linkSym) {
-                        if (linkSym.symbol == symbol) {
-                            result.add(linkSym);
-
-                            queue.add(linkSym.target);
-                        }
+                    if (link.isEmpty()) {
+                        queue.add(link.getTarget());
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        if (link.getSymbol() == symbol) {
+                            result.add(link);
+
+                            queue.add(link.getTarget());
+                        }
                     }
                 }
             }
@@ -232,8 +221,8 @@ public interface Links extends Iterable<Link> {
             var target = queue.remove();
             if (result.add(target)) {
                 for (var link : findTo(target)) {
-                    if (link instanceof LinkEmpty) {
-                        queue.add(link.source);
+                    if (link.isEmpty()) {
+                        queue.add(link.getSource());
                     }
                 }
             }
@@ -246,7 +235,7 @@ public interface Links extends Iterable<Link> {
         var result = Nodes.createW();
 
         for (var link : this) {
-            result.add(link.source);
+            result.add(link.getSource());
         }
 
         return result;
@@ -256,7 +245,7 @@ public interface Links extends Iterable<Link> {
         var result = Nodes.createW();
 
         for (var link : this) {
-            result.add(link.target);
+            result.add(link.getTarget());
         }
 
         return result;
@@ -272,10 +261,10 @@ public interface Links extends Iterable<Link> {
             var target = nav.pop();
 
             for (var link : findTo(target)) {
-                if (link instanceof LinkEmpty) {
+                if (link.isEmpty()) {
                     result.add(link);
 
-                    nav.push(link.source);
+                    nav.push(link.getSource());
                 }
             }
         }
@@ -293,10 +282,10 @@ public interface Links extends Iterable<Link> {
             var source = nav.pop();
 
             for (var link : findFrom(source)) {
-                if (link instanceof LinkEmpty) {
+                if (link.isEmpty()) {
                     result.add(link);
 
-                    nav.push(link.target);
+                    nav.push(link.getTarget());
                 }
             }
         }

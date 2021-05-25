@@ -1,16 +1,13 @@
 package org.gramat.pipeline;
 
 import org.gramat.data.actions.Actions;
-import org.gramat.data.actions.ActionsW;
-import org.gramat.data.links.Links;
 import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.graphs.Automaton;
+import org.gramat.graphs.CleanMachine;
 import org.gramat.graphs.Machine;
 import org.gramat.graphs.Node;
 import org.gramat.graphs.links.Link;
-import org.gramat.graphs.links.LinkEmpty;
-import org.gramat.graphs.links.LinkSymbol;
 
 import java.io.IOException;
 
@@ -40,7 +37,11 @@ public class MachineFormatter {
         write(output, Nodes.of(machine.source), Nodes.of(machine.target), machine.links);
     }
 
-    public void write(Appendable output, Nodes sources, Nodes targets, Links links) {
+    public void writeMachine(Appendable output, CleanMachine machine) {
+        write(output, Nodes.of(machine.source()), machine.targets(), machine.links());
+    }
+
+    public void write(Appendable output, Nodes sources, Nodes targets, Iterable<? extends Link> links) {
         for (var source : sources) {
             writeInitial(output, source);
         }
@@ -67,9 +68,9 @@ public class MachineFormatter {
     }
 
     private void writeLink(Appendable output, Link link) {
-        writeName(output, link.source);
+        writeName(output, link.getSource());
         write(output, "->");
-        writeName(output, link.target);
+        writeName(output, link.getTarget());
         write(output, " : ");
         write(output, writeLabel(link));
         writeNewLine(output);
@@ -78,19 +79,19 @@ public class MachineFormatter {
     private String writeLabel(Link link) {
         var label = new StringBuilder();
 
-        writeActions(label, link.beforeActions, "", "\n");
+        writeActions(label, link.getBeforeActions(), "", "\n");
 
-        if (link instanceof LinkSymbol linkSym) {
-            writeLabel(label, linkSym.symbol.toString());
+        if (link.hasSymbol()) {
+            writeLabel(label, link.getSymbol().toString());
         }
-        else if (link instanceof LinkEmpty linkEmp) {
+        else if (link.isEmpty()) {
             writeLabel(label, "empty");
         }
         else {
             throw ErrorFactory.notImplemented();
         }
 
-        writeActions(label, link.afterActions, "\n", "");
+        writeActions(label, link.getAfterActions(), "\n", "");
 
         return label.toString()
                 .replace("\\", "\\\\")

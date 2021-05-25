@@ -23,7 +23,9 @@ class AutomatonTest {
         var input = CharInput.of(expressionInput, title);
         var automaton = gramat.compile(input);
         var formatter = new MachineFormatter();
-        var actual = formatter.writeAutomaton(automaton);
+        var output = new StringBuilder();
+        formatter.writeMachine(output, automaton);
+        var actual = output.toString();
 
         if (!actual.equals(expected + "\n")) {
             log.info("  Actual: {}", AmEditor.url(

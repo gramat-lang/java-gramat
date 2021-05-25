@@ -1,7 +1,7 @@
 package org.gramat.pipeline;
 
-import lombok.extern.slf4j.Slf4j;
 import org.gramat.actions.ActionFactory;
+import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -13,203 +13,173 @@ import org.gramat.expressions.Repeat;
 import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
-import org.gramat.graphs.Graph;
-import org.gramat.graphs.Machine;
-import org.gramat.graphs.Node;
-import org.gramat.graphs.Segment;
-import org.gramat.tools.IdentifierProvider;
+import org.gramat.graphs.CleanMachine;
+import org.gramat.graphs.CleanMachineProgram;
+import org.gramat.graphs.DirtyMachine;
+import org.gramat.graphs.DirtySegment;
+import org.gramat.graphs.NodeProvider;
+import org.gramat.graphs.links.LinkProvider;
+import org.gramat.symbols.SymbolFactory;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
-@Slf4j
 public class ExpressionCompiler {
 
-    public static Machine run(ExpressionProgram program) {
-        return new ExpressionCompiler(program.dependencies).run(program.main);
-    }
+    public static CleanMachineProgram run(NodeProvider nodeProvider, ExpressionProgram program) {
+        var dependencies = new LinkedHashMap<String, CleanMachine>();
+        var main = compileExpressionClean(nodeProvider, program.main);
 
-    private final Graph graph;
-    private final Map<String, Expression> dependencies;
-    private final Map<String, Segment> referenceSegments;
+        for (var entry : program.dependencies.entrySet()) {
+            var dependency = compileExpressionClean(nodeProvider, entry.getValue());
 
-    public ExpressionCompiler(Map<String, Expression> dependencies) {
-        this.dependencies = dependencies;
-        this.graph = new Graph(IdentifierProvider.create(1));
-        this.referenceSegments = new LinkedHashMap<>();
-    }
-
-    public Machine run(Expression main) {
-        log.debug("Compiling main machine...");
-
-        var mainMachine = compileMachine(main);
-
-        log.debug("Compilation completed");  // TODO add more debug info
-
-        return mainMachine;
-    }
-
-    public Machine compileMachine(Expression expression) {
-        var source = graph.createNode();
-        var target = graph.createNode();
-
-        compileExpression(expression, source, target);
-
-        return new Machine(source, target, graph.links);
-    }
-
-    private void compileExpression(Expression expression, Node source, Node target) {
-        if (expression instanceof Wrapping) {
-            compileWrapping((Wrapping)expression, source, target);
+            dependencies.put(entry.getKey(), dependency);
         }
-        else if (expression instanceof Alternation) {
-            compileAlternation((Alternation)expression, source, target);
+
+        return new CleanMachineProgram(main, dependencies);
+    }
+
+    private static CleanMachine compileExpressionClean(NodeProvider nodeProvider, Expression expression) {
+        var linkProvider = new LinkProvider();
+        var dirtySegment = compileExpression(nodeProvider, linkProvider, expression);
+
+        return MachineCompiler.compile(
+                nodeProvider,
+                new DirtyMachine(dirtySegment.sources(), dirtySegment.targets(), linkProvider.toList()));
+    }
+
+    private static DirtySegment compileExpression(NodeProvider nodeProvider, LinkProvider linkProvider, Expression expression) {
+        if (expression instanceof Alternation) {
+            return compileAlternation(nodeProvider, linkProvider, (Alternation)expression);
         }
         else if (expression instanceof Option) {
-            compileOption((Option)expression, source, target);
+            return compileOption(nodeProvider, linkProvider, (Option)expression);
         }
         else if (expression instanceof Reference) {
-            compileReference((Reference)expression, source, target);
+            return compileReference(nodeProvider, linkProvider, (Reference)expression);
         }
         else if (expression instanceof Repeat) {
-            compileRepeat((Repeat)expression, source, target);
+            return compileRepeat(nodeProvider, linkProvider, (Repeat)expression);
         }
         else if (expression instanceof Sequence) {
-            compileSequence((Sequence)expression, source, target);
+            return compileSequence(nodeProvider, linkProvider, (Sequence)expression);
         }
         else if (expression instanceof Literal) {
-            compileLiteral((Literal)expression, source, target);
+            return compileLiteral(nodeProvider, linkProvider, (Literal)expression);
         }
         else if (expression instanceof Wildcard) {
-            compileWildcard((Wildcard)expression, source, target);
+            return compileWildcard(nodeProvider, linkProvider, (Wildcard)expression);
+        }
+        else if (expression instanceof Wrapping) {
+            return compileWrapping(nodeProvider, linkProvider, (Wrapping)expression);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
     }
 
-    private void compileWrapping(Wrapping wrapping, Node source, Node target) {
-        var links0 = graph.links.copyR();
+    private static DirtySegment compileAlternation(NodeProvider nodeProvider, LinkProvider linkProvider, Alternation alternation) {
+        var sources = Nodes.createW();
+        var targets = Nodes.createW();
 
-        compileExpression(wrapping.content, source, target);
-
-        var links = graph.links.copyW();
-        links.removeAll(links0);
-
-        var begin = ActionFactory.createBeginAction(wrapping.type);
-        var end = ActionFactory.createEndAction(wrapping.type, wrapping.argument);
-
-        for (var link : links) {
-            if (link.source == source) {
-                link.beforeActions.prepend(begin);
-            }
-
-            if (link.target == target) {
-                link.afterActions.append(end);
-            }
-        }
-    }
-
-    private void compileAlternation(Alternation alternation, Node source, Node target) {
         for (var item : alternation.items) {
-            var itemTarget = graph.createNode();
+            var itemMachine = compileExpression(nodeProvider, linkProvider, item);
 
-            compileExpression(item, source, itemTarget);
-
-            graph.createLink(itemTarget, target);
-        }
-    }
-
-    private void compileOption(Option option, Node source, Node target) {
-        compileExpression(option.content, source, target);
-
-        graph.createLink(source, target);
-    }
-
-    private void compileReference(Reference reference, Node source, Node target) {
-        var segment = getOrCreateSegment(reference.name);
-
-        log.debug("Connecting segment {}...", reference.name);
-
-        graph.createLink(source, segment.source);
-        graph.createLink(segment.target, target);
-    }
-
-    private Segment getOrCreateSegment(String name) {
-        var segment = referenceSegments.get(name);
-        if (segment != null) {
-            return segment;
+            sources.addAll(itemMachine.targets());
+            targets.addAll(itemMachine.targets());
         }
 
-        log.debug("Creating segment {}...", name);
-
-        var dependency = dependencies.get(name);
-        if (dependency == null) {
-            throw ErrorFactory.notFound(name);
-        }
-
-        var refSource = graph.createNode();
-        var refTarget = graph.createNode();
-
-        segment = new Segment(refSource, refTarget);
-
-        referenceSegments.put(name, segment);
-
-        compileExpression(dependency, refSource, refTarget);
-
-        return segment;
+        return new DirtySegment(sources, targets);
     }
 
-    private void compileRepeat(Repeat repeat, Node source, Node target) {
-        var contentSource = graph.createNode();
-        var contentTarget = graph.createNode();
+    private static DirtySegment compileOption(NodeProvider nodeProvider, LinkProvider linkProvider, Option option) {
+        var machine = compileExpression(nodeProvider, linkProvider, option);
+        return new DirtySegment(
+                machine.sources(),
+                Nodes.join(machine.sources(), machine.targets()));
+    }
 
-        compileExpression(repeat.content, contentSource, contentTarget);
+    private static DirtySegment compileReference(NodeProvider nodeProvider, LinkProvider linkProvider, Reference reference) {
+        var source = nodeProvider.createNode();
+        var target = nodeProvider.createNode();
+        var symbol = SymbolFactory.reference(reference.name);
+
+        linkProvider.createLink(source, target, symbol);
+
+        return new DirtySegment(Nodes.of(source), Nodes.of(target));
+    }
+
+    private static DirtySegment compileRepeat(NodeProvider nodeProvider, LinkProvider linkProvider, Repeat repeat) {
+        var source = nodeProvider.createNode();
+        var target = nodeProvider.createNode();
+
+        var contentMachine = compileExpression(nodeProvider, linkProvider, repeat.content);
+
+        linkProvider.createLink(source, contentMachine.sources());
+        linkProvider.createLink(contentMachine.targets(), target);
 
         if (repeat.separator != null) {
-            compileExpression(repeat.separator, contentTarget, contentSource);
+            var separatorMachine = compileExpression(nodeProvider, linkProvider, repeat.separator);
+
+            linkProvider.createLink(contentMachine.targets(), separatorMachine.sources());
+            linkProvider.createLink(separatorMachine.targets(), contentMachine.sources());
         }
         else {
-            graph.createLink(contentTarget, contentSource);
+            linkProvider.createLink(contentMachine.targets(), contentMachine.sources());
         }
 
-        graph.createLink(source, contentSource);
-        graph.createLink(contentTarget, target);
+        return new DirtySegment(Nodes.of(source), Nodes.of(target));
     }
 
-    private void compileSequence(Sequence sequence, Node source, Node target) {
+    private static DirtySegment compileSequence(NodeProvider nodeProvider, LinkProvider linkProvider, Sequence sequence) {
+        var source = nodeProvider.createNode();
         var lastNode = source;
 
-        for (var i = 0; i < sequence.items.size(); i++) {
-            var item = sequence.items.get(i);
+        for (var item : sequence.items) {
+            var itemMachine = compileExpression(nodeProvider, linkProvider, item);
 
-            Node itemTarget;
-            if (i == sequence.items.size() - 1) {
-                itemTarget = target;
-            }
-            else {
-                itemTarget = graph.createNode();
-            }
+            linkProvider.createLink(lastNode, itemMachine.sources());
 
-            compileExpression(item, lastNode, itemTarget);
+            lastNode = nodeProvider.createNode();
 
-            lastNode = itemTarget;
-        }
-    }
-
-    private void compileLiteral(Literal literal, Node source, Node target) {
-        graph.createLink(source, target, literal.symbol);
-    }
-
-    private void compileWildcard(Wildcard wildcard, Node source, Node target) {
-        if (wildcard.level != 1) {
-            throw ErrorFactory.syntaxError(wildcard.location,
-                    "No supported wilcard level: " + wildcard.level);
+            linkProvider.createLink(itemMachine.targets(), lastNode);
         }
 
-        // TODO improve how to make wildcards 🤔
+        return new DirtySegment(Nodes.of(source), Nodes.of(lastNode));
+    }
+
+    private static DirtySegment compileLiteral(NodeProvider nodeProvider, LinkProvider linkProvider, Literal literal) {
+        var source = nodeProvider.createNode();
+        var target = nodeProvider.createNode();
+
+        linkProvider.createLink(source, target, literal.symbol);
+
+        return new DirtySegment(Nodes.of(source), Nodes.of(target));
+    }
+
+    private static DirtySegment compileWildcard(NodeProvider nodeProvider, LinkProvider linkProvider, Wildcard wildcard) {
         throw new UnsupportedOperationException();
     }
 
-}
+    private static DirtySegment compileWrapping(NodeProvider nodeProvider, LinkProvider linkProvider, Wrapping wrapping) {
+        var machine = compileExpressionClean(nodeProvider, wrapping);
+        var begin = ActionFactory.createBeginAction(wrapping.type);
+        var end = ActionFactory.createEndAction(wrapping.type, wrapping.argument);
 
+        for (var link : machine.links()) {
+            if (machine.source() == link.getSource()) {
+                link.addBeforeActions(begin);
+            }
+
+            if (machine.targets().contains(link.getTarget())) {
+                link.addAfterActions(end);
+            }
+        }
+
+        linkProvider.addLinks(machine.links());
+
+        return new DirtySegment(Nodes.of(machine.source()), machine.targets());
+    }
+
+    private ExpressionCompiler() {}
+
+}

@@ -1,7 +1,6 @@
 package org.gramat.graphs;
 
 import org.gramat.data.links.Links;
-import org.gramat.graphs.links.LinkSymbol;
 import org.gramat.symbols.Symbol;
 
 import java.util.LinkedHashSet;
@@ -24,8 +23,8 @@ public class Machine {
         var symbols = new LinkedHashSet<Symbol>();
 
         for (var link : links) {
-            if (link instanceof LinkSymbol linkSym) {
-                symbols.add(linkSym.symbol);
+            if (link.hasSymbol()) {
+                symbols.add(link.getSymbol());
             }
         }
 

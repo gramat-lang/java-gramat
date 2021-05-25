@@ -10,7 +10,6 @@ import org.gramat.tools.IdentifierProvider;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class Graph {
 
@@ -36,19 +35,15 @@ public class Graph {
     }
 
     public Link createLink(Node source, Node target, Symbol symbol) {
-        var link = new LinkSymbol(String.valueOf(linkIds.next()), source, target, symbol);
+        var link = new LinkSymbol(source, target, symbol);
 
         links.add(link);
 
         return link;
     }
 
-    public void createLink(Node source, Node target, Symbol symbol, String ids) {
-        links.add(new LinkSymbol(ids, source, target, symbol));
-    }
-
     public void createLink(Node source, Node target) {
-        links.add(new LinkEmpty(String.valueOf(linkIds.next()), source, target));
+        links.add(new LinkEmpty(source, target));
     }
 
 }

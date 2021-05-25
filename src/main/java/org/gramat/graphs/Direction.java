@@ -21,10 +21,10 @@ public enum Direction {
     N_S, N_T, N_N;
 
     public static Direction compute(Link link, Node sources, Nodes targets) {
-        var fromSource = (sources == link.source);
-        var fromTarget = targets.contains(link.source);
-        var toSource = (sources == link.target);
-        var toTarget = targets.contains(link.target);
+        var fromSource = (sources == link.getSource());
+        var fromTarget = targets.contains(link.getSource());
+        var toSource = (sources == link.getTarget());
+        var toTarget = targets.contains(link.getTarget());
 
         if (fromSource) {
             if (toSource) {

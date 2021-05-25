@@ -1,24 +1,26 @@
 package org.gramat.graphs.links;
 
+import org.gramat.actions.Action;
 import org.gramat.data.actions.Actions;
-import org.gramat.data.actions.ActionsW;
 import org.gramat.graphs.Node;
+import org.gramat.symbols.Symbol;
 
-import java.util.Objects;
+public interface Link {
 
-public abstract class Link {
+    Node getSource();
+    Node getTarget();
 
-    public final String ids;
-    public final Node source;
-    public final Node target;
-    public final ActionsW beforeActions;
-    public final ActionsW afterActions;
+    Actions getBeforeActions();
+    Actions getAfterActions();
 
-    protected Link(String ids, Node source, Node target) {
-        this.ids = ids;
-        this.source = Objects.requireNonNull(source);
-        this.target = Objects.requireNonNull(target);
-        this.beforeActions = Actions.createW();
-        this.afterActions = Actions.createW();
-    }
+    boolean isEmpty();
+    boolean hasSymbol();
+
+    Symbol getSymbol();
+
+    void addBeforeActions(Action action);
+    void addBeforeActions(Actions actions);
+    void addAfterActions(Actions actions);
+    void addAfterActions(Action action);
+
 }
