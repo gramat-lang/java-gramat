@@ -1,9 +1,9 @@
-package org.gramat.graphs.links;
+package org.gramat.machine.links;
 
 import org.gramat.actions.Action;
-import org.gramat.data.actions.Actions;
-import org.gramat.data.actions.ActionsW;
-import org.gramat.graphs.Node;
+import org.gramat.actions.Actions;
+import org.gramat.actions.ActionsW;
+import org.gramat.machine.nodes.Node;
 import org.gramat.symbols.Symbol;
 
 import java.util.Objects;
@@ -16,7 +16,7 @@ public class LinkSymbol implements Link {
     private final ActionsW afterActions;
     private final Symbol symbol;
 
-    public LinkSymbol(Node source, Node target, Symbol symbol) {
+    LinkSymbol(Node source, Node target, Symbol symbol) {
         this.source = Objects.requireNonNull(source);
         this.target = Objects.requireNonNull(target);
         this.symbol = Objects.requireNonNull(symbol);

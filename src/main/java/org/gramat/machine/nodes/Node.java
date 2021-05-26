@@ -1,4 +1,4 @@
-package org.gramat.graphs;
+package org.gramat.machine.nodes;
 
 public class Node {
 
@@ -6,7 +6,7 @@ public class Node {
 
     public boolean wildcard;
 
-    public Node(int id) {
+    Node(int id) {
         this.id = id;
     }
 

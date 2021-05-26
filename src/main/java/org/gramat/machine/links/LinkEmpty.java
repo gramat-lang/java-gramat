@@ -1,8 +1,8 @@
-package org.gramat.graphs.links;
+package org.gramat.machine.links;
 
 import org.gramat.actions.Action;
-import org.gramat.data.actions.Actions;
-import org.gramat.graphs.Node;
+import org.gramat.actions.Actions;
+import org.gramat.machine.nodes.Node;
 import org.gramat.symbols.Symbol;
 
 public class LinkEmpty implements Link {
@@ -10,7 +10,7 @@ public class LinkEmpty implements Link {
     private final Node source;
     private final Node target;
 
-    public LinkEmpty(Node source, Node target) {
+    LinkEmpty(Node source, Node target) {
         this.source = source;
         this.target = target;
     }

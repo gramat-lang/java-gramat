@@ -1,46 +1,49 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.data.nodes.NodeNavigator;
-import org.gramat.data.nodes.Nodes;
-import org.gramat.graphs.CleanMachine;
-import org.gramat.graphs.ClosureMapper;
-import org.gramat.graphs.DirtyMachine;
-import org.gramat.graphs.links.Link;
-import org.gramat.graphs.Node;
-import org.gramat.graphs.NodeProvider;
-import org.gramat.graphs.links.LinkProvider;
-import org.gramat.graphs.links.LinkSymbol;
+import org.gramat.machine.Machine;
+import org.gramat.machine.links.Link;
+import org.gramat.machine.links.LinkList;
+import org.gramat.machine.links.LinkSymbol;
+import org.gramat.machine.links.LinkSymbolList;
+import org.gramat.machine.nodes.Node;
+import org.gramat.machine.nodes.NodeNavigator;
+import org.gramat.machine.nodes.NodeFactory;
+import org.gramat.machine.nodes.NodeSet;
 import org.gramat.symbols.Symbol;
-import org.gramat.tools.DataUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 @Slf4j
 public class MachineCleaner {
 
-    public static CleanMachine run(NodeProvider nodeProvider, Nodes sources, Nodes targets, List<Link> links) {
-        return new MachineCleaner(nodeProvider).run(sources, targets, links);
+    public static Machine run(NodeFactory nodeFactory, NodeSet sources, NodeSet targets, LinkList links) {
+        return new MachineCleaner(nodeFactory).run(sources, targets, links);
     }
 
-    private final ClosureMapper mapper;
+    private final NodeFactory nodeFactory;
+    private final Map<String, NodeSet> idClosures;
+    private final Map<String, Node> idNewNodes;
 
-    private MachineCleaner(NodeProvider nodeProvider) {
-        mapper = new ClosureMapper(nodeProvider);
+    private MachineCleaner(NodeFactory nodeFactory) {
+        this.nodeFactory = nodeFactory;
+        this.idClosures = new HashMap<>();
+        this.idNewNodes = new HashMap<>();
     }
 
-    private CleanMachine run(Nodes sources, Nodes targets, List<Link> links) {
+    private Machine run(NodeSet sources, NodeSet targets, LinkList links) {
         log.debug("Cleaning machine...");
 
-        var symbols = symbols(links);
+        var symbols = links.getSymbols();
         var control = new HashSet<String>();
-        var queue = new ArrayDeque<Nodes>();
-        var cleanLinks = new LinkProvider();
+        var queue = new ArrayDeque<NodeSet>();
+        var cleanLinks = new LinkSymbolList();
 
         var closure0 = forwardClosure(sources, links);
         queue.add(closure0);
@@ -48,7 +51,7 @@ public class MachineCleaner {
         while (!queue.isEmpty()) {
             var oldSources = queue.remove();
             if (control.add(oldSources.getId())) {
-                var newSource = mapper.map(oldSources);
+                var newSource = map(oldSources);
 
                 for (var symbol : symbols) {
                     var oldLinkSymbols = findLinkSymbolsFrom(oldSources, symbol, links);
@@ -56,7 +59,7 @@ public class MachineCleaner {
                         var oldTargets = forwardClosure(collectTargets(oldLinkSymbols), links);
                         log.debug("LINK {} -> {} : {}", oldSources, oldTargets, symbol);
 
-                        var newTarget = mapper.map(oldTargets);
+                        var newTarget = map(oldTargets);
                         var newLink = cleanLinks.createLink(newSource, newTarget, symbol);
 
                         applyActions(newLink, oldLinkSymbols);
@@ -69,10 +72,9 @@ public class MachineCleaner {
 
         log.debug("Cleaning machine completed");
 
-        var cleanSource = mapper.unmap(closure0);
-        var targetClosure = backwardClosure(targets, links);
-        var cleanTargets = mapper.searchNodes(targetClosure);
-        return new CleanMachine(cleanSource, cleanTargets, cleanLinks.toListSymbol());
+        var cleanSource = unmap(closure0);
+        var cleanTargets = searchNodes(targets);
+        return new Machine(cleanSource, cleanTargets, cleanLinks);
     }
 
     private void applyActions(LinkSymbol newLink, List<LinkSymbol> oldLinks) {
@@ -83,7 +85,7 @@ public class MachineCleaner {
         }
     }
 
-    private Nodes forwardClosure(Nodes sources, List<Link> links) {
+    private NodeSet forwardClosure(NodeSet sources, LinkList links) {
         var nav = new NodeNavigator();
 
         nav.push(sources);
@@ -100,7 +102,7 @@ public class MachineCleaner {
         return nav.getVisited();
     }
 
-    private List<LinkSymbol> findLinkSymbolsFrom(Nodes closure, Symbol symbol, List<Link> links) {
+    private List<LinkSymbol> findLinkSymbolsFrom(NodeSet closure, Symbol symbol, LinkList links) {
         var result = new ArrayList<LinkSymbol>();
 
         for (var link : links) {
@@ -112,113 +114,52 @@ public class MachineCleaner {
         return result;
     }
 
-    private Nodes backwardClosure(Nodes targets, List<Link> links) {
-        var result = Nodes.createW();
-        var queue = new ArrayDeque<Node>();  // TODO use navigator
-
-        DataUtils.addAll(queue, targets);
-
-        while (!queue.isEmpty()) {
-            var target = queue.remove();
-            if (result.add(target)) {
-                for (var link : links) {
-                    if (targets.contains(link.getTarget()) && link.isEmpty()) {
-                        queue.add(link.getSource());
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private ClosureInfo computeTargetClosure(Nodes sources, Symbol symbol, List<Link> links) {
-        var nav = new NodeNavigator();
-        var beforeLinks = new ArrayList<Link>();
-        var mainLinks = new ArrayList<Link>();
-        var afterLinks = new ArrayList<Link>();
-        var closure = Nodes.createW();
-
-        nav.push(sources);
-
-        while (nav.hasNodes()) {
-            var source = nav.pop();
-
-            for (var link : links) {
-                if (link.getSource() == source) {
-                    if (link.isEmpty()) {
-                        nav.push(link.getTarget());
-
-                        beforeLinks.add(link);
-                    }
-                    else if (link.getSymbol() == symbol) {
-                        mainLinks.add(link);
-
-                        closure.add(link.getTarget());
-                    }
-                }
-            }
-        }
-
-        nav.reset();
-        nav.push(closure);
-
-        while (nav.hasNodes()) {
-            var source = nav.pop();
-
-            for (var link : links) {
-                if (link.getSource() == source && link.isEmpty()) {
-                    nav.push(link.getTarget());
-
-                    afterLinks.add(link);
-
-                    closure.add(link.getTarget());
-                }
-            }
-        }
-
-        return new ClosureInfo(beforeLinks, mainLinks, afterLinks, closure);
-    }
-
-    private record ClosureInfo(List<Link> beforeLinks, List<Link> mainLinks, List<Link> afterLinks, Nodes closure) {
-        public void applyActions(Link link) {
-            for (var beforeLink : beforeLinks) {
-                link.addBeforeActions(beforeLink.getBeforeActions());
-                link.addAfterActions(beforeLink.getAfterActions());
-            }
-
-            for (var mainLink : mainLinks) {
-                link.addBeforeActions(mainLink.getBeforeActions());
-                link.addAfterActions(mainLink.getAfterActions());
-            }
-
-            for (var afterLink : afterLinks) {
-                link.addBeforeActions(afterLink.getBeforeActions());
-                link.addAfterActions(afterLink.getAfterActions());
-            }
-        }
-    }
-
-    private static Set<Symbol> symbols(List<Link> links) {
-        var symbols = new LinkedHashSet<Symbol>();
-
-        for (var link : links) {
-            if (!link.isEmpty()) {
-                symbols.add(link.getSymbol());
-            }
-        }
-
-        return symbols;
-    }
-
-    private Nodes collectTargets(List<? extends Link> links) {
-        var result = Nodes.createW();
+    private NodeSet collectTargets(List<? extends Link> links) {
+        var result = new LinkedHashSet<Node>();
 
         for (var link : links) {
             result.add(link.getTarget());
         }
 
-        return result;
+        return NodeSet.of(result);
+    }
+
+
+    public Node map(NodeSet nodes) {
+        return idNewNodes.computeIfAbsent(nodes.getId(), k -> {
+            var newNode = nodeFactory.createNode();
+            idClosures.put(nodes.getId(), nodes);
+            return newNode;
+        });
+    }
+
+    public Node unmap(NodeSet oldNodes) {
+        var id = oldNodes.getId();
+        var newNode = idNewNodes.get(id);
+        if (newNode == null) {
+            throw new RuntimeException("not mapped");
+        }
+        return newNode;
+    }
+
+    public NodeSet searchNodes(NodeSet oldNodes) {
+        var newNodes = new LinkedHashSet<Node>();
+
+        for (var entry : idClosures.entrySet()) {
+            for (var oldNode : oldNodes) {
+                if (entry.getValue().contains(oldNode)) {
+                    var newNode = idNewNodes.get(entry.getKey());
+
+                    newNodes.add(newNode);
+                }
+            }
+        }
+
+        if (newNodes.isEmpty()) {
+            throw new RuntimeException();
+        }
+
+        return NodeSet.of(newNodes);
     }
 
 }

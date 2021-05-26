@@ -1,8 +1,6 @@
-package org.gramat.data.expressions;
+package org.gramat.expressions;
 
 import org.gramat.errors.ErrorFactory;
-import org.gramat.expressions.Expression;
-import org.gramat.expressions.ExpressionRule;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,6 +1,5 @@
-package org.gramat.data.actions;
+package org.gramat.actions;
 
-import org.gramat.actions.Action;
 import org.gramat.tools.DataUtils;
 
 import java.util.Collection;

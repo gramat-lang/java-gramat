@@ -1,12 +1,12 @@
-package org.gramat.graphs;
+package org.gramat.machine.nodes;
 
 import org.gramat.tools.IdentifierProvider;
 
-public class NodeProvider {
+public class NodeFactory {
 
     private final IdentifierProvider ids;
 
-    public NodeProvider() {
+    public NodeFactory() {
         ids = IdentifierProvider.create(1);
     }
 

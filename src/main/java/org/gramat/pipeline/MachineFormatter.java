@@ -1,19 +1,16 @@
 package org.gramat.pipeline;
 
-import org.gramat.data.actions.Actions;
-import org.gramat.data.nodes.NodeNavigator;
-import org.gramat.data.nodes.Nodes;
+import org.gramat.actions.Actions;
 import org.gramat.errors.ErrorFactory;
-import org.gramat.graphs.Automaton;
-import org.gramat.graphs.CleanMachine;
-import org.gramat.graphs.Machine;
-import org.gramat.graphs.Node;
-import org.gramat.graphs.links.Link;
+import org.gramat.machine.Machine;
+import org.gramat.machine.links.Link;
+import org.gramat.machine.nodes.Node;
+import org.gramat.machine.nodes.NodeNavigator;
+import org.gramat.machine.nodes.NodeSet;
 import org.gramat.tools.DataUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,35 +78,11 @@ public class MachineFormatter {
         return 0;
     }
 
-    public String writeMachine(Machine machine) {
-        var builder = new StringBuilder();
-
-        writeMachine(builder, machine);
-
-        return builder.toString();
-    }
-
-    public String writeAutomaton(Automaton automaton) {
-        var builder = new StringBuilder();
-
-        writeAutomaton(builder, automaton);
-
-        return builder.toString();
-    }
-
-    public void writeAutomaton(Appendable output, Automaton automaton) {
-        write(output, Nodes.of(automaton.initial), automaton.accepted, automaton.links);
-    }
-
     public void writeMachine(Appendable output, Machine machine) {
-        write(output, Nodes.of(machine.source), Nodes.of(machine.target), machine.links);
+        write(output, NodeSet.of(machine.source()), machine.targets(), machine.links());
     }
 
-    public void writeMachine(Appendable output, CleanMachine machine) {
-        write(output, Nodes.of(machine.source()), machine.targets(), machine.links());
-    }
-
-    public void write(Appendable output, Nodes sources, Nodes targets, Iterable<? extends Link> links) {
+    public void write(Appendable output, NodeSet sources, NodeSet targets, Iterable<? extends Link> links) {
         var printedLinks = new HashSet<Link>();
         var nav = new NodeNavigator();
 

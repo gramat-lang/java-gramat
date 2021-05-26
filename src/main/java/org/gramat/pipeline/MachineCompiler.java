@@ -1,51 +1,52 @@
 package org.gramat.pipeline;
 
 import org.gramat.actions.ActionFactory;
-import org.gramat.data.actions.Actions;
-import org.gramat.data.nodes.Nodes;
-import org.gramat.graphs.CleanMachine;
-import org.gramat.graphs.CleanMachineProgram;
-import org.gramat.graphs.Machine;
-import org.gramat.graphs.Segment;
-import org.gramat.graphs.DirtyMachine;
-import org.gramat.graphs.Node;
-import org.gramat.graphs.NodeProvider;
-import org.gramat.graphs.links.LinkProvider;
+import org.gramat.actions.Actions;
+import org.gramat.machine.Machine;
+import org.gramat.machine.MachineProgram;
+import org.gramat.machine.links.LinkList;
+import org.gramat.machine.nodes.Node;
+import org.gramat.machine.nodes.NodeFactory;
+import org.gramat.machine.nodes.NodeSet;
 import org.gramat.symbols.Symbol;
 import org.gramat.symbols.SymbolFactory;
 import org.gramat.symbols.SymbolReference;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class MachineCompiler {
 
-
-    public static CleanMachine run(NodeProvider nodeProvider, CleanMachineProgram program) {
-        return new MachineCompiler(program.dependencies, nodeProvider).run(program.main);
+    public record Segment(Node source, NodeSet targets) {
+        // nothing special here
     }
 
-    private final Map<String, CleanMachine> dependencies;
-    private final LinkProvider linkProvider;
-    private final NodeProvider nodeProvider;
+    public static Machine run(NodeFactory nodeFactory, MachineProgram program) {
+        return new MachineCompiler(program.dependencies, nodeFactory).run(program.main);
+    }
+
+    private final Map<String, Machine> dependencies;
+    private final LinkList linkList;
+    private final NodeFactory nodeFactory;
     private final Map<String, Segment> segments;
 
-    private MachineCompiler(Map<String, CleanMachine> dependencies, NodeProvider nodeProvider) {
+    private MachineCompiler(Map<String, Machine> dependencies, NodeFactory nodeFactory) {
         this.dependencies = dependencies;
-        this.nodeProvider = nodeProvider;
-        this.linkProvider = new LinkProvider();
+        this.nodeFactory = nodeFactory;
+        this.linkList = new LinkList();
         this.segments = new HashMap<>();
     }
 
-    private CleanMachine run(CleanMachine main) {
+    private Machine run(Machine main) {
         var segment = compile(main);
-        return MachineCleaner.run(nodeProvider,
-                Nodes.of(segment.source()),
+        return MachineCleaner.run(nodeFactory,
+                NodeSet.of(segment.source()),
                 segment.targets(),
-                linkProvider.toList());
+                linkList);
     }
 
-    private Segment compile(CleanMachine machine) {
+    private Segment compile(Machine machine) {
         for (var link : machine.links()) {
             if (link.getSymbol() instanceof SymbolReference ref) {
                 var dependency = dependencies.get(ref.name);
@@ -56,33 +57,33 @@ public class MachineCompiler {
                         link.getBeforeActions(), link.getAfterActions());
 
                 // Connect segment to the main machine
-                linkProvider.createLink(link.getSource(), segment.source());
-                linkProvider.createLink(segment.targets(), link.getTarget());
+                linkList.createLink(link.getSource(), segment.source());
+                linkList.createLink(segment.targets(), link.getTarget());
             }
             else {
-                linkProvider.addLink(link);
+                linkList.addLink(link);
             }
         }
 
         return new Segment(machine.source(), machine.targets());
     }
 
-    private Segment compile(String name, CleanMachine machine, Actions rootBeforeActions, Actions rootAfterActions) {
+    private Segment compile(String name, Machine machine, Actions rootBeforeActions, Actions rootAfterActions) {
         var nodeMap = new HashMap<Node, Node>();
-        var newSource = nodeProvider.createNode();
-        var newTargets = Nodes.createW();
+        var newSource = nodeFactory.createNode();
+        var newTargets = new LinkedHashSet<Node>();
 
         nodeMap.put(machine.source(), newSource);
 
         for (var target : machine.targets()) {
-            var newTarget = nodeProvider.createNode();
+            var newTarget = nodeFactory.createNode();
 
             nodeMap.put(target, newTarget);
 
             newTargets.add(newTarget);
         }
 
-        var result = new Segment(newSource, newTargets);
+        var result = new Segment(newSource, NodeSet.of(newTargets));
 
         segments.put(name, result);
 
@@ -121,8 +122,8 @@ public class MachineCompiler {
             if (link.getSymbol() instanceof SymbolReference ref) {
                 var segment = segments.get(ref.name);
                 if (segment != null) {
-                    linkProvider.createLink(link.getSource(), segment.source());
-                    linkProvider.createLink(segment.targets(), link.getTarget());
+                    linkList.createLink(link.getSource(), segment.source());
+                    linkList.createLink(segment.targets(), link.getTarget());
                 }
                 else {
                     var dependency = dependencies.get(ref.name);
@@ -135,8 +136,8 @@ public class MachineCompiler {
                             beforeActions, afterActions);
 
                     // Connect segment to the main machine
-                    linkProvider.createLink(link.getSource(), segment.source());
-                    linkProvider.createLink(segment.targets(), link.getTarget());
+                    linkList.createLink(link.getSource(), segment.source());
+                    linkList.createLink(segment.targets(), link.getTarget());
                 }
             }
             else {
@@ -149,7 +150,7 @@ public class MachineCompiler {
                     symbol = link.getSymbol();
                 }
 
-                var newLink = linkProvider.createLink(linkSource, linkTarget, symbol);
+                var newLink = linkList.createLink(linkSource, linkTarget, symbol);
                 newLink.addBeforeActions(beforeActions);
                 newLink.addAfterActions(afterActions);
             }

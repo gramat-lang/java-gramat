@@ -1,10 +1,7 @@
-package org.gramat.data.nodes;
-
-import org.gramat.graphs.Node;
+package org.gramat.machine.nodes;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.Set;
 
 public class NodeNavigator {
 
@@ -41,7 +38,7 @@ public class NodeNavigator {
         return !queue.isEmpty();
     }
 
-    public Nodes getVisited() {
-        return Nodes.of(control);
+    public NodeSet getVisited() {
+        return NodeSet.of(control);
     }
 }

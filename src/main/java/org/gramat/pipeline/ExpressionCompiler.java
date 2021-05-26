@@ -1,7 +1,6 @@
 package org.gramat.pipeline;
 
 import org.gramat.actions.ActionFactory;
-import org.gramat.data.nodes.Nodes;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -13,156 +12,159 @@ import org.gramat.expressions.Repeat;
 import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
-import org.gramat.graphs.CleanMachine;
-import org.gramat.graphs.CleanMachineProgram;
-import org.gramat.graphs.DirtyMachine;
-import org.gramat.graphs.DirtySegment;
-import org.gramat.graphs.NodeProvider;
-import org.gramat.graphs.links.LinkProvider;
+import org.gramat.machine.Machine;
+import org.gramat.machine.MachineProgram;
+import org.gramat.machine.links.LinkList;
+import org.gramat.machine.nodes.Node;
+import org.gramat.machine.nodes.NodeFactory;
+import org.gramat.machine.nodes.NodeSet;
 import org.gramat.symbols.SymbolFactory;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 public class ExpressionCompiler {
 
-    public static CleanMachineProgram run(NodeProvider nodeProvider, ExpressionProgram program) {
-        var dependencies = new LinkedHashMap<String, CleanMachine>();
-        var main = compileExpressionClean(nodeProvider, program.main);
+    public record Segment(NodeSet sources, NodeSet targets) {}
+
+    public static MachineProgram run(NodeFactory nodeFactory, ExpressionProgram program) {
+        var dependencies = new LinkedHashMap<String, Machine>();
+        var main = compileExpressionClean(nodeFactory, program.main);
 
         for (var entry : program.dependencies.entrySet()) {
-            var dependency = compileExpressionClean(nodeProvider, entry.getValue());
+            var dependency = compileExpressionClean(nodeFactory, entry.getValue());
 
             dependencies.put(entry.getKey(), dependency);
         }
 
-        return new CleanMachineProgram(main, dependencies);
+        return new MachineProgram(main, dependencies);
     }
 
-    private static CleanMachine compileExpressionClean(NodeProvider nodeProvider, Expression expression) {
-        var linkProvider = new LinkProvider();
-        var dirtySegment = compileExpression(nodeProvider, linkProvider, expression);
+    private static Machine compileExpressionClean(NodeFactory nodeFactory, Expression expression) {
+        var linkList = new LinkList();
+        var dirtySegment = compileExpression(nodeFactory, linkList, expression);
 
         return MachineCleaner.run(
-                nodeProvider,
+                nodeFactory,
                 dirtySegment.sources(), dirtySegment.targets(),
-                linkProvider.toList());
+                linkList);
     }
 
-    private static DirtySegment compileExpression(NodeProvider nodeProvider, LinkProvider linkProvider, Expression expression) {
+    private static Segment compileExpression(NodeFactory nodeFactory, LinkList linkList, Expression expression) {
         if (expression instanceof Alternation) {
-            return compileAlternation(nodeProvider, linkProvider, (Alternation)expression);
+            return compileAlternation(nodeFactory, linkList, (Alternation)expression);
         }
         else if (expression instanceof Option) {
-            return compileOption(nodeProvider, linkProvider, (Option)expression);
+            return compileOption(nodeFactory, linkList, (Option)expression);
         }
         else if (expression instanceof Reference) {
-            return compileReference(nodeProvider, linkProvider, (Reference)expression);
+            return compileReference(nodeFactory, linkList, (Reference)expression);
         }
         else if (expression instanceof Repeat) {
-            return compileRepeat(nodeProvider, linkProvider, (Repeat)expression);
+            return compileRepeat(nodeFactory, linkList, (Repeat)expression);
         }
         else if (expression instanceof Sequence) {
-            return compileSequence(nodeProvider, linkProvider, (Sequence)expression);
+            return compileSequence(nodeFactory, linkList, (Sequence)expression);
         }
         else if (expression instanceof Literal) {
-            return compileLiteral(nodeProvider, linkProvider, (Literal)expression);
+            return compileLiteral(nodeFactory, linkList, (Literal)expression);
         }
         else if (expression instanceof Wildcard) {
-            return compileWildcard(nodeProvider, linkProvider, (Wildcard)expression);
+            return compileWildcard(nodeFactory, linkList, (Wildcard)expression);
         }
         else if (expression instanceof Wrapping) {
-            return compileWrapping(nodeProvider, linkProvider, (Wrapping)expression);
+            return compileWrapping(nodeFactory, linkList, (Wrapping)expression);
         }
         else {
             throw ErrorFactory.internalError("not implemented expression: " + expression);
         }
     }
 
-    private static DirtySegment compileAlternation(NodeProvider nodeProvider, LinkProvider linkProvider, Alternation alternation) {
-        var sources = Nodes.createW();
-        var targets = Nodes.createW();
+    private static Segment compileAlternation(NodeFactory nodeFactory, LinkList linkList, Alternation alternation) {
+        var sources = new LinkedHashSet<Node>();
+        var targets = new LinkedHashSet<Node>();
 
         for (var item : alternation.items) {
-            var itemMachine = compileExpression(nodeProvider, linkProvider, item);
+            var itemMachine = compileExpression(nodeFactory, linkList, item);
 
-            sources.addAll(itemMachine.sources());
-            targets.addAll(itemMachine.targets());
+            sources.addAll(itemMachine.sources().toCollection());
+            targets.addAll(itemMachine.targets().toCollection());
         }
 
-        return new DirtySegment(sources, targets);
+        return new Segment(NodeSet.of(sources), NodeSet.of(targets));
     }
 
-    private static DirtySegment compileOption(NodeProvider nodeProvider, LinkProvider linkProvider, Option option) {
-        var machine = compileExpression(nodeProvider, linkProvider, option.content);
-        return new DirtySegment(
+    private static Segment compileOption(NodeFactory nodeFactory, LinkList linkList, Option option) {
+        var machine = compileExpression(nodeFactory, linkList, option.content);
+        return new Segment(
                 machine.sources(),
-                Nodes.join(machine.sources(), machine.targets()));
+                machine.sources().join(machine.targets()));
     }
 
-    private static DirtySegment compileReference(NodeProvider nodeProvider, LinkProvider linkProvider, Reference reference) {
-        var source = nodeProvider.createNode();
-        var target = nodeProvider.createNode();
+    private static Segment compileReference(NodeFactory nodeFactory, LinkList linkList, Reference reference) {
+        var source = nodeFactory.createNode();
+        var target = nodeFactory.createNode();
         var symbol = SymbolFactory.reference(reference.name);
 
-        linkProvider.createLink(source, target, symbol);
+        linkList.createLink(source, target, symbol);
 
-        return new DirtySegment(Nodes.of(source), Nodes.of(target));
+        return new Segment(NodeSet.of(source), NodeSet.of(target));
     }
 
-    private static DirtySegment compileRepeat(NodeProvider nodeProvider, LinkProvider linkProvider, Repeat repeat) {
-        var source = nodeProvider.createNode();
-        var target = nodeProvider.createNode();
+    private static Segment compileRepeat(NodeFactory nodeFactory, LinkList linkList, Repeat repeat) {
+        var source = nodeFactory.createNode();
+        var target = nodeFactory.createNode();
 
-        var contentMachine = compileExpression(nodeProvider, linkProvider, repeat.content);
+        var contentMachine = compileExpression(nodeFactory, linkList, repeat.content);
 
-        linkProvider.createLink(source, contentMachine.sources());
-        linkProvider.createLink(contentMachine.targets(), target);
+        linkList.createLink(source, contentMachine.sources());
+        linkList.createLink(contentMachine.targets(), target);
 
         if (repeat.separator != null) {
-            var separatorMachine = compileExpression(nodeProvider, linkProvider, repeat.separator);
+            var separatorMachine = compileExpression(nodeFactory, linkList, repeat.separator);
 
-            linkProvider.createLink(contentMachine.targets(), separatorMachine.sources());
-            linkProvider.createLink(separatorMachine.targets(), contentMachine.sources());
+            linkList.createLink(contentMachine.targets(), separatorMachine.sources());
+            linkList.createLink(separatorMachine.targets(), contentMachine.sources());
         }
         else {
-            linkProvider.createLink(contentMachine.targets(), contentMachine.sources());
+            linkList.createLink(contentMachine.targets(), contentMachine.sources());
         }
 
-        return new DirtySegment(Nodes.of(source), Nodes.of(target));
+        return new Segment(NodeSet.of(source), NodeSet.of(target));
     }
 
-    private static DirtySegment compileSequence(NodeProvider nodeProvider, LinkProvider linkProvider, Sequence sequence) {
-        var source = nodeProvider.createNode();
+    private static Segment compileSequence(NodeFactory nodeFactory, LinkList linkList, Sequence sequence) {
+        var source = nodeFactory.createNode();
         var lastNode = source;
 
         for (var item : sequence.items) {
-            var itemMachine = compileExpression(nodeProvider, linkProvider, item);
+            var itemMachine = compileExpression(nodeFactory, linkList, item);
 
-            linkProvider.createLink(lastNode, itemMachine.sources());
+            linkList.createLink(lastNode, itemMachine.sources());
 
-            lastNode = nodeProvider.createNode();
+            lastNode = nodeFactory.createNode();
 
-            linkProvider.createLink(itemMachine.targets(), lastNode);
+            linkList.createLink(itemMachine.targets(), lastNode);
         }
 
-        return new DirtySegment(Nodes.of(source), Nodes.of(lastNode));
+        return new Segment(NodeSet.of(source), NodeSet.of(lastNode));
     }
 
-    private static DirtySegment compileLiteral(NodeProvider nodeProvider, LinkProvider linkProvider, Literal literal) {
-        var source = nodeProvider.createNode();
-        var target = nodeProvider.createNode();
+    private static Segment compileLiteral(NodeFactory nodeFactory, LinkList linkList, Literal literal) {
+        var source = nodeFactory.createNode();
+        var target = nodeFactory.createNode();
 
-        linkProvider.createLink(source, target, literal.symbol);
+        linkList.createLink(source, target, literal.symbol);
 
-        return new DirtySegment(Nodes.of(source), Nodes.of(target));
+        return new Segment(NodeSet.of(source), NodeSet.of(target));
     }
 
-    private static DirtySegment compileWildcard(NodeProvider nodeProvider, LinkProvider linkProvider, Wildcard wildcard) {
+    private static Segment compileWildcard(NodeFactory nodeFactory, LinkList linkList, Wildcard wildcard) {
         throw new UnsupportedOperationException();
     }
 
-    private static DirtySegment compileWrapping(NodeProvider nodeProvider, LinkProvider linkProvider, Wrapping wrapping) {
-        var machine = compileExpressionClean(nodeProvider, wrapping.content);
+    private static Segment compileWrapping(NodeFactory nodeFactory, LinkList linkList, Wrapping wrapping) {
+        var machine = compileExpressionClean(nodeFactory, wrapping.content);
         var begin = ActionFactory.createBeginAction(wrapping.type);
         var end = ActionFactory.createEndAction(wrapping.type, wrapping.argument);
 
@@ -176,9 +178,9 @@ public class ExpressionCompiler {
             }
         }
 
-        linkProvider.addLinks(machine.links());
+        linkList.addLinks(machine.links());
 
-        return new DirtySegment(Nodes.of(machine.source()), machine.targets());
+        return new Segment(NodeSet.of(machine.source()), machine.targets());
     }
 
     private ExpressionCompiler() {}
