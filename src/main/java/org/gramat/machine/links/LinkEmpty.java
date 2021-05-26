@@ -3,7 +3,7 @@ package org.gramat.machine.links;
 import org.gramat.actions.Action;
 import org.gramat.actions.Actions;
 import org.gramat.machine.nodes.Node;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 public class LinkEmpty implements Link {
 
@@ -25,11 +25,11 @@ public class LinkEmpty implements Link {
         return true;
     }
 
-    public boolean hasSymbol() {
+    public boolean hasPattern() {
         return false;
     }
 
-    public Symbol getSymbol() {
+    public Pattern getPattern() {
         throw new RuntimeException();
     }
 

@@ -90,7 +90,7 @@ public class ExpressionParser {
 
     private void skipInlineVoid() {
         while (input.isAlive()) {
-            if (isInlineVoidSymbol(input.peek())) {
+            if (isInlineVoidChar(input.peek())) {
                 input.move();
             }
             else if (input.pull("/*")) {
@@ -106,7 +106,7 @@ public class ExpressionParser {
 
     private void skipBlockVoid() {
         while (input.isAlive()) {
-            if (isBlockVoidSymbol(input.peek())) {
+            if (isBlockVoidChar(input.peek())) {
                 input.move();
             }
             else if (input.pull("/*")) {
@@ -150,11 +150,11 @@ public class ExpressionParser {
         return Optional.of(new ExpressionRule(nameOp.get(), exprOp.get()));
     }
 
-    private void expect(char symbol) {
+    private void expect(char c) {
         var location = input.beginLocation();
-        if (input.peek() != symbol) {
+        if (input.peek() != c) {
             throw ErrorFactory.syntaxError(location.build(),
-                    "SymbolChar %s expected", symbol);
+                    "PatternChar %s expected", c);
         }
 
         input.move();
@@ -163,12 +163,12 @@ public class ExpressionParser {
     private Optional<String> parseName() {
         var name = new StringBuilder();
 
-        if (isNameBeginSymbol(input.peek())) {
+        if (isNameBeginChar(input.peek())) {
             do {
-                var symbol = input.pull();
+                var c = input.pull();
 
-                name.append(symbol);
-            } while (isNameSymbol(input.peek()));
+                name.append(c);
+            } while (isNameChar(input.peek()));
         }
 
         if (name.length() == 0) {
@@ -178,26 +178,26 @@ public class ExpressionParser {
         return Optional.of(name.toString());
     }
 
-    private boolean isNameSymbol(char symbol) {
-        return (symbol >= 'a' && symbol <= 'z')
-                || (symbol >= 'A' && symbol <= 'Z')
-                || (symbol >= '0' && symbol <= '9')
-                || (symbol == '_')
-                || (symbol == '-');
+    private boolean isNameChar(char c) {
+        return (c >= 'a' && c <= 'z')
+                || (c >= 'A' && c <= 'Z')
+                || (c >= '0' && c <= '9')
+                || (c == '_')
+                || (c == '-');
     }
 
-    private boolean isNameBeginSymbol(char symbol) {
-        return (symbol >= 'a' && symbol <= 'z')
-                || (symbol >= 'A' && symbol <= 'Z')
-                || (symbol == '_');
+    private boolean isNameBeginChar(char c) {
+        return (c >= 'a' && c <= 'z')
+                || (c >= 'A' && c <= 'Z')
+                || (c == '_');
     }
 
-    private boolean isInlineVoidSymbol(char symbol) {
-        return symbol == ' ' || symbol == '\t';
+    private boolean isInlineVoidChar(char c) {
+        return c == ' ' || c == '\t';
     }
 
-    private boolean isBlockVoidSymbol(char symbol) {
-        return symbol == ' ' || symbol == '\t' || symbol == '\r' || symbol == '\n';
+    private boolean isBlockVoidChar(char c) {
+        return c == ' ' || c == '\t' || c == '\r' || c == '\n';
     }
 
     private Optional<Expression> parseExpression(boolean blockMode) {
@@ -274,19 +274,18 @@ public class ExpressionParser {
     }
 
     private Optional<Expression> parseExpressionItem() {
-        var symbol = input.peek();
-
-        switch (symbol) {
+        var c = input.peek();
+        switch (c) {
             case '*': return parseWildcard();
             case '(': return parseGroup();
             case '<': return parseWrapping();
             case '[': return parseOptional();
             case '{': return parseRepetition();
             case '\"', '\'':
-                return parseLiteral(symbol);
+                return parseLiteral(c);
             case '`': return parseCharClass();
             default:
-                if (isNameBeginSymbol(symbol)) {
+                if (isNameBeginChar(c)) {
                     return parseReference();
                 }
                 return Optional.empty();
@@ -340,11 +339,11 @@ public class ExpressionParser {
                     "Invalid space position, try with '\\s' instead");
         }
 
-        var symbol = parseStringChar();
+        var c = parseStringChar();
 
         if (!input.pull('-')) {
             input.endLocation(location);
-            return factory.literal(location.build(), symbol);
+            return factory.literal(location.build(), c);
         }
         else if (input.peek() == ' ') {
             throw ErrorFactory.syntaxError(location.build(),
@@ -355,7 +354,7 @@ public class ExpressionParser {
 
         input.endLocation(location);
 
-        return factory.literal(location.build(), symbol, end);
+        return factory.literal(location.build(), c, end);
     }
 
     private char parseStringChar() {
@@ -365,19 +364,19 @@ public class ExpressionParser {
         }
 
         var location = input.getLocation();
-        var symbol = input.pull();
+        var c = input.pull();
 
-        if (symbol != '\\') {
-            return symbol;
+        if (c != '\\') {
+            return c;
         }
         else if (!input.isAlive()) {
             throw ErrorFactory.syntaxError(
                     location, "Escaped char expected");
         }
 
-        symbol = input.pull();
+        c = input.pull();
 
-        return switch (symbol) {
+        return switch (c) {
             case 's' -> ' ';
             case 'r' -> '\r';
             case 'n' -> '\n';
@@ -386,7 +385,7 @@ public class ExpressionParser {
             case '\'' -> '\'';
             case '\"' -> '\"';
             default -> throw ErrorFactory.syntaxError(
-                    location, "Invalid escape sequence: %s", symbol);
+                    location, "Invalid escape sequence: %s", c);
         };
     }
 
@@ -397,14 +396,14 @@ public class ExpressionParser {
         expect(delimiter);
 
         while (input.peek() != delimiter) {
-            var symbolLocation = input.beginLocation();
-            var symbol = parseStringChar();
+            var cLocation = input.beginLocation();
+            var c = parseStringChar();
 
-            input.endLocation(symbolLocation);
+            input.endLocation(cLocation);
 
-            var symbolExpression = factory.literal(symbolLocation.build(), symbol);
+            var literalExpression = factory.literal(cLocation.build(), c);
 
-            content.add(symbolExpression);
+            content.add(literalExpression);
         }
 
         expect(delimiter);

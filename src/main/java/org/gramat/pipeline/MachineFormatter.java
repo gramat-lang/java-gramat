@@ -50,28 +50,28 @@ public class MachineFormatter {
     }
 
     private int compareLinks(Link left, Link right) {
-        var leftSymbol = left.hasSymbol() ? left.getSymbol().toString() : "";
-        var rightSymbol = right.hasSymbol() ? right.getSymbol().toString() : "";
-        var symbolResult = leftSymbol.compareTo(rightSymbol);
+        var leftPattern = left.hasPattern() ? left.getPattern().toString() : "";
+        var rightPattern = right.hasPattern() ? right.getPattern().toString() : "";
+        var resultPattern = leftPattern.compareTo(rightPattern);
 
-        if (symbolResult != 0) {
-            return symbolResult;
+        if (resultPattern != 0) {
+            return resultPattern;
         }
 
         var leftSourceKey = getKey(left.getSource());
         var rightSourceKey = getKey(right.getSource());
-        var sourceResult = leftSourceKey.compareTo(rightSourceKey);
+        var resultSource = leftSourceKey.compareTo(rightSourceKey);
 
-        if (sourceResult != 0) {
-            return sourceResult;
+        if (resultSource != 0) {
+            return resultSource;
         }
 
         var leftTargetKey = getKey(left.getTarget());
         var rightTargetKey = getKey(right.getTarget());
-        var targetResult = leftTargetKey.compareTo(rightTargetKey);
+        var resultTarget = leftTargetKey.compareTo(rightTargetKey);
 
-        if (targetResult != 0) {
-            return targetResult;
+        if (resultTarget != 0) {
+            return resultTarget;
         }
 
         // TODO compare actions
@@ -154,8 +154,8 @@ public class MachineFormatter {
 
         writeActions(label, link.getBeforeActions(), "", "\n");
 
-        if (link.hasSymbol()) {
-            writeLabel(label, link.getSymbol().toString());
+        if (link.hasPattern()) {
+            writeLabel(label, link.getPattern().toString());
         }
         else if (link.isEmpty()) {
             writeLabel(label, "empty");
@@ -188,8 +188,8 @@ public class MachineFormatter {
         }
     }
 
-    private void writeLabel(Appendable output, String symbol) {
-        write(output, symbol);
+    private void writeLabel(Appendable output, String label) {
+        write(output, label);
     }
 
     private void writeName(Appendable output, Node node) {

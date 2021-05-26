@@ -3,7 +3,7 @@ package org.gramat.machine.links;
 import org.gramat.actions.Action;
 import org.gramat.actions.Actions;
 import org.gramat.machine.nodes.Node;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 public interface Link {
 
@@ -14,9 +14,9 @@ public interface Link {
     Actions getAfterActions();
 
     boolean isEmpty();
-    boolean hasSymbol();
+    boolean hasPattern();
 
-    Symbol getSymbol();
+    Pattern getPattern();
 
     void addBeforeActions(Action action);
     void addBeforeActions(Actions actions);

@@ -4,22 +4,22 @@ import org.gramat.actions.Action;
 import org.gramat.actions.Actions;
 import org.gramat.actions.ActionsW;
 import org.gramat.machine.nodes.Node;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 import java.util.Objects;
 
-public class LinkSymbol implements Link {
+public class LinkPattern implements Link {
 
     private final Node source;
     private final Node target;
     private final ActionsW beforeActions;
     private final ActionsW afterActions;
-    private final Symbol symbol;
+    private final Pattern pattern;
 
-    LinkSymbol(Node source, Node target, Symbol symbol) {
+    LinkPattern(Node source, Node target, Pattern pattern) {
         this.source = Objects.requireNonNull(source);
         this.target = Objects.requireNonNull(target);
-        this.symbol = Objects.requireNonNull(symbol);
+        this.pattern = Objects.requireNonNull(pattern);
         this.beforeActions = Actions.createW();
         this.afterActions = Actions.createW();
     }
@@ -34,12 +34,12 @@ public class LinkSymbol implements Link {
         return false;
     }
 
-    public boolean hasSymbol() {
+    public boolean hasPattern() {
         return true;
     }
 
-    public Symbol getSymbol() {
-        return symbol;
+    public Pattern getPattern() {
+        return pattern;
     }
 
     public void addBeforeActions(Action action) {

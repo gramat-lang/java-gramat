@@ -1,11 +1,11 @@
-package org.gramat.symbols;
+package org.gramat.patterns;
 
 import org.gramat.tools.PP;
 
-public class SymbolChar implements Symbol {
+public class PatternChar implements Pattern {
     public final char value;
 
-    SymbolChar(char value) {
+    PatternChar(char value) {
         this.value = value;
     }
 

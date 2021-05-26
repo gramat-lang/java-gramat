@@ -11,8 +11,8 @@ import org.gramat.expressions.Repeat;
 import org.gramat.expressions.Sequence;
 import org.gramat.expressions.Wildcard;
 import org.gramat.expressions.Wrapping;
-import org.gramat.symbols.SymbolChar;
-import org.gramat.symbols.SymbolRange;
+import org.gramat.patterns.PatternChar;
+import org.gramat.patterns.PatternRange;
 
 import java.io.IOException;
 
@@ -127,16 +127,16 @@ public class ExpressionFormatter {
     }
 
     private void writeLiteral(Appendable output, Literal literal) {
-        if (literal.symbol instanceof SymbolChar symbol) {
+        if (literal.pattern instanceof PatternChar pc) {
             writeToken(output, "\"");
-            writeToken(output, String.valueOf(symbol.value));
+            writeToken(output, String.valueOf(pc.value));
             writeToken(output, "\"");
         }
-        else if (literal.symbol instanceof SymbolRange symbol) {
+        else if (literal.pattern instanceof PatternRange pr) {
             writeToken(output, "'");
-            writeToken(output, String.valueOf(symbol.begin));
+            writeToken(output, String.valueOf(pr.begin));
             writeToken(output, "-");
-            writeToken(output, String.valueOf(symbol.end));
+            writeToken(output, String.valueOf(pr.end));
             writeToken(output, "'");
         }
         else {

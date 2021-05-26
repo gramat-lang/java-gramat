@@ -2,7 +2,7 @@ package org.gramat.machine.links;
 
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,8 +17,8 @@ public class LinkList implements Iterable<Link> {
         data = new ArrayList<>();
     }
 
-    public LinkSymbol createLink(Node source, Node target, Symbol symbol) {
-        var link = new LinkSymbol(source, target, symbol);
+    public LinkPattern createLink(Node source, Node target, Pattern pattern) {
+        var link = new LinkPattern(source, target, pattern);
         data.add(link);
         return link;
     }
@@ -51,7 +51,7 @@ public class LinkList implements Iterable<Link> {
         data.add(link);
     }
 
-    public void addLinks(LinkSymbolList links) {
+    public void addLinks(LinkPatternList links) {
         data.addAll(links.data);
     }
 
@@ -60,15 +60,15 @@ public class LinkList implements Iterable<Link> {
         return data.iterator();
     }
 
-    public Set<Symbol> getSymbols() {
-        var symbols = new LinkedHashSet<Symbol>();
+    public Set<Pattern> getPatterns() {
+        var patterns = new LinkedHashSet<Pattern>();
 
         for (var link : data) {
-            if (link instanceof LinkSymbol linkSym) {
-                symbols.add(linkSym.getSymbol());
+            if (link instanceof LinkPattern linkSym) {
+                patterns.add(linkSym.getPattern());
             }
         }
 
-        return symbols;
+        return patterns;
     }
 }

@@ -4,13 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.gramat.machine.Machine;
 import org.gramat.machine.links.Link;
 import org.gramat.machine.links.LinkList;
-import org.gramat.machine.links.LinkSymbol;
-import org.gramat.machine.links.LinkSymbolList;
+import org.gramat.machine.links.LinkPattern;
+import org.gramat.machine.links.LinkPatternList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeNavigator;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,10 +40,10 @@ public class MachineCleaner {
     private Machine run(NodeSet sources, NodeSet targets, LinkList links) {
         log.debug("Cleaning machine...");
 
-        var symbols = links.getSymbols();
+        var patterns = links.getPatterns();
         var control = new HashSet<String>();
         var queue = new ArrayDeque<NodeSet>();
-        var cleanLinks = new LinkSymbolList();
+        var cleanLinks = new LinkPatternList();
 
         var closure0 = forwardClosure(sources, links);
         queue.add(closure0);
@@ -53,16 +53,16 @@ public class MachineCleaner {
             if (control.add(oldSources.getId())) {
                 var newSource = map(oldSources);
 
-                for (var symbol : symbols) {
-                    var oldLinkSymbols = findLinkSymbolsFrom(oldSources, symbol, links);
-                    if (!oldLinkSymbols.isEmpty()) {
-                        var oldTargets = forwardClosure(collectTargets(oldLinkSymbols), links);
-                        log.debug("LINK {} -> {} : {}", oldSources, oldTargets, symbol);
+                for (var pattern : patterns) {
+                    var oldLinkPatterns = findLinkPatternsFrom(oldSources, pattern, links);
+                    if (!oldLinkPatterns.isEmpty()) {
+                        var oldTargets = forwardClosure(collectTargets(oldLinkPatterns), links);
+                        log.debug("LINK {} -> {} : {}", oldSources, oldTargets, pattern);
 
                         var newTarget = map(oldTargets);
-                        var newLink = cleanLinks.createLink(newSource, newTarget, symbol);
+                        var newLink = cleanLinks.createLink(newSource, newTarget, pattern);
 
-                        applyActions(newLink, oldLinkSymbols);
+                        applyActions(newLink, oldLinkPatterns);
 
                         queue.add(oldTargets);
                     }
@@ -77,7 +77,7 @@ public class MachineCleaner {
         return new Machine(cleanSource, cleanTargets, cleanLinks);
     }
 
-    private void applyActions(LinkSymbol newLink, List<LinkSymbol> oldLinks) {
+    private void applyActions(LinkPattern newLink, List<LinkPattern> oldLinks) {
         // TODO check for collisions
         for (var oldLink : oldLinks) {
             newLink.addBeforeActions(oldLink.getBeforeActions());
@@ -102,11 +102,11 @@ public class MachineCleaner {
         return nav.getVisited();
     }
 
-    private List<LinkSymbol> findLinkSymbolsFrom(NodeSet closure, Symbol symbol, LinkList links) {
-        var result = new ArrayList<LinkSymbol>();
+    private List<LinkPattern> findLinkPatternsFrom(NodeSet closure, Pattern pattern, LinkList links) {
+        var result = new ArrayList<LinkPattern>();
 
         for (var link : links) {
-            if (closure.contains(link.getSource()) && link instanceof LinkSymbol linkSym && link.getSymbol() == symbol) {
+            if (closure.contains(link.getSource()) && link instanceof LinkPattern linkSym && link.getPattern() == pattern) {
                 result.add(linkSym);
             }
         }

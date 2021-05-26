@@ -48,11 +48,11 @@ public class CharInput {
 
     public char pull() {
         if (position < content.length) {
-            var symbol = content[position];
+            var c = content[position];
 
             position++;
 
-            return symbol;
+            return c;
         }
         else {
             throw ErrorFactory.syntaxError(getLocation(), "Unexpected end of file");

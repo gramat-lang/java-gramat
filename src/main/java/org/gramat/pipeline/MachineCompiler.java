@@ -8,9 +8,9 @@ import org.gramat.machine.links.LinkList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.symbols.Symbol;
-import org.gramat.symbols.SymbolFactory;
-import org.gramat.symbols.SymbolReference;
+import org.gramat.patterns.Pattern;
+import org.gramat.patterns.PatternReference;
+import org.gramat.patterns.PatternFactory;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -48,7 +48,7 @@ public class MachineCompiler {
 
     private Segment compile(Machine machine) {
         for (var link : machine.links()) {
-            if (link.getSymbol() instanceof SymbolReference ref) {
+            if (link.getPattern() instanceof PatternReference ref) {
                 var dependency = dependencies.get(ref.name);
                 if (dependency == null) {
                     throw new RuntimeException();
@@ -119,7 +119,7 @@ public class MachineCompiler {
                 afterActions = Actions.join(afterActions, ActionFactory.pop(name));
             }
 
-            if (link.getSymbol() instanceof SymbolReference ref) {
+            if (link.getPattern() instanceof PatternReference ref) {
                 var segment = segments.get(ref.name);
                 if (segment != null) {
                     linkList.createLink(link.getSource(), segment.source());
@@ -141,16 +141,16 @@ public class MachineCompiler {
                 }
             }
             else {
-                Symbol symbol;
+                Pattern pattern;
 
                 if (newTargets.contains(linkTarget) && (fromSource ^ toTarget)) {
-                    symbol = SymbolFactory.token(link.getSymbol(), name);
+                    pattern = PatternFactory.token(link.getPattern(), name);
                 }
                 else {
-                    symbol = link.getSymbol();
+                    pattern = link.getPattern();
                 }
 
-                var newLink = linkList.createLink(linkSource, linkTarget, symbol);
+                var newLink = linkList.createLink(linkSource, linkTarget, pattern);
                 newLink.addBeforeActions(beforeActions);
                 newLink.addAfterActions(afterActions);
             }

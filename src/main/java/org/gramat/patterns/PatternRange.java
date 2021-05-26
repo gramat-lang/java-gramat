@@ -1,12 +1,12 @@
-package org.gramat.symbols;
+package org.gramat.patterns;
 
 import org.gramat.tools.PP;
 
-public class SymbolRange implements Symbol {
+public class PatternRange implements Pattern {
     public final char begin;
     public final char end;
 
-    SymbolRange(char begin, char end) {
+    PatternRange(char begin, char end) {
         this.begin = begin;
         this.end = end;
     }

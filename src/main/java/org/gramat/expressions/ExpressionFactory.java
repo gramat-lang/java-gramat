@@ -2,7 +2,7 @@ package org.gramat.expressions;
 
 import org.gramat.actions.ActionType;
 import org.gramat.location.Location;
-import org.gramat.symbols.SymbolFactory;
+import org.gramat.patterns.PatternFactory;
 import org.gramat.tools.DataUtils;
 
 import java.util.List;
@@ -52,12 +52,12 @@ public class ExpressionFactory {
 
     public Literal literal(Location location, char value) {
         count++;
-        return new Literal(location, SymbolFactory.character(value));
+        return new Literal(location, PatternFactory.character(value));
     }
 
     public Literal literal(Location location, char begin, char end) {
         count++;
-        return new Literal(location, SymbolFactory.range(begin, end));
+        return new Literal(location, PatternFactory.range(begin, end));
     }
 
     public int getCount() {

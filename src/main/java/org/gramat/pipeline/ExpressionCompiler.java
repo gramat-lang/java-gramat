@@ -18,7 +18,7 @@ import org.gramat.machine.links.LinkList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.symbols.SymbolFactory;
+import org.gramat.patterns.PatternFactory;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -104,9 +104,9 @@ public class ExpressionCompiler {
     private static Segment compileReference(NodeFactory nodeFactory, LinkList linkList, Reference reference) {
         var source = nodeFactory.createNode();
         var target = nodeFactory.createNode();
-        var symbol = SymbolFactory.reference(reference.name);
+        var pattern = PatternFactory.reference(reference.name);
 
-        linkList.createLink(source, target, symbol);
+        linkList.createLink(source, target, pattern);
 
         return new Segment(NodeSet.of(source), NodeSet.of(target));
     }
@@ -154,7 +154,7 @@ public class ExpressionCompiler {
         var source = nodeFactory.createNode();
         var target = nodeFactory.createNode();
 
-        linkList.createLink(source, target, literal.symbol);
+        linkList.createLink(source, target, literal.pattern);
 
         return new Segment(NodeSet.of(source), NodeSet.of(target));
     }

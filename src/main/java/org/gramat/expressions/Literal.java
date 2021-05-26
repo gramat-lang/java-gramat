@@ -1,17 +1,17 @@
 package org.gramat.expressions;
 
 import org.gramat.location.Location;
-import org.gramat.symbols.Symbol;
+import org.gramat.patterns.Pattern;
 
 import java.util.List;
 
 public class Literal extends Expression {
 
-    public final Symbol symbol;
+    public final Pattern pattern;
 
-    Literal(Location location, Symbol symbol) {
+    Literal(Location location, Pattern pattern) {
         super(location);
-        this.symbol = symbol;
+        this.pattern = pattern;
     }
 
     @Override
