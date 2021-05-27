@@ -1,7 +1,7 @@
 package org.gramat.expressions;
 
 import org.gramat.location.Location;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
 
 import java.util.List;
 

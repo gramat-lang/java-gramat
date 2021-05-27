@@ -1,17 +1,17 @@
 package org.gramat.expressions;
 
-import org.gramat.actions.ActionType;
+import org.gramat.machine.operations.OperationType;
 import org.gramat.location.Location;
 
 import java.util.List;
 
 public class Wrapping extends Expression {
 
-    public final ActionType type;
+    public final OperationType type;
     public final String argument;
     public final Expression content;
 
-    Wrapping(Location location, ActionType type, String argument, Expression content) {
+    Wrapping(Location location, OperationType type, String argument, Expression content) {
         super(location);
         this.type = type;
         this.argument = argument;

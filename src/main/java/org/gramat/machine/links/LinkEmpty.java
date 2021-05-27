@@ -1,9 +1,10 @@
 package org.gramat.machine.links;
 
-import org.gramat.actions.Action;
-import org.gramat.actions.Actions;
+import org.gramat.machine.operations.Operation;
 import org.gramat.machine.nodes.Node;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
+
+import java.util.List;
 
 public class LinkEmpty implements Link {
 
@@ -18,8 +19,8 @@ public class LinkEmpty implements Link {
     public Node getSource() { return source; }
     public Node getTarget() { return target; }
 
-    public Actions getBeforeActions() { return Actions.empty(); }
-    public Actions getAfterActions() { return Actions.empty(); }
+    public List<Operation> getBeginOperations() { return List.of(); }
+    public List<Operation> getEndOperations() { return List.of(); }
 
     public boolean isEmpty() {
         return true;
@@ -30,22 +31,6 @@ public class LinkEmpty implements Link {
     }
 
     public Pattern getPattern() {
-        throw new RuntimeException();
-    }
-
-    public void addBeforeActions(Action action) {
-        throw new RuntimeException();
-    }
-
-    public void addBeforeActions(Actions actions) {
-        throw new RuntimeException();
-    }
-
-    public void addAfterActions(Actions actions) {
-        throw new RuntimeException();
-    }
-
-    public void addAfterActions(Action action) {
         throw new RuntimeException();
     }
 }

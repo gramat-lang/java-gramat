@@ -2,7 +2,7 @@ package org.gramat.machine.links;
 
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
 
 import java.util.ArrayList;
 import java.util.Iterator;

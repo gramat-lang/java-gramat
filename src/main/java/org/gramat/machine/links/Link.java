@@ -1,26 +1,22 @@
 package org.gramat.machine.links;
 
-import org.gramat.actions.Action;
-import org.gramat.actions.Actions;
+import org.gramat.machine.operations.Operation;
 import org.gramat.machine.nodes.Node;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
+
+import java.util.List;
 
 public interface Link {
 
     Node getSource();
     Node getTarget();
 
-    Actions getBeforeActions();
-    Actions getAfterActions();
+    List<Operation> getBeginOperations();
+    List<Operation> getEndOperations();
 
-    boolean isEmpty();
-    boolean hasPattern();
+    boolean isEmpty();  // TODO replace by using instanceof?
+    boolean hasPattern();  // TODO replace by using instanceof?
 
-    Pattern getPattern();
-
-    void addBeforeActions(Action action);
-    void addBeforeActions(Actions actions);
-    void addAfterActions(Actions actions);
-    void addAfterActions(Action action);
+    Pattern getPattern(); // TODO replace by using instanceof?
 
 }

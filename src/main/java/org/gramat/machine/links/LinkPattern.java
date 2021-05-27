@@ -1,60 +1,69 @@
 package org.gramat.machine.links;
 
-import org.gramat.actions.Action;
-import org.gramat.actions.Actions;
-import org.gramat.actions.ActionsW;
+import org.gramat.machine.operations.Operation;
 import org.gramat.machine.nodes.Node;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class LinkPattern implements Link {
 
     private final Node source;
     private final Node target;
-    private final ActionsW beforeActions;
-    private final ActionsW afterActions;
+    private final List<Operation> beginOperations;
+    private final List<Operation> endOperations;
     private final Pattern pattern;
 
     LinkPattern(Node source, Node target, Pattern pattern) {
         this.source = Objects.requireNonNull(source);
         this.target = Objects.requireNonNull(target);
         this.pattern = Objects.requireNonNull(pattern);
-        this.beforeActions = Actions.createW();
-        this.afterActions = Actions.createW();
+        this.beginOperations = new ArrayList<>();
+        this.endOperations = new ArrayList<>();
     }
 
+    @Override
     public Node getSource() { return source; }
+
+    @Override
     public Node getTarget() { return target; }
 
-    public Actions getBeforeActions() { return beforeActions; }
-    public Actions getAfterActions() { return afterActions; }
+    @Override
+    public List<Operation> getBeginOperations() { return beginOperations; }
 
+    @Override
+    public List<Operation> getEndOperations() { return endOperations; }
+
+    @Override
     public boolean isEmpty() {
         return false;
     }
 
+    @Override
     public boolean hasPattern() {
         return true;
     }
 
+    @Override
     public Pattern getPattern() {
         return pattern;
     }
 
-    public void addBeforeActions(Action action) {
-        beforeActions.append(action);
+    public void prependBeginOperation(Operation operation) {
+        beginOperations.add(0, operation);
     }
 
-    public void addBeforeActions(Actions actions) {
-        this.beforeActions.append(actions);
+    public void prependBeginOperations(List<Operation> operations) {
+        beginOperations.addAll(0, operations);
     }
 
-    public void addAfterActions(Actions actions) {
-        this.afterActions.append(actions);
+    public void appendEndOperation(Operation operation) {
+        endOperations.add(operation);
     }
 
-    public void addAfterActions(Action action) {
-        afterActions.append(action);
+    public void appendEndOperations(List<Operation> operations) {
+        endOperations.addAll(operations);
     }
 }

@@ -1,37 +1,49 @@
-lit ref lit
+title: lit ref lit
 
-main = "a" ref "c"
-ref = "b"
+expression:
+    main = "a" ref "c"
+    ref = "b"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->4 : 'c'
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->4 : 'c'
+    4<=
+
+pass: abc
 ----------
-lit ref* lit
+title: lit ref* lit
 
-main = "a" ref-1 "d"
-ref-1 = "b" ref-2
-ref-2 = "c"
+expression:
+    main = "a" ref-1 "d"
+    ref-1 = "b" ref-2
+    ref-2 = "c"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->4 : 'c'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->4 : 'c'
+    4->5 : 'd'
+    5<=
+
+pass: abcd
 ----------
-lit ref-1 lit ref-2
+title: lit ref-1 lit ref-2
 
-main = "a" ref-1 "c" ref-2
-ref-1 = "b"
-ref-2 = "d"
+expression:
+    main = "a" ref-1 "c" ref-2
+    ref-1 = "b"
+    ref-2 = "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->4 : 'c'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->4 : 'c'
+    4->5 : 'd'
+    5<=
+
+pass: abcd
 ----------

@@ -1,106 +1,198 @@
-lit opt lit
+title: lit opt lit
 
-main = "a" ["b"] "c"
+expression:
+    main = "a" ["b"] "c"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-3->4 : 'c'
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->4 : 'c'
+    3->4 : 'c'
+    4<=
+
+pass: abc
+pass: ac
+fail:
+fail: a
+fail: abbc
+fail: acb
+fail: x
 ----------
-lit rep lit
+title: lit rep lit
 
-main = "a" {+"b"} "c"
+expression:
+    main = "a" {+"b"} "c"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->3 : 'b'
-3->4 : 'c'
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->3 : 'b'
+    3->4 : 'c'
+    4<=
+
+pass: abc
+pass: abbc
+pass: abbbc
+fail:
+fail: ac
+fail: abcbc
+fail: x
 ----------
-lit opt(rep) lit
+title: lit opt(rep) lit
 
-main = "a" {"b"} "c"
+expression:
+    main = "a" {"b"} "c"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-3->3 : 'b'
-3->4 : 'c'
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->4 : 'c'
+    3->3 : 'b'
+    3->4 : 'c'
+    4<=
+
+pass: ac
+pass: abc
+pass: abbc
+pass: abbbc
+fail:
+fail: a
+fail: acb
+fail: x
 ----------
-lit alt lit
+title: lit alt lit
 
-main = "a" ("b"|"c") "d"
+expression:
+    main = "a" ("b"|"c") "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-3->5 : 'd'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->5 : 'c'
+    3->4 : 'd'
+    5->4 : 'd'
+    4<=
+
+pass: abd
+pass: acd
+fail:
+fail: ad
+fail: abcd
+fail: acbd
+fail: add
+fail: x
 ----------
-lit opt(alt) lit
+title: lit opt(alt) lit
 
-main = "a" ["b"|"c"] "d"
+expression:
+    main = "a" ["b"|"c"] "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-2->5 : 'd'
-3->5 : 'd'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->5 : 'c'
+    2->4 : 'd'
+    3->4 : 'd'
+    5->4 : 'd'
+    4<=
+
+pass: ad
+pass: abd
+pass: acd
+fail:
+fail: a
+fail: abbd
+fail: accd
+fail: x
 ----------
-lit rep(alt) lit
+title: lit rep(alt) lit
 
-main = "a" {+"b"|"c"} "d"
+expression:
+    main = "a" {+"b"|"c"} "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-3->3 : 'b'
-3->4 : 'c'
-3->5 : 'd'
-4->3 : 'b'
-4->4 : 'c'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->4 : 'c'
+    3->3 : 'b'
+    3->4 : 'c'
+    3->5 : 'd'
+    4->3 : 'b'
+    4->4 : 'c'
+    4->5 : 'd'
+    5<=
+
+pass: abd
+pass: abcd
+pass: acbd
+pass: abbd
+pass: accd
+pass: abcbd
+pass: acbcd
+fail:
+fail: ad
+fail: abcdd
+fail: x
 ----------
-lit opt(rep(alt)) lit
+title: lit opt(rep(alt)) lit
 
-main = "a" {"b"|"c"} "d"
+expression:
+    main = "a" {"b"|"c"} "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-2->5 : 'd'
-3->3 : 'b'
-3->4 : 'c'
-3->5 : 'd'
-4->3 : 'b'
-4->4 : 'c'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->4 : 'c'
+    2->5 : 'd'
+    3->3 : 'b'
+    3->4 : 'c'
+    3->5 : 'd'
+    4->3 : 'b'
+    4->4 : 'c'
+    4->5 : 'd'
+    5<=
+
+pass: ad
+pass: abd
+pass: abcd
+pass: acbd
+pass: abbd
+pass: accd
+pass: abcbd
+pass: acbcd
+fail:
+fail: abcdd
+fail: x
 ----------
-lit alt(rep, opt) lit
+title: lit alt(rep, opt) lit
 
-main = "a" ({+"b"}|["c"]) "d"
+expression:
+    main = "a" ({+"b"}|["c"]) "d"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-2->4 : 'c'
-2->5 : 'd'
-3->3 : 'b'
-3->5 : 'd'
-4->5 : 'd'
-5<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    2->5 : 'c'
+    2->4 : 'd'
+    3->3 : 'b'
+    3->4 : 'd'
+    5->4 : 'd'
+    4<=
+
+pass: acd
+pass: abd
+pass: abbd
+pass: abbbd
+pass: ad
+fail: abcd
+fail: accd
+fail: x
 ----------

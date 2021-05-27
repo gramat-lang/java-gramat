@@ -1,19 +1,19 @@
 package org.gramat.pipeline;
 
-import org.gramat.actions.ActionFactory;
-import org.gramat.actions.Actions;
+import org.gramat.machine.operations.Operation;
 import org.gramat.machine.Machine;
 import org.gramat.machine.MachineProgram;
 import org.gramat.machine.links.LinkList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
-import org.gramat.patterns.Pattern;
-import org.gramat.patterns.PatternReference;
-import org.gramat.patterns.PatternFactory;
+import org.gramat.machine.patterns.Pattern;
+import org.gramat.machine.patterns.PatternFactory;
+import org.gramat.machine.patterns.PatternReference;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 public class MachineCompiler {
@@ -40,7 +40,7 @@ public class MachineCompiler {
 
     private Machine run(Machine main) {
         var segment = compile(main);
-        return MachineCleaner.run(nodeFactory,
+        return PowersetConstruction.run(nodeFactory,
                 NodeSet.of(segment.source()),
                 segment.targets(),
                 linkList);
@@ -54,7 +54,7 @@ public class MachineCompiler {
                     throw new RuntimeException();
                 }
                 var segment = compile(ref.name, dependency,
-                        link.getBeforeActions(), link.getAfterActions());
+                        link.getBeginOperations(), link.getEndOperations());
 
                 // Connect segment to the main machine
                 linkList.createLink(link.getSource(), segment.source());
@@ -68,7 +68,7 @@ public class MachineCompiler {
         return new Segment(machine.source(), machine.targets());
     }
 
-    private Segment compile(String name, Machine machine, Actions rootBeforeActions, Actions rootAfterActions) {
+    private Segment compile(String name, Machine machine, List<Operation> rootBeginOperations, List<Operation> rootEndOperations) {
         var nodeMap = new HashMap<Node, Node>();
         var newSource = nodeFactory.createNode();
         var newTargets = new LinkedHashSet<Node>();
@@ -93,30 +93,21 @@ public class MachineCompiler {
             var fromSource = (newSource == linkSource);
             var toTarget = (newTargets.contains(linkTarget));
 
-            Actions beforeActions;
-            Actions afterActions;
+            List<Operation> beginOperations;
+            List<Operation> endOperations;
 
             if (fromSource) {
-                beforeActions = Actions.join(rootBeforeActions, link.getBeforeActions());
+                beginOperations = Operation.join(rootBeginOperations, link.getBeginOperations());
             }
             else {
-                beforeActions = link.getBeforeActions();
+                beginOperations = link.getBeginOperations();
             }
 
             if (toTarget) {
-                afterActions = Actions.join(rootAfterActions, link.getAfterActions());
+                endOperations = Operation.join(link.getEndOperations(), rootEndOperations);
             }
             else {
-                afterActions = link.getAfterActions();
-            }
-
-
-            if (fromSource && !toTarget) {
-                beforeActions = Actions.join(ActionFactory.push(name), beforeActions);
-            }
-
-            if (toTarget && !fromSource) {
-                afterActions = Actions.join(afterActions, ActionFactory.pop(name));
+                endOperations = link.getEndOperations();
             }
 
             if (link.getPattern() instanceof PatternReference ref) {
@@ -133,7 +124,7 @@ public class MachineCompiler {
 
                     segment = compile(
                             ref.name, dependency,
-                            beforeActions, afterActions);
+                            beginOperations, endOperations);
 
                     // Connect segment to the main machine
                     linkList.createLink(link.getSource(), segment.source());
@@ -143,7 +134,9 @@ public class MachineCompiler {
             else {
                 Pattern pattern;
 
-                if (newTargets.contains(linkTarget) && (fromSource ^ toTarget)) {
+                // Use symbol + token only if the link goes to the target
+                //   AND does not come from source (otherwise it would not be reachable)
+                if (newTargets.contains(linkTarget) && newSource != linkSource) {
                     pattern = PatternFactory.token(link.getPattern(), name);
                 }
                 else {
@@ -151,8 +144,8 @@ public class MachineCompiler {
                 }
 
                 var newLink = linkList.createLink(linkSource, linkTarget, pattern);
-                newLink.addBeforeActions(beforeActions);
-                newLink.addAfterActions(afterActions);
+                newLink.prependBeginOperations(beginOperations);
+                newLink.appendEndOperations(endOperations);
             }
         }
 

@@ -1,7 +1,7 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.actions.ActionType;
+import org.gramat.machine.operations.OperationType;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Expression;
 import org.gramat.expressions.ExpressionFactory;
@@ -505,7 +505,7 @@ public class ExpressionParser {
                     "Wrapping type expected");
         }
 
-        var typeOp = ActionType.parse(rawTypeOp.get());
+        var typeOp = OperationType.parse(rawTypeOp.get());
         if (typeOp.isEmpty()) {
             throw ErrorFactory.syntaxError(input.getLocation(),
                     "Invalid wrapping type: %s", rawTypeOp.get());

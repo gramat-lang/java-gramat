@@ -1,6 +1,7 @@
 package org.gramat.pipeline;
 
 import lombok.extern.slf4j.Slf4j;
+import org.gramat.machine.operations.OperationType;
 import org.gramat.errors.ErrorFactory;
 import org.gramat.expressions.Alternation;
 import org.gramat.expressions.Expression;
@@ -174,7 +175,7 @@ public class ExpressionExpander {
                 var newDependency = expand(dependency, recursiveNames);
                 referenceStack.removeFirst();
 
-                newDependencies.set(newName, newDependency);
+                newDependencies.set(newName, factory.wrapping(newDependency.location, OperationType.TOKEN, newName, newDependency));
             }
 
             return factory.reference(reference.location, refMap.newName);

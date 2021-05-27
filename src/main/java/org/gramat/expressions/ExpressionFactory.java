@@ -1,8 +1,8 @@
 package org.gramat.expressions;
 
-import org.gramat.actions.ActionType;
+import org.gramat.machine.operations.OperationType;
 import org.gramat.location.Location;
-import org.gramat.patterns.PatternFactory;
+import org.gramat.machine.patterns.PatternFactory;
 import org.gramat.tools.DataUtils;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class ExpressionFactory {
         count = 0;
     }
 
-    public Wrapping wrapping(Location location, ActionType type, String argument, Expression content) {
+    public Wrapping wrapping(Location location, OperationType type, String argument, Expression content) {
         count++;
         return new Wrapping(location, type, argument, content);
     }

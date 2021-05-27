@@ -1,10 +1,11 @@
 package org.gramat.machine.links;
 
 import org.gramat.machine.nodes.Node;
-import org.gramat.patterns.Pattern;
+import org.gramat.machine.patterns.Pattern;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class LinkPatternList implements Iterable<LinkPattern> {
 
@@ -23,5 +24,17 @@ public class LinkPatternList implements Iterable<LinkPattern> {
     @Override
     public Iterator<LinkPattern> iterator() {
         return data.iterator();
+    }
+
+    public List<LinkPattern> findAllFrom(Node node) {
+        var result = new ArrayList<LinkPattern>();
+
+        for (var link : data) {
+            if (link.getSource() == node) {
+                result.add(link);
+            }
+        }
+
+        return result;
     }
 }

@@ -1,58 +1,108 @@
-alternation
+title: alternation
 
-main = 'a'|'b'|'c'
+expression:
+    main = 'a'|'b'|'c'
 
-->1
-1->2 : 'a'
-1->3 : 'b'
-1->4 : 'c'
-2<=
-3<=
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    1->3 : 'b'
+    1->4 : 'c'
+    2<=
+    3<=
+    4<=
+
+pass: a
+pass: b
+pass: c
+fail: x
 ----------
-option
+title: option
 
-main = ['a']
+expression:
+    main = ['a']
 
-->1
-1->2 : 'a'
-1<=
-2<=
+automaton:
+    ->1
+    1->2 : 'a'
+    1<=
+    2<=
+
+pass: a
+pass:
+fail: x
 ----------
-repeat
+title: repeat
 
-main = {+'a'}
+expression:
+    main = {+'a'}
 
-->1
-1->2 : 'a'
-2->2 : 'a'
-2<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->2 : 'a'
+    2<=
+
+pass: aaa
+pass: aa
+pass: a
+fail:
+fail: x
 ----------
-repeat with separator
+title: repeat with separator
 
-main = {+'a'/'b'}
+expression:
+    main = {+'a'/'b'}
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->2 : 'a'
-2<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->2 : 'a'
+    2<=
+
+pass: a
+pass: aba
+pass: ababa
+pass: abababa
+fail:
+fail: x
+fail: ab
+fail: abab
+fail: ababab
 ----------
-sequence
+title: sequence
 
-main = "a" "b" "c"
+expression:
+    main = "a" "b" "c"
 
-->1
-1->2 : 'a'
-2->3 : 'b'
-3->4 : 'c'
-4<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2->3 : 'b'
+    3->4 : 'c'
+    4<=
+
+pass: abc
+fail:
+fail: a
+fail: ab
+fail: abb
+fail: abcd
+fail: x
 ----------
-literal
+title: literal
 
-main = "a"
+expression:
+    main = "a"
 
-->1
-1->2 : 'a'
-2<=
+automaton:
+    ->1
+    1->2 : 'a'
+    2<=
+
+pass: a
+fail:
+fail: x
+fail: aa
 ----------

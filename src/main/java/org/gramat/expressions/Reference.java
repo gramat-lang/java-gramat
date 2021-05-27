@@ -5,7 +5,7 @@ import org.gramat.tools.Validations;
 
 import java.util.List;
 
-public class Reference extends Expression {
+public class Reference extends Expression {// TODO remove and replace by literal+pattern
 
     public final String name;
 

@@ -1,13 +1,19 @@
 package tools;
 
+import org.gramat.automata.Automaton;
+import org.gramat.io.AutomatonFormatter;
+import org.gramat.io.MachineFormatter;
 import org.gramat.machine.Machine;
-import org.gramat.pipeline.MachineFormatter;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class AmEditor {
+
+    public static String url(Automaton automaton) {
+        return url(AutomatonFormatter.toString(automaton));
+    }
 
     public static String url(Machine machine) {
         var builder = new StringBuilder();
