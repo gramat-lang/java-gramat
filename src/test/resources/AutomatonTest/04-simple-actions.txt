@@ -20,9 +20,9 @@ automaton:
     1->2 : value-begin(1)\
     'a'\
     value-end(1)
-    1->3 : value-begin(1)\
+    1->3 : value-begin(2)\
     'b'\
-    value-end(1)
+    value-end(2)
     2<=
     3<=
 ----------

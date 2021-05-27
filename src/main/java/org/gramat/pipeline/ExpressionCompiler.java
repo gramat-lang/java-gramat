@@ -18,8 +18,10 @@ import org.gramat.machine.links.LinkList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
+import org.gramat.machine.operations.OperationType;
 import org.gramat.machine.patterns.PatternFactory;
 
+import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
@@ -177,6 +179,15 @@ public class ExpressionCompiler {
 
     private Segment compileWrapping(LinkList linkList, Wrapping wrapping) {
         var machine = compileExpressionClean(wrapping.content);
+
+        linkList.addLinks(machine.links());
+
+        // Do NOT wrap the machine with tokens when it is actually flat
+        //   (to avoid polluting the transitions with effect-less actions)
+        if (wrapping.type == OperationType.TOKEN && isFlat(wrapping.content)) {
+            return new Segment(NodeSet.of(machine.source()), machine.targets());
+        }
+
         var group = operationFactory.nextGroup();
         var begin = operationFactory.createBegin(wrapping.type, group, wrapping.argument);
         var end = operationFactory.createEnd(wrapping.type, group, wrapping.argument);
@@ -191,9 +202,27 @@ public class ExpressionCompiler {
             }
         }
 
-        linkList.addLinks(machine.links());
-
         return new Segment(NodeSet.of(machine.source()), machine.targets());
+    }
+
+    private boolean isFlat(Expression expression) {
+        var stack = new ArrayDeque<Expression>();
+
+        stack.push(expression);
+
+        while (!stack.isEmpty()) {
+            var e = stack.pop();
+
+            if (e instanceof Reference) {
+                return false;
+            }
+
+            for (var child : e.getChildren()) {
+                stack.push(child);
+            }
+        }
+
+        return true;
     }
 
 }

@@ -137,16 +137,71 @@ public class ExpressionExpander {
         return newItems;
     }
 
-    private Expression expandWrapping(Wrapping target, Set<String> recursiveNames) {
-        return target.derive(expand(target.content, recursiveNames));
+    private Expression expandWrapping(Wrapping wrapping, Set<String> recursiveNames) {
+        var content = expand(wrapping.content, recursiveNames);
+        if (content instanceof Alternation alt) {
+            // <w:x|y>  →  <w:x>|<w:y>
+            var newItems = new ArrayList<Expression>();
+
+            for (var item : alt.items) {
+                newItems.add(factory.wrapping(
+                        item.location,
+                        wrapping.type,
+                        wrapping.argument,
+                        item));
+            }
+
+            return factory.alternation(wrapping.location, newItems);
+        }
+        else if (content instanceof Option opt) {
+            // <w:[x]>  →  [<w:x>]
+            return factory.option(wrapping.location, factory.wrapping(
+                    opt.location,
+                    wrapping.type,
+                    wrapping.argument,
+                    opt.content));
+        }
+        else {
+            // direct expansion
+            return factory.wrapping(
+                    wrapping.location,
+                    wrapping.type,
+                    wrapping.argument,
+                    content);
+        }
     }
 
-    private Expression expandAlternation(Alternation target, Set<String> recursiveNames) {
-        return target.derive(expandAll(target.items, recursiveNames));
+    private Expression expandAlternation(Alternation alternation, Set<String> recursiveNames) {
+        if (alternation.items.size() == 1) {
+            // (x) → x
+            return expand(alternation.items.get(0), recursiveNames);
+        }
+        else {
+            // direct expansion
+            return alternation.derive(expandAll(alternation.items, recursiveNames));
+        }
     }
 
-    private Expression expandOption(Option target, Set<String> recursiveNames) {
-        return target.derive(expand(target.content, recursiveNames));
+    private Expression expandOption(Option option, Set<String> recursiveNames) {
+        if (option.content instanceof Option nested) {
+            // [[x]] → [x]
+            return expand(nested.content, recursiveNames);
+        }
+        else {
+            // direct expansion
+            return option.derive(expand(option.content, recursiveNames));
+        }
+    }
+
+    private Expression expandSequence(Sequence sequence, Set<String> recursiveNames) {
+        if (sequence.items.size() == 1) {
+            // (x) → x
+            return expand(sequence.items.get(0), recursiveNames);
+        }
+        else {
+            // direct expansion
+            return sequence.derive(expandAll(sequence.items, recursiveNames));
+        }
     }
 
     private Expression expandReference(Reference reference, Set<String> recursiveNames) {
@@ -172,10 +227,10 @@ public class ExpressionExpander {
                 log.debug("Expanding {} from {}...", newName, reference.name);
 
                 referenceStack.addFirst(refMap);
-                var newDependency = expand(dependency, recursiveNames);
+                var newDependency = expand(factory.wrapping(dependency.location, OperationType.TOKEN, newName, dependency), recursiveNames);
                 referenceStack.removeFirst();
 
-                newDependencies.set(newName, factory.wrapping(newDependency.location, OperationType.TOKEN, newName, newDependency));
+                newDependencies.set(newName, newDependency);
             }
 
             return factory.reference(reference.location, refMap.newName);
@@ -191,10 +246,6 @@ public class ExpressionExpander {
         var newContent = expand(target.content, recursiveNames);
         var newSeparator = target.separator != null ? expand(target.separator, recursiveNames) : null;
         return target.derive(newContent, newSeparator);
-    }
-
-    private Expression expandSequence(Sequence target, Set<String> recursiveNames) {
-        return target.derive(expandAll(target.items, recursiveNames));
     }
 
     private static class ReferenceMap {

@@ -23,10 +23,4 @@ public class Wrapping extends Expression {
         return List.of(content);
     }
 
-    public Wrapping derive(Expression newContent) {
-        if (content == newContent) {
-            return this;
-        }
-        return new Wrapping(location, type, argument, newContent);
-    }
 }

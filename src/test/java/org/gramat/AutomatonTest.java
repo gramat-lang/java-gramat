@@ -41,10 +41,10 @@ class AutomatonTest {
 
         var title = args.getValue("title");
         var expression = args.getValue("expression");
-        var expected = args.getValue("automaton");
+        var expected = args.getValue("automaton").trim();
 
         var automaton = compile(expression, title);
-        var actual = AutomatonFormatter.toString(automaton);
+        var actual = AutomatonFormatter.toString(automaton).trim();
 
         log.info("  Actual: {}", AmEditor.url(actual));
         log.info("Expected: {}", AmEditor.url(expected));
