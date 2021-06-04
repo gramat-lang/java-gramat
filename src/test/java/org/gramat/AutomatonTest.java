@@ -51,35 +51,39 @@ class AutomatonTest {
 
         assertEquals(expected, actual);
 
-        for (var passInput : args.getValues("pass")) {
-            log.info("Evaluating {}", passInput);
+        for (var entry : args) {
+            if ("pass".equals(entry.getName())) {
+                var passInput = entry.getValue();
 
-            var evaluator = new Evaluator();
-            var result = evaluator.eval(automaton.getInitial(), Tape.of(passInput, "pass"));
+                log.info("Evaluating {}", passInput);
 
-            log.info("Passed! result: {}", result);
-        }
+                var evaluator = new Evaluator();
+                var result = evaluator.eval(automaton.getInitial(), Tape.of(passInput, "pass"));
 
-        for (var failInput : args.getValues("fail")) {
-            log.info("Evaluating {}", failInput);
-
-            var evaluator = new Evaluator();
-
-            boolean failed;
-
-            try {
-                var result = evaluator.eval(automaton.getInitial(), Tape.of(failInput, "fail"));
-
-                failed = true;
+                log.info("Passed! result: {}", result);
             }
-            catch (Exception e) {
-                failed = false;
+            else if ("fail".equals(entry.getName())) {
+                var failInput = entry.getName();
+                log.info("Evaluating {}", failInput);
 
-                log.info("Failed (expected): {}", e.getMessage());
-            }
+                var evaluator = new Evaluator();
 
-            if (failed) {
-                throw new AssertionError("Not expected to pass: " + failInput);
+                boolean failed;
+
+                try {
+                    var result = evaluator.eval(automaton.getInitial(), Tape.of(failInput, "fail"));
+
+                    failed = true;
+                }
+                catch (Exception e) {
+                    failed = false;
+
+                    log.info("Failed (expected): {}", e.getMessage());
+                }
+
+                if (failed) {
+                    throw new AssertionError("Not expected to pass: " + failInput);
+                }
             }
         }
     }
@@ -110,11 +114,12 @@ class AutomatonTest {
     static List<Arguments> testExpressionVsMachine() {
         var result = new ArrayList<Arguments>();
         var session = ArgParser.parse(
-                "/AutomatonTest/00-plain-single.txt",
-                "/AutomatonTest/01-plain-mixed.txt",
-                "/AutomatonTest/02-lineal-refs.txt",
-                "/AutomatonTest/03-recursive-refs.txt",
-                "/AutomatonTest/04-simple-actions.txt"
+                "/AutomatonTest/plain-single.txt",
+                "/AutomatonTest/plain-mixed.txt",
+                "/AutomatonTest/plain-references.txt",
+                "/AutomatonTest/actions-simple.txt",
+                "/AutomatonTest/recursive-simple.txt",
+                "/AutomatonTest/recursive-complex.txt"
         );
 
         for (var group : session) {

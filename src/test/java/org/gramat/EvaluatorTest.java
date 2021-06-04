@@ -14,9 +14,8 @@ class EvaluatorTest {
     @Test
     void test() {
         var resources = List.of(
-//                "/EvaluatorTest/json.gm",
-//                "/EvaluatorTest/sql.gm",
-                "/EvaluationTest/test.gm");
+                "/EvaluatorTest/json.gm",
+                "/EvaluatorTest/sql.gm");
 
         for (var resource : resources) {
             var input = CharInput.of(Resources.loadString(resource), resource);

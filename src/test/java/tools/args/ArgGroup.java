@@ -1,9 +1,10 @@
 package tools.args;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class ArgGroup {
+public class ArgGroup implements Iterable<ArgEntry> {
 
     private final List<ArgEntry> entries;
 
@@ -92,5 +93,10 @@ public class ArgGroup {
 
     public boolean isIgnored() {
         return ignored;
+    }
+
+    @Override
+    public Iterator<ArgEntry> iterator() {
+        return entries.iterator();
     }
 }

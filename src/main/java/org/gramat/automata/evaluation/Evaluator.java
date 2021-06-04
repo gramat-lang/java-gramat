@@ -6,20 +6,11 @@ import org.gramat.automata.tapes.Tape;
 public class Evaluator {
 
     public Object eval(State initial, Tape tape) {
-        var context = new Context();
-        var endState = eval(initial, tape, context);
-
-        if (!endState.isAccepted()) {
-            throw new RejectedException("Input was not accepted", tape.getLocation(), endState);
-        }
-        else if (tape.isOpen()) {
-            throw new RejectedException("Expected end of content", tape.getLocation(), endState);
-        }
-
-        return context.getResult();
+        return eval(initial, tape, true);
     }
 
-    private State eval(State initial, Tape tape, Context context) {
+    public Object eval(State initial, Tape tape, boolean consumeAll) {
+        var context = new Context(tape);
         var state = initial;
 
         while (tape.isOpen()) {
@@ -29,17 +20,24 @@ public class Evaluator {
                 break;
             }
 
-            context.run(tape, transition.getBeginActions());
+            context.run(transition.getBeginActions());
 
             tape.moveForward();
 
-            context.run(tape, transition.getEndActions());
+            context.run(transition.getEndActions());
 
             // Move to next state
             state = transition.getTarget();
         }
 
-        return state;
+        if (!state.isAccepted()) {
+            throw new RejectedException("Input was not accepted", tape.getLocation(), state);
+        }
+        else if (consumeAll && tape.isOpen()) {
+            throw new RejectedException("Expected end of content", tape.getLocation(), state);
+        }
+
+        return context.getResult();
     }
 
 }

@@ -48,6 +48,11 @@ public class StringTape implements Tape {
                 .build();
     }
 
+    @Override
+    public int getPosition() {
+        return position;
+    }
+
     private LocationPoint computeLocationPoint(int position) {
         var line = 1;
         var column = 1;

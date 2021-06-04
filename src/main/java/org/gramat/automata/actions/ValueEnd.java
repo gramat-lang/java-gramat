@@ -2,7 +2,8 @@ package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.tapes.Tape;
+import org.gramat.automata.messages.Message;
+import org.gramat.automata.messages.ValueEndMessage;
 
 @Slf4j
 public class ValueEnd extends Action {
@@ -14,8 +15,28 @@ public class ValueEnd extends Action {
     }
 
     @Override
-    public void run(Tape tape, Context context) {
-        log.debug("RUN {}", this);
+    public ActionType getType() {
+        return ActionType.VALUE;
+    }
+
+    @Override
+    public ActionMode getMode() {
+        return ActionMode.END;
+    }
+
+    @Override
+    public String getTypeHint() {
+        return typeHint;
+    }
+
+    @Override
+    public boolean hasTypeHint() {
+        return true;
+    }
+
+    @Override
+    public Message createMessage(Context context) {
+        return new ValueEndMessage(group, context.getPosition(), typeHint);
     }
 
     @Override

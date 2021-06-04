@@ -18,4 +18,5 @@ public interface Tape {
 
     Location getLocation();
 
+    int getPosition();
 }

@@ -2,7 +2,7 @@ package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.tapes.Tape;
+import org.gramat.automata.messages.Message;
 import org.gramat.automata.tokens.Token;
 
 import java.util.Objects;
@@ -18,10 +18,18 @@ public class PushToken extends Action {
     }
 
     @Override
-    public void run(Tape tape, Context context) {
-        log.debug("RUN {}", this);
+    public ActionType getType() {
+        return ActionType.TOKEN;
+    }
 
-        context.push(token);
+    @Override
+    public ActionMode getMode() {
+        return ActionMode.BEGIN;
+    }
+
+    @Override
+    public Token getToken() {
+        return token;
     }
 
     @Override

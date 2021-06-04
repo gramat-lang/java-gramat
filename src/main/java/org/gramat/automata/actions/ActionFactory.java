@@ -39,16 +39,16 @@ public class ActionFactory {
 
     public MapEnd createMapEnd(int group, String typeHint) {
         return getOrCreate(MapEnd.class, () -> new MapEnd(group, typeHint),
-                item -> item.getGroup() == group && Objects.equals(item.typeHint, typeHint));
+                item -> item.getGroup() == group && Objects.equals(item.getTypeHint(), typeHint));
     }
 
     public PutBegin createPutBegin(int group) {
         return getOrCreate(PutBegin.class, () -> new PutBegin(group), item -> item.getGroup() == group);
     }
 
-    public PutEnd createPutEnd(int group, String nameHint) {
-        return getOrCreate(PutEnd.class, () -> new PutEnd(group, nameHint),
-                item -> item.getGroup() == group && Objects.equals(item.nameHint, nameHint));
+    public PutEnd createPutEnd(int group, String keyHint) {
+        return getOrCreate(PutEnd.class, () -> new PutEnd(group, keyHint),
+                item -> item.getGroup() == group && Objects.equals(item.keyHint, keyHint));
     }
 
     public ValueBegin createValueBegin(int group) {
