@@ -120,10 +120,15 @@ public class AutomatonCompiler {
         var leftSymbolRange = left.getSymbol() instanceof SymbolRange;
         var rightSymbolRange = right.getSymbol() instanceof SymbolRange;
 
-        if (leftSymbolRange && !rightSymbolRange) {
+        if (leftSymbolRange && rightSymbolRange) {
+            var leftSymbolRangeV = (SymbolRange)left.getSymbol();
+            var rightSymbolRangeV = (SymbolRange)right.getSymbol();
+            return Character.compare(leftSymbolRangeV.getBegin(), rightSymbolRangeV.getBegin());
+        }
+        if (leftSymbolRange) {
             return +1;
         }
-        else if (!leftSymbolRange && rightSymbolRange) {
+        else if (rightSymbolRange) {
             return -1;
         }
 

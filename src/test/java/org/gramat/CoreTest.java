@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
 @Slf4j
-class AutomatonTest {
+class CoreTest {
 
     @ParameterizedTest
     @MethodSource
@@ -114,12 +114,13 @@ class AutomatonTest {
     static List<Arguments> testExpressionVsMachine() {
         var result = new ArrayList<Arguments>();
         var session = ArgParser.parse(
-                "/AutomatonTest/plain-single.txt",
-                "/AutomatonTest/plain-mixed.txt",
-                "/AutomatonTest/plain-references.txt",
-                "/AutomatonTest/actions-simple.txt",
-                "/AutomatonTest/recursive-simple.txt",
-                "/AutomatonTest/recursive-complex.txt"
+                "/CoreTest/plain-single.txt",
+                "/CoreTest/plain-mixed.txt",
+                "/CoreTest/plain-references.txt",
+                "/CoreTest/actions-simple.txt",
+                "/CoreTest/actions-complex.txt",
+                "/CoreTest/recursive-simple.txt",
+                "/CoreTest/recursive-complex.txt"
         );
 
         for (var group : session) {

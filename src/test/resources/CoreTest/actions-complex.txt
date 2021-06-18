@@ -1,0 +1,10 @@
+title: basic JSON-like
+
+expression:
+    main = "<" [<value: ("<"|"=") {"<"|"="|">"} ("="|">")>] ">"
+
+automaton:
+    ?
+
+pass: <<=<<==>>=>>
+----------#

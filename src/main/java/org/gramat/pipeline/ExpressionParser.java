@@ -310,7 +310,7 @@ public class ExpressionParser {
         var location = input.beginLocation();
         var options = new ArrayList<Expression>();
 
-        expect('\'');
+        expect('`');
 
         do {
             var option = parseCharClassOption();
@@ -318,7 +318,7 @@ public class ExpressionParser {
             options.add(option);
         } while (input.pull(' '));
 
-        expect('\'');
+        expect('`');
 
         if (options.isEmpty()) {
             return Optional.empty();
