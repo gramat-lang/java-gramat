@@ -10,7 +10,7 @@ public class PutEndInstruction implements DataInstruction {
     @Override
     public void run(DataContext context) {
         var mapContainer = context.popContainer();
-        var value = mapContainer.buildAny();
+        var value = mapContainer.buildValue();
         var currentContainer = context.peekContainer();
         var key = currentContainer.getKey();
 

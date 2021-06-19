@@ -9,6 +9,6 @@ public class ValueBeginInstruction implements DataInstruction {
 
     @Override
     public void run(DataContext context) {
-        context.setBeginPosition(beginPosition);
+        context.pushBeginPosition(beginPosition);
     }
 }

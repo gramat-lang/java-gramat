@@ -19,4 +19,6 @@ public interface Tape {
     Location getLocation();
 
     int getPosition();
+
+    String substring(int begin, int end);
 }

@@ -11,9 +11,9 @@ public class ValueEndInstruction implements DataInstruction {
 
     @Override
     public void run(DataContext context) {
-        var begin = context.getBeginPosition();
+        var begin = context.popBeginPosition();
         var text = context.getSubstring(begin, endPosition);
-        var value = context.createValue(text, typeHint);
+        var value = context.parseText(text, typeHint);
         var currentContainer = context.peekContainer();
 
         currentContainer.add(value);

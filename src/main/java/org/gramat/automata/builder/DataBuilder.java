@@ -32,7 +32,7 @@ public class DataBuilder {
     }
 
     public Object build() {
-        var context = new DataContext();
+        var context = new DataContext(tape);
 
         for (var instruction : instructions) {
             instruction.run(context);

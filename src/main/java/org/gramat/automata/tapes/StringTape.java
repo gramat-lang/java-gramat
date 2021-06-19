@@ -53,6 +53,11 @@ public class StringTape implements Tape {
         return position;
     }
 
+    @Override
+    public String substring(int begin, int end) {
+        return content.substring(begin, end);
+    }
+
     private LocationPoint computeLocationPoint(int position) {
         var line = 1;
         var column = 1;
