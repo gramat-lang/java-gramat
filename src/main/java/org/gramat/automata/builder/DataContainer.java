@@ -31,7 +31,7 @@ public class DataContainer {
             throw new RuntimeException();
         }
         else if (map == null) {
-            throw new RuntimeException();
+            return null;
         }
         else {
             return map;
@@ -42,10 +42,7 @@ public class DataContainer {
         if (map != null) {
             throw new RuntimeException();
         }
-        else if (list == null) {
-            throw new RuntimeException();
-        }
-        else if (list.isEmpty()) {
+        else if (list == null  || list.isEmpty()) {
             return null;
         }
         else if (list.size() != 1) {
@@ -104,9 +101,7 @@ public class DataContainer {
             throw new RuntimeException();
         }
 
-        if (map.containsKey(key)) {
-            throw new RuntimeException();
-        }
+        // TODO check for duplicated keys
 
         map.put(key, value);
     }

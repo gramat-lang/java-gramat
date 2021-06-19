@@ -10,195 +10,191 @@ expression:
 automaton:
     ->1
     1->15 : push(Object-3)\
-    map-begin(18)\
+    map-begin()\
     '('
     1->2 : push(Array-1)\
-    list-begin(9)\
+    list-begin()\
     '['
-    1->14 : value-begin(1)\
+    1->14 : value-begin()\
     'x'\
-    value-end(1)
+    value-end()
     2->12 : ']' / Array-1\
-    list-end(9)\
+    list-end()\
     pop(Array-1)
     2->5 : push(Object-2)\
-    map-begin(6)\
+    map-begin()\
     '('
     2->2 : push(Array-1)\
-    list-begin(9)\
+    list-begin()\
     '['
-    2->3 : value-begin(8)\
+    2->3 : value-begin()\
     'x'\
-    value-end(8)
+    value-end()
     3->12 : ']' / Array-1\
-    list-end(9)\
+    list-end()\
     pop(Array-1)
     3->4 : '\,'
     4->5 : push(Object-2)\
-    map-begin(6)\
+    map-begin()\
     '('
     4->2 : push(Array-1)\
-    list-begin(9)\
+    list-begin()\
     '['
-    4->3 : value-begin(8)\
+    4->3 : value-begin()\
     'x'\
-    value-end(8)
+    value-end()
     5->9 : ')' / Object-2\
-    map-end(6)\
+    map-end()\
     pop(Object-2)
-    5->6 : put-begin(5)\
-    key-begin(3)\
-    value-begin(2)\
+    5->6 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(2)\
-    key-end(3)
+    value-end()\
+    key-end()
     6->7 : '='
     7->5 : push(Object-2)\
-    map-begin(6)\
+    map-begin()\
     '('
     7->2 : push(Array-1)\
-    list-begin(9)\
+    list-begin()\
     '['
-    7->8 : value-begin(4)\
+    7->8 : value-begin()\
     'x'\
-    value-end(4)\
-    put-end(5)
+    value-end()\
+    put-end()
     8->9 : ')' / Object-2\
-    map-end(6)\
+    map-end()\
     pop(Object-2)
     8->13 : '\,'
     9->9 : ')' / Object-2\
-    map-end(6)\
+    map-end()\
     pop(Object-2)
     9->12 : ']' / Array-1\
-    list-end(9)\
+    list-end()\
     pop(Array-1)
     9->10 : '\,'
     10->5 : push(Object-2)\
-    map-begin(6)\
+    map-begin()\
     '('
     10->2 : push(Array-1)\
-    list-begin(9)\
+    list-begin()\
     '['
-    10->11 : value-begin(8)\
-    put-begin(5)\
-    key-begin(3)\
-    value-begin(2)\
+    10->11 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(2)\
-    key-end(3)\
-    value-end(8)
+    value-end()\
+    key-end()
     11->12 : ']' / Array-1\
-    list-end(9)\
+    list-end()\
     pop(Array-1)
     11->4 : '\,'
     11->7 : '='
     12->9 : ')' / Object-2\
-    map-end(6)\
+    map-end()\
     pop(Object-2)
     12->12 : ']' / Array-1\
-    list-end(9)\
+    list-end()\
     pop(Array-1)
     12->10 : '\,'
-    13->6 : put-begin(5)\
-    key-begin(3)\
-    value-begin(2)\
+    13->6 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(2)\
-    key-end(3)
+    value-end()\
+    key-end()
     15->24 : ')' / Object-3\
-    map-end(18)\
+    map-end()\
     pop(Object-3)
-    15->16 : put-begin(17)\
-    key-begin(15)\
-    value-begin(14)\
+    15->16 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(14)\
-    key-end(15)
+    value-end()\
+    key-end()
     16->17 : '='
     17->15 : push(Object-3)\
-    map-begin(18)\
+    map-begin()\
     '('
     17->18 : push(Array-4)\
-    list-begin(12)\
+    list-begin()\
     '['
-    17->25 : value-begin(16)\
+    17->25 : value-begin()\
     'x'\
-    value-end(16)\
-    put-end(17)
+    value-end()\
+    put-end()
     18->21 : ']' / Array-4\
-    list-end(12)\
+    list-end()\
     pop(Array-4)\
-    put-end(17)
+    put-end()
     18->15 : push(Object-3)\
-    map-begin(18)\
+    map-begin()\
     '('
     18->18 : push(Array-4)\
-    list-begin(12)\
+    list-begin()\
     '['
-    18->19 : value-begin(11)\
+    18->19 : value-begin()\
     'x'\
-    value-end(11)
+    value-end()
     19->21 : ']' / Array-4\
-    list-end(12)\
+    list-end()\
     pop(Array-4)\
-    put-end(17)
+    put-end()
     19->20 : '\,'
     20->15 : push(Object-3)\
-    map-begin(18)\
+    map-begin()\
     '('
     20->18 : push(Array-4)\
-    list-begin(12)\
+    list-begin()\
     '['
-    20->19 : value-begin(11)\
+    20->19 : value-begin()\
     'x'\
-    value-end(11)
+    value-end()
     21->24 : ')' / Object-3\
-    map-end(18)\
+    map-end()\
     pop(Object-3)
     21->21 : ']' / Array-4\
-    list-end(12)\
+    list-end()\
     pop(Array-4)\
-    put-end(17)
+    put-end()
     21->22 : '\,'
     22->15 : push(Object-3)\
-    map-begin(18)\
+    map-begin()\
     '('
     22->18 : push(Array-4)\
-    list-begin(12)\
+    list-begin()\
     '['
-    22->23 : put-begin(17)\
-    key-begin(15)\
-    value-begin(14)\
-    value-begin(11)\
+    22->23 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(11)\
-    value-end(14)\
-    key-end(15)
+    value-end()\
+    key-end()
     23->21 : ']' / Array-4\
-    list-end(12)\
+    list-end()\
     pop(Array-4)\
-    put-end(17)
+    put-end()
     23->20 : '\,'
     23->17 : '='
     24->24 : ')' / Object-3\
-    map-end(18)\
+    map-end()\
     pop(Object-3)
     24->21 : ']' / Array-4\
-    list-end(12)\
+    list-end()\
     pop(Array-4)\
-    put-end(17)
+    put-end()
     24->22 : '\,'
     25->24 : ')' / Object-3\
-    map-end(18)\
+    map-end()\
     pop(Object-3)
     25->26 : '\,'
-    26->16 : put-begin(17)\
-    key-begin(15)\
-    value-begin(14)\
+    26->16 : put-begin()\
+    key-begin()\
+    value-begin()\
     'x'\
-    value-end(14)\
-    key-end(15)
+    value-end()\
+    key-end()
     12<=
     14<=
     24<=

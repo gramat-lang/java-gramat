@@ -9,10 +9,9 @@ public class PutEndInstruction implements DataInstruction {
 
     @Override
     public void run(DataContext context) {
-        var mapContainer = context.popContainer();
-        var value = mapContainer.buildValue();
-        var currentContainer = context.peekContainer();
-        var key = currentContainer.getKey();
+        var putContainer = context.popContainer();
+        var value = putContainer.buildValue();
+        var key = putContainer.getKey();
 
         if (key == null && keyHint == null) {
             throw new RuntimeException("missing key");
@@ -23,6 +22,8 @@ public class PutEndInstruction implements DataInstruction {
         else if (key == null) {
             key = keyHint;
         }
+
+        var currentContainer = context.peekContainer();
 
         currentContainer.set(key, value);
     }

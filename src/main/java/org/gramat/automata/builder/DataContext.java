@@ -61,7 +61,9 @@ public class DataContext {
         if (beginPosition == null) {
             throw new RuntimeException();
         }
-        return beginPosition;
+        var position = beginPosition;
+        beginPosition = null;
+        return position;
     }
 
     public String getSubstring(int begin, int end) {
