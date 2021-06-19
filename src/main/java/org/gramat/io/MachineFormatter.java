@@ -9,6 +9,7 @@ import org.gramat.machine.links.Link;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeNavigator;
 import org.gramat.machine.nodes.NodeSet;
+import org.gramat.machine.operations.OperationList;
 import org.gramat.tools.DataUtils;
 
 import java.io.IOException;
@@ -200,15 +201,15 @@ public class MachineFormatter {
                 .replace(",", "\\,");
     }
 
-    private void writeActions(Appendable output, List<Operation> actions, String prepend, String append) {
-        if (!actions.isEmpty()) {
+    private void writeActions(Appendable output, OperationList operationsctions, String prepend, String append) {
+        if (operationsctions.isPresent()) {
             write(output, prepend);
             var index = 0;
-            for (var action : actions) {
+            for (var operation : operationsctions) {
                 if (index > 0) {
                     write(output, "\n");
                 }
-                write(output, action.toString());
+                write(output, operation.toString());
                 index++;
             }
             write(output, append);

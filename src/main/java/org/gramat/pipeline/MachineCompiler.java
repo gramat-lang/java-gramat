@@ -7,6 +7,7 @@ import org.gramat.machine.links.LinkList;
 import org.gramat.machine.nodes.Node;
 import org.gramat.machine.nodes.NodeFactory;
 import org.gramat.machine.nodes.NodeSet;
+import org.gramat.machine.operations.OperationList;
 import org.gramat.machine.patterns.Pattern;
 import org.gramat.machine.patterns.PatternFactory;
 import org.gramat.machine.patterns.PatternReference;
@@ -68,7 +69,7 @@ public class MachineCompiler {
         return new Segment(machine.source(), machine.targets());
     }
 
-    private Segment compile(String name, Machine machine, List<Operation> rootBeginOperations, List<Operation> rootEndOperations) {
+    private Segment compile(String name, Machine machine, OperationList rootBeginOperations, OperationList rootEndOperations) {
         var nodeMap = new HashMap<Node, Node>();
         var newSource = nodeFactory.createNode();
         var newTargets = new LinkedHashSet<Node>();
@@ -93,18 +94,18 @@ public class MachineCompiler {
             var fromSource = (newSource == linkSource);
             var toTarget = (newTargets.contains(linkTarget));
 
-            List<Operation> beginOperations;
-            List<Operation> endOperations;
+            OperationList beginOperations;
+            OperationList endOperations;
 
             if (fromSource) {
-                beginOperations = Operation.join(rootBeginOperations, link.getBeginOperations());
+                beginOperations = OperationList.join(rootBeginOperations, link.getBeginOperations());
             }
             else {
                 beginOperations = link.getBeginOperations();
             }
 
             if (toTarget) {
-                endOperations = Operation.join(link.getEndOperations(), rootEndOperations);
+                endOperations = OperationList.join(link.getEndOperations(), rootEndOperations);
             }
             else {
                 endOperations = link.getEndOperations();
@@ -144,8 +145,8 @@ public class MachineCompiler {
                 }
 
                 var newLink = linkList.createLink(linkSource, linkTarget, pattern);
-                newLink.prependBeginOperations(beginOperations);
-                newLink.appendEndOperations(endOperations);
+                newLink.getBeginOperations().prepend(beginOperations);
+                newLink.getEndOperations().append(endOperations);
             }
         }
 

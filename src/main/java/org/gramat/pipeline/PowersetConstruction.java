@@ -72,10 +72,9 @@ public class PowersetConstruction {
     }
 
     private void applyOperations(LinkPattern newLink, List<LinkPattern> oldLinks) {
-        // TODO check for collisions
         for (var oldLink : oldLinks) {
-            newLink.prependBeginOperations(oldLink.getBeginOperations());
-            newLink.appendEndOperations(oldLink.getEndOperations());
+            newLink.getBeginOperations().prepend(oldLink.getBeginOperations());
+            newLink.getEndOperations().append(oldLink.getEndOperations());
         }
     }
 

@@ -15,6 +15,7 @@ import org.gramat.automata.tokens.Token;
 import org.gramat.automata.tokens.TokenFactory;
 import org.gramat.machine.Machine;
 import org.gramat.machine.nodes.Node;
+import org.gramat.machine.operations.OperationList;
 import org.gramat.machine.operations.OperationType;
 import org.gramat.machine.patterns.PatternToken;
 
@@ -42,7 +43,7 @@ public class AutomatonCompiler {
         this.states = new StateFactory();
         this.symbols = new SymbolFactory();
         this.tokens = new TokenFactory();
-        this.actions = new ActionFactory();
+        this.actions = new ActionFactory(tokens);
     }
 
     private Automaton run() {
@@ -145,44 +146,14 @@ public class AutomatonCompiler {
         return Integer.compare(leftTargetIndex, rightTargetIndex);
     }
 
-    private Action[] makeActions(List<Operation> operations) {
+    private Action[] makeActions(OperationList operations) {
         var result = new Action[operations.size()];
 
         for (var i = 0; i < operations.size(); i++) {
-            result[i] = makeAction(operations.get(i));
+            result[i] = actions.create(operations.get(i));
         }
 
         return result;
-    }
-
-    public Action makeAction(Operation operation) {
-        // TODO some op types do not accept arguments
-        return switch (operation.mode()) {
-            case BEGIN -> createBegin(operation.type(), operation.group(), operation.argument());
-            case END -> createEnd(operation.type(), operation.group(), operation.argument());
-        };
-    }
-
-    private Action createBegin(OperationType type, int group, String argument) {
-        return switch (type) {
-            case KEY -> actions.createKeyBegin(group);
-            case LIST -> actions.createListBegin(group);
-            case MAP -> actions.createMapBegin(group);
-            case PUT -> actions.createPutBegin(group);
-            case VALUE -> actions.createValueBegin(group);
-            case TOKEN -> actions.createPush(group, tokens.token(argument));
-        };
-    }
-
-    private Action createEnd(OperationType type, int group, String argument) {
-        return switch (type) {
-            case KEY -> actions.createKeyEnd(group);
-            case LIST -> actions.createListEnd(group, argument);
-            case MAP -> actions.createMapEnd(group, argument);
-            case PUT -> actions.createPutEnd(group, argument);
-            case VALUE -> actions.createValueEnd(group, argument);
-            case TOKEN -> actions.createPop(group, tokens.token(argument));
-        };
     }
 
 }

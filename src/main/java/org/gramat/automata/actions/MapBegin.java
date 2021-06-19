@@ -1,34 +1,25 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.MapBeginMessage;
-import org.gramat.automata.messages.Message;
+import org.gramat.automata.builder.DataBuilder;
+import org.gramat.automata.builder.MapBeginInstruction;
 
 @Slf4j
-public class MapBegin extends Action {
+public class MapBegin implements Action {
 
-    MapBegin(int group) {
-        super(group);
-    }
+    private final MapBeginInstruction instruction;
 
-    @Override
-    public ActionType getType() {
-        return ActionType.MAP;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.BEGIN;
-    }
-
-    @Override
-    public Message createMessage(Context context) {
-        return new MapBeginMessage(group);
+    MapBegin() {
+        instruction = new MapBeginInstruction();
     }
 
     @Override
     public String toString() {
-        return String.format("map-begin(%s)", group);
+        return "map-begin()";
+    }
+
+    @Override
+    public void run(DataBuilder builder) {
+        builder.push(instruction);
     }
 }

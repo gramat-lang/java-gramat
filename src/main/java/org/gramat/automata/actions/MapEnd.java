@@ -1,50 +1,35 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.MapEndMessage;
-import org.gramat.automata.messages.Message;
+import org.gramat.automata.builder.DataBuilder;
+import org.gramat.automata.builder.MapEndInstruction;
 
 @Slf4j
-public class MapEnd extends Action {
+public class MapEnd implements Action {
 
     private final String typeHint;
 
-    MapEnd(int group, String typeHint) {
-        super(group);
+    private final MapEndInstruction instruction;
+
+    MapEnd(String typeHint) {
         this.typeHint = typeHint;
+        this.instruction = new MapEndInstruction(typeHint);
     }
 
-    @Override
-    public ActionType getType() {
-        return ActionType.MAP;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.END;
-    }
-
-    @Override
-    public boolean hasTypeHint() {
-        return true;
-    }
-
-    @Override
     public String getTypeHint() {
         return typeHint;
     }
 
     @Override
-    public Message createMessage(Context context) {
-        return new MapEndMessage(group, typeHint);
+    public String toString() {
+        if (typeHint != null) {
+            return String.format("map-end(%s)", typeHint);
+        }
+        return "map-end()";
     }
 
     @Override
-    public String toString() {
-        if (typeHint != null) {
-            return String.format("map-end(%s, %s)", group, typeHint);
-        }
-        return String.format("map-end(%s)", group);
+    public void run(DataBuilder builder) {
+        builder.push(instruction);
     }
 }

@@ -2,6 +2,7 @@ package org.gramat.machine.links;
 
 import org.gramat.machine.operations.Operation;
 import org.gramat.machine.nodes.Node;
+import org.gramat.machine.operations.OperationList;
 import org.gramat.machine.patterns.Pattern;
 
 import java.util.List;
@@ -19,8 +20,8 @@ public class LinkEmpty implements Link {
     public Node getSource() { return source; }
     public Node getTarget() { return target; }
 
-    public List<Operation> getBeginOperations() { return List.of(); }
-    public List<Operation> getEndOperations() { return List.of(); }
+    public OperationList getBeginOperations() { return OperationList.empty(); }
+    public OperationList getEndOperations() { return OperationList.empty(); }
 
     public boolean isEmpty() {
         return true;

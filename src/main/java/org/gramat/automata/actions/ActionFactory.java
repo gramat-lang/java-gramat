@@ -1,6 +1,8 @@
 package org.gramat.automata.actions;
 
-import org.gramat.automata.tokens.Token;
+import org.gramat.automata.tokens.TokenFactory;
+import org.gramat.machine.operations.Operation;
+import org.gramat.machine.operations.OperationType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,64 +12,130 @@ import java.util.function.Supplier;
 
 public class ActionFactory {
 
+    private final TokenFactory tokens;
+
     private final List<Action> actions;
 
-    public ActionFactory() {
-        actions = new ArrayList<>();
+    public ActionFactory(TokenFactory tokens) {
+        this.tokens = tokens;
+        this.actions = new ArrayList<>();
     }
 
-    public KeyBegin createKeyBegin(int group) {
-        return getOrCreate(KeyBegin.class, () -> new KeyBegin(group), item -> item.getGroup() == group);
+    public Action create(Operation operation) {
+        return switch (operation.mode()) {
+            case BEGIN -> createBegin(operation.type(), operation.argument());
+            case END -> createEnd(operation.type(), operation.argument());
+        };
     }
 
-    public KeyEnd createKeyEnd(int group) {
-        return getOrCreate(KeyEnd.class, () -> new KeyEnd(group), item -> item.getGroup() == group);
+    private Action createBegin(OperationType type, String argument) {
+        return switch (type) {
+            case KEY -> createKeyBegin();
+            case LIST -> createListBegin();
+            case MAP -> createMapBegin();
+            case PUT -> createPutBegin();
+            case VALUE -> createValueBegin();
+            case TOKEN -> createBeginToken(argument);
+        };
     }
 
-    public ListBegin createListBegin(int group) {
-        return getOrCreate(ListBegin.class, () -> new ListBegin(group), item -> item.getGroup() == group);
+    private KeyBegin createKeyBegin() {
+        return getOrCreate(
+                KeyBegin.class,
+                KeyBegin::new,
+                instance -> true);
     }
 
-    public ListEnd createListEnd(int group, String typeHint) {
-        return getOrCreate(ListEnd.class, () -> new ListEnd(group, typeHint),
-                item -> item.getGroup() == group && Objects.equals(item.typeHint, typeHint));
+    private ListBegin createListBegin() {
+        return getOrCreate(
+                ListBegin.class,
+                ListBegin::new,
+                instance -> true);
     }
 
-    public MapBegin createMapBegin(int group) {
-        return getOrCreate(MapBegin.class, () -> new MapBegin(group), item -> item.getGroup() == group);
+    private MapBegin createMapBegin() {
+        return getOrCreate(
+                MapBegin.class,
+                MapBegin::new,
+                instance -> true);
     }
 
-    public MapEnd createMapEnd(int group, String typeHint) {
-        return getOrCreate(MapEnd.class, () -> new MapEnd(group, typeHint),
-                item -> item.getGroup() == group && Objects.equals(item.getTypeHint(), typeHint));
+    private PutBegin createPutBegin() {
+        return getOrCreate(
+                PutBegin.class,
+                PutBegin::new,
+                instance -> true);
     }
 
-    public PutBegin createPutBegin(int group) {
-        return getOrCreate(PutBegin.class, () -> new PutBegin(group), item -> item.getGroup() == group);
+    private ValueBegin createValueBegin() {
+        return getOrCreate(
+                ValueBegin.class,
+                ValueBegin::new,
+                instance -> true);
     }
 
-    public PutEnd createPutEnd(int group, String keyHint) {
-        return getOrCreate(PutEnd.class, () -> new PutEnd(group, keyHint),
-                item -> item.getGroup() == group && Objects.equals(item.keyHint, keyHint));
+    private PushToken createBeginToken(String argument) {
+        var token = tokens.token(argument);
+
+        return getOrCreate(
+                PushToken.class,
+                () -> new PushToken(token),
+                instance -> instance.getToken() == token);
     }
 
-    public ValueBegin createValueBegin(int group) {
-        return getOrCreate(ValueBegin.class, () -> new ValueBegin(group), item -> item.getGroup() == group);
+
+    private Action createEnd(OperationType type, String argument) {
+        return switch (type) {
+            case KEY -> createKeyEnd();
+            case LIST -> createListEnd(argument);
+            case MAP -> createMapEnd(argument);
+            case PUT -> createPutEnd(argument);
+            case VALUE -> createValueEnd(argument);
+            case TOKEN -> createPop(argument);
+        };
     }
 
-    public ValueEnd createValueEnd(int group, String typeHint) {
-        return getOrCreate(ValueEnd.class, () -> new ValueEnd(group, typeHint),
-                item -> item.getGroup() == group && Objects.equals(item.typeHint, typeHint));
+    private KeyEnd createKeyEnd() {
+        return getOrCreate(
+                KeyEnd.class,
+                KeyEnd::new,
+                instance -> true);
     }
 
-    public PushToken createPush(int group, Token token) {
-        return getOrCreate(PushToken.class, () -> new PushToken(group, token),
-                item -> item.getGroup() == group && item.token.equals(token));
+    private ListEnd createListEnd(String typeHint) {
+        return getOrCreate(ListEnd.class,
+                () -> new ListEnd(typeHint),
+                instance -> Objects.equals(instance.getTypeHint(), typeHint));
     }
 
-    public PopToken createPop(int group, Token token) {
-        return getOrCreate(PopToken.class, () -> new PopToken(group, token),
-                item -> item.getGroup() == group && item.token.equals(token));
+    private MapEnd createMapEnd(String typeHint) {
+        return getOrCreate(MapEnd.class,
+                () -> new MapEnd(typeHint),
+                instance -> Objects.equals(instance.getTypeHint(), typeHint));
+    }
+
+    private PutEnd createPutEnd(String keyHint) {
+        return getOrCreate(PutEnd.class,
+                () -> new PutEnd(keyHint),
+                instance -> Objects.equals(instance.getKeyHint(), keyHint));
+    }
+
+    private ValueEnd createValueEnd(String typeHint) {
+        return getOrCreate(ValueEnd.class,
+                () -> new ValueEnd(typeHint),
+                instance -> Objects.equals(instance.getTypeHint(), typeHint));
+    }
+
+    private PopToken createPop(String argument) {
+        var token = tokens.token(argument);
+        return getOrCreate(PopToken.class,
+                () -> new PopToken(token),
+                instance -> instance.getToken() == token);
+    }
+
+
+    public Action[] toArray() {
+        return actions.toArray(new Action[0]);
     }
 
     private <T extends Action> T getOrCreate(Class<T> type, Supplier<T> creator, Predicate<T> matcher) {
@@ -86,9 +154,4 @@ public class ActionFactory {
         actions.add(action);
 
         return action;
-    }
-
-    public Action[] toArray() {
-        return actions.toArray(new Action[0]);
-    }
-}
+    }}

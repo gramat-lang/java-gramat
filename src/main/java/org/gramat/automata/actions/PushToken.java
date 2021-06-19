@@ -1,39 +1,31 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.Message;
+import org.gramat.automata.builder.DataBuilder;
 import org.gramat.automata.tokens.Token;
 
 import java.util.Objects;
 
 @Slf4j
-public class PushToken extends Action {
+public class PushToken implements Action {
 
-    public final Token token;
+    private final Token token;
 
-    PushToken(int group, Token token) {
-        super(group);
+    PushToken(Token token) {
         this.token = Objects.requireNonNull(token);
-    }
-
-    @Override
-    public ActionType getType() {
-        return ActionType.TOKEN;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.BEGIN;
-    }
-
-    @Override
-    public Token getToken() {
-        return token;
     }
 
     @Override
     public String toString() {
         return "push(" + token + ")";
+    }
+
+    @Override
+    public void run(DataBuilder builder) {
+        builder.push(token);
+    }
+
+    public Token getToken() {
+        return token;
     }
 }

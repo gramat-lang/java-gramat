@@ -1,34 +1,25 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.ListBeginMessage;
-import org.gramat.automata.messages.Message;
+import org.gramat.automata.builder.DataBuilder;
+import org.gramat.automata.builder.ListBeginInstruction;
 
 @Slf4j
-public class ListBegin extends Action {
+public class ListBegin implements Action {
 
-    ListBegin(int group) {
-        super(group);
-    }
+    private final ListBeginInstruction instruction;
 
-    @Override
-    public ActionType getType() {
-        return ActionType.LIST;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.BEGIN;
-    }
-
-    @Override
-    public Message createMessage(Context context) {
-        return new ListBeginMessage(group);
+    ListBegin() {
+        instruction = new ListBeginInstruction();
     }
 
     @Override
     public String toString() {
-        return String.format("list-begin(%s)", group);
+        return "list-begin()";
+    }
+
+    @Override
+    public void run(DataBuilder builder) {
+        builder.push(instruction);
     }
 }

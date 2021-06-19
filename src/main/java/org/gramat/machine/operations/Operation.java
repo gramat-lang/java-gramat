@@ -3,13 +3,7 @@ package org.gramat.machine.operations;
 import java.util.ArrayList;
 import java.util.List;
 
-public record Operation(OperationMode mode, OperationType type, int group, String argument) {
-
-    public static List<Operation> join(List<Operation> first, List<Operation> last) {
-        var items = new ArrayList<>(first);
-        items.addAll(last);
-        return items;
-    }
+public record Operation(OperationMode mode, OperationType type, String argument) {
 
     @Override
     public String toString() {

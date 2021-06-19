@@ -2,6 +2,7 @@ package org.gramat.automata.evaluation;
 
 import lombok.extern.slf4j.Slf4j;
 import org.gramat.automata.State;
+import org.gramat.automata.builder.DataBuilder;
 import org.gramat.automata.tapes.Tape;
 import org.gramat.tools.PP;
 
@@ -13,12 +14,12 @@ public class Evaluator {
     }
 
     public Object eval(State initial, Tape tape, boolean consumeAll) {
-        var context = new Context(tape);
+        var builder = new DataBuilder(tape);
         var state = initial;
 
         while (tape.isOpen()) {
             var ch = tape.getChar();
-            var transition = state.findTransitionFor(ch, context.getToken());
+            var transition = state.findTransitionFor(ch, builder.getToken());
             if (transition == null) {
                 break;
             }
@@ -29,7 +30,7 @@ public class Evaluator {
                 log.debug("RUN BEGIN {}", action);
             }
 
-            context.run(transition.getBeginActions());
+            builder.run(transition.getBeginActions());
 
             log.debug("MOVE FORWARD");
 
@@ -39,7 +40,7 @@ public class Evaluator {
                 log.debug("RUN END {}", action);
             }
 
-            context.run(transition.getEndActions());
+            builder.run(transition.getEndActions());
 
             // Move to next state
             state = transition.getTarget();
@@ -52,7 +53,7 @@ public class Evaluator {
             throw new RejectedException("Expected end of content", tape.getLocation(), state);
         }
 
-        return context.getResult();
+        return builder.build();
     }
 
 }

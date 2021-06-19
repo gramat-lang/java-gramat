@@ -2,24 +2,38 @@ package org.gramat.machine.operations;
 
 import org.gramat.tools.IdentifierProvider;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class OperationFactory {
 
-    private final IdentifierProvider groupNumbers;
+    private final List<Operation> operations;
 
     public OperationFactory() {
-        groupNumbers = IdentifierProvider.create(1);
+        operations = new ArrayList<>();
     }
 
-    public int nextGroup() {
-        return groupNumbers.next();
+    public Operation create(OperationMode mode, OperationType type, String argument) {
+        for (var op : operations) {
+            if (op.mode() == mode && op.type() == type && Objects.equals(op.argument(), argument)) {
+                return op;
+            }
+        }
+
+        var op = new Operation(mode, type, argument);
+
+        operations.add(op);
+
+        return op;
     }
 
-    public Operation createBegin(OperationType type, int group, String argument) {
-        return new Operation(OperationMode.BEGIN, type, group, argument);
+    public Operation createBegin(OperationType type, String argument) {
+        return create(OperationMode.BEGIN, type, argument);
     }
 
-    public Operation createEnd(OperationType type, int group, String argument) {
-        return new Operation(OperationMode.END, type, group, argument);
+    public Operation createEnd(OperationType type, String argument) {
+        return create(OperationMode.END, type, argument);
     }
 
 }

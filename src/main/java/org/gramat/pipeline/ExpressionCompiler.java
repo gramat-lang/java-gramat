@@ -188,17 +188,16 @@ public class ExpressionCompiler {
             return new Segment(NodeSet.of(machine.source()), machine.targets());
         }
 
-        var group = operationFactory.nextGroup();
-        var begin = operationFactory.createBegin(wrapping.type, group, wrapping.argument);
-        var end = operationFactory.createEnd(wrapping.type, group, wrapping.argument);
+        var begin = operationFactory.createBegin(wrapping.type, wrapping.argument);
+        var end = operationFactory.createEnd(wrapping.type, wrapping.argument);
 
         for (var link : machine.links()) {
             if (machine.source() == link.getSource()) {
-                link.prependBeginOperation(begin);
+                link.getBeginOperations().prepend(begin);
             }
 
             if (machine.targets().contains(link.getTarget())) {
-                link.appendEndOperation(end);
+                link.getEndOperations().append(end);
             }
         }
 

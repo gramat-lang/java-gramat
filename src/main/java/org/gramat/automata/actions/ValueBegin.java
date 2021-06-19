@@ -1,34 +1,21 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.Message;
-import org.gramat.automata.messages.ValueBeginMessage;
+import org.gramat.automata.builder.DataBuilder;
+import org.gramat.automata.builder.ValueBeginInstruction;
 
 @Slf4j
-public class ValueBegin extends Action {
-
-    ValueBegin(int group) {
-        super(group);
-    }
-
-    @Override
-    public ActionType getType() {
-        return ActionType.VALUE;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.BEGIN;
-    }
-
-    @Override
-    public Message createMessage(Context context) {
-        return new ValueBeginMessage(group, context.getPosition());
-    }
+public class ValueBegin implements Action {
 
     @Override
     public String toString() {
-        return String.format("value-begin(%s)", group);
+        return "value-begin()";
+    }
+
+    @Override
+    public void run(DataBuilder builder) {
+        var position = builder.getPosition();
+
+        builder.push(new ValueBeginInstruction(position));
     }
 }

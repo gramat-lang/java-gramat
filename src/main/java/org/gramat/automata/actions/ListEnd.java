@@ -1,50 +1,35 @@
 package org.gramat.automata.actions;
 
 import lombok.extern.slf4j.Slf4j;
-import org.gramat.automata.evaluation.Context;
-import org.gramat.automata.messages.ListEndMessage;
-import org.gramat.automata.messages.Message;
+import org.gramat.automata.builder.DataBuilder;
+import org.gramat.automata.builder.ListEndInstruction;
 
 @Slf4j
-public class ListEnd extends Action {
+public class ListEnd implements Action {
 
-    public final String typeHint;
+    private final String typeHint;
 
-    ListEnd(int group, String typeHint) {
-        super(group);
+    private final ListEndInstruction instruction;
+
+    ListEnd(String typeHint) {
         this.typeHint = typeHint;
+        this.instruction = new ListEndInstruction(typeHint);
     }
 
-    @Override
-    public ActionType getType() {
-        return ActionType.LIST;
-    }
-
-    @Override
-    public ActionMode getMode() {
-        return ActionMode.END;
-    }
-
-    @Override
-    public Message createMessage(Context context) {
-        return new ListEndMessage(group, typeHint);
-    }
-
-    @Override
     public String getTypeHint() {
         return typeHint;
     }
 
     @Override
-    public boolean hasTypeHint() {
-        return true;
+    public String toString() {
+        if (typeHint != null) {
+            return String.format("list-end(%s)", typeHint);
+        }
+        return "list-end()";
     }
 
     @Override
-    public String toString() {
-        if (typeHint != null) {
-            return String.format("list-end(%s, %s)", group, typeHint);
-        }
-        return String.format("list-end(%s)", group);
+    public void run(DataBuilder builder) {
+        builder.push(instruction);
     }
 }
