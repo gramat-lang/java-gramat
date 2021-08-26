@@ -1,63 +1,79 @@
 package org.gramat.automata.builder;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 public class DataContainer {
 
-    private List<Object> list;
-    private Map<String, Object> map;
+    private final List<ValueBase> values;
+
     private String key;
 
+    public DataContainer() {
+        values = new ArrayList<>();
+    }
+
     public Object buildList(String typeHint) {
-        // TODO type hint
-        if (map != null) {
-            throw new RuntimeException();
+        var list = new ArrayList<>(); // TODO use type hint
+
+        for (var value : values) {
+            if (value instanceof ValueItem item) {
+                list.add(item.value());
+            }
+            else {
+                throw new RuntimeException("unsupported value");
+            }
         }
-        else if (list == null) {
-            throw new RuntimeException();
-        }
-        else {
-            return list;
-        }
+
+        return list;
     }
 
     public Object buildMap(String typeHint) {
-        // TODO type hint
-        if (list != null) {
-            throw new RuntimeException();
+        var map = new LinkedHashMap<String, Object>();  // TODO use type hint
+
+        for (var value : values) {
+            if (value instanceof ValuePair pair) {
+                if (map.containsKey(pair.key())) {
+                    log.warn("overridden key: {}", pair.key());
+                }
+
+                map.put(pair.key(), pair.value());
+            }
+            else {
+                throw new RuntimeException("unsupported value: " + value);
+            }
         }
-        else if (map == null) {
-            return null;
-        }
-        else {
-            return map;
-        }
+
+        return map;
     }
 
     public Object buildValue() {
-        if (map != null) {
-            throw new RuntimeException();
-        }
-        else if (list == null  || list.isEmpty()) {
+        if (values.isEmpty()) {
             return null;
         }
-        else if (list.size() != 1) {
-            throw new RuntimeException();
+        else if (values.size() != 1) {
+            throw new RuntimeException("too much values");
+        }
+
+        var value = values.get(0);
+        if (value instanceof ValueItem item) {
+            return item.value();
         }
         else {
-            return list.get(0);
+            throw new RuntimeException("unsupported value: " + value);
         }
     }
 
     public String buildString() {
         var value = buildValue();
 
-        if (value instanceof String) {
-            return (String) value;
+        if (value instanceof String str) {
+            return str;
         }
         else {
             throw new RuntimeException();
@@ -76,33 +92,15 @@ public class DataContainer {
         return key;
     }
 
-    public void add(Object value) {
-        if (map != null) {
-            throw new RuntimeException();
-        }
+    public void addItem(Object value) {
+        var item = new ValueItem(value);
 
-        if (list == null) {
-            list = new ArrayList<>();
-        }
-
-        list.add(value);
+        values.add(item);
     }
 
-    public void set(String key, Object value) {
-        if (list != null) {
-            throw new RuntimeException();
-        }
+    public void addPair(String key, Object value) {
+        var pair = new ValuePair(key, value);
 
-        if (map == null) {
-            map = new LinkedHashMap<>();
-        }
-
-        if (key == null) {
-            throw new RuntimeException();
-        }
-
-        // TODO check for duplicated keys
-
-        map.put(key, value);
+        values.add(pair);
     }
 }

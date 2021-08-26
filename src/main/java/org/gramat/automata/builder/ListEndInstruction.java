@@ -14,6 +14,6 @@ public class ListEndInstruction implements DataInstruction {
         var value = listContainer.buildList(typeHint);
         var currentContainer = context.peekContainer();
 
-        currentContainer.add(value);
+        currentContainer.addItem(value);
     }
 }

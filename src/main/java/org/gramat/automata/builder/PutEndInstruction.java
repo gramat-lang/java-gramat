@@ -11,20 +11,23 @@ public class PutEndInstruction implements DataInstruction {
     public void run(DataContext context) {
         var putContainer = context.popContainer();
         var value = putContainer.buildValue();
-        var key = putContainer.getKey();
-
-        if (key == null && keyHint == null) {
-            throw new RuntimeException("missing key");
-        }
-        else if (key != null && keyHint != null) {
-            throw new RuntimeException("conflicting key");
-        }
-        else if (key == null) {
-            key = keyHint;
-        }
+        var key = resolveKey(putContainer.getKey());
 
         var currentContainer = context.peekContainer();
 
-        currentContainer.set(key, value);
+        currentContainer.addPair(key, value);
+    }
+
+    private String resolveKey(String key) {
+        if (key != null && keyHint != null) {
+            throw new RuntimeException("conflicting key");
+        }
+        else if (key == null) {
+            if (keyHint == null) {
+                throw new RuntimeException("missing key");
+            }
+            return keyHint;
+        }
+        return key;
     }
 }

@@ -1,4 +1,4 @@
-title: basic JSON-like
+title: ambiguous JSON-like
 
 expression:
     main = "<" [<value: ("<"|"=") {"<"|"="|">"} ("="|">")>] ">"

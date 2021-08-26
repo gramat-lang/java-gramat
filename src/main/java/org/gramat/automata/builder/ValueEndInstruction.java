@@ -16,6 +16,6 @@ public class ValueEndInstruction implements DataInstruction {
         var value = context.parseText(text, typeHint);
         var currentContainer = context.peekContainer();
 
-        currentContainer.add(value);
+        currentContainer.addItem(value);
     }
 }

@@ -13,6 +13,6 @@ public class MapEndInstruction implements DataInstruction {
         var value = mapContainer.buildMap(typeHint);
         var currentContainer = context.peekContainer();
 
-        currentContainer.add(value);
+        currentContainer.addItem(value);
     }
 }
